@@ -90,6 +90,14 @@ img[src$="#sm"]{image-rendering:auto!important}
 #party{position:absolute;left:50%;top:calc(34px + var(--st));transform:translateX(-50%);font-size:12px;line-height:1.2;padding:3px 10px;background:rgba(14,30,40,.7);box-shadow:0 0 0 2px var(--ink);color:#bfefff;text-shadow:1px 1px 0 var(--ink);white-space:nowrap;pointer-events:auto;cursor:pointer}
 #party i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:#ffb24a;vertical-align:0}
 #party.on i{background:var(--good)} #party.err i{background:var(--bad)}
+#duelq{position:absolute;left:50%;top:calc(62px + var(--st));transform:translateX(-50%);z-index:30;padding:8px 12px;background:rgba(48,16,14,.92);box-shadow:0 0 0 2px var(--ink),0 0 0 4px #ff7a4a;color:#ffd9c8;text-align:center;font-size:13px;line-height:1.3;text-shadow:1px 1px 0 var(--ink);pointer-events:auto}
+#duelq .dq-b{display:flex;gap:8px;justify-content:center;margin-top:6px}
+#duelq button{font:inherit;font-size:13px;padding:6px 14px;min-width:84px;border:0;color:#fff;background:#3a8f4a;box-shadow:0 0 0 2px var(--ink);cursor:pointer;touch-action:manipulation}
+#duelq #duel-no{background:#9a3a30}
+#coopq{position:absolute;left:50%;top:calc(62px + var(--st));transform:translateX(-50%);z-index:29;padding:8px 12px;background:rgba(14,32,48,.92);box-shadow:0 0 0 2px var(--ink),0 0 0 4px #4ab0ff;color:#cfeaff;text-align:center;font-size:13px;line-height:1.3;text-shadow:1px 1px 0 var(--ink);pointer-events:auto;max-width:calc(100vw - 40px)}
+#coopq .dq-b{display:flex;gap:8px;justify-content:center;margin-top:6px}
+#coopq button{font:inherit;font-size:13px;padding:6px 14px;min-width:84px;border:0;color:#fff;background:#2f78b8;box-shadow:0 0 0 2px var(--ink);cursor:pointer;touch-action:manipulation}
+#coopq #coop-no{background:#4a4450}
 .roomcode{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .roomcode b{font-size:28px;letter-spacing:6px;color:var(--lantern);text-shadow:2px 2px 0 var(--ink)}
 #goldline{font-size:12px;color:var(--exp);text-shadow:1px 1px 0 var(--ink);display:flex;gap:4px;align-items:center}
@@ -427,6 +435,8 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
     </div>
     <div id="zone"></div>
     <div id="party" hidden></div>
+    <div id="coopq" hidden><div class="dq-t"></div><div class="dq-b"><button id="coop-ok" class="pbtn">Katıl</button><button id="coop-no" class="pbtn">Kapat</button></div></div>
+    <div id="duelq" hidden><div class="dq-t"></div><div class="dq-b"><button id="duel-ok" class="pbtn">Kabul</button><button id="duel-no" class="pbtn">Reddet</button></div></div>
     <div id="feed"></div>
     <div id="cluster">
       <div id="skrow">
@@ -2213,6 +2223,7 @@ function newCharacter(cls, name) {
     clearDiff: {}, // zindan → bitirilen en yüksek zorluk (0 Normal, 1 Zor, 2 Kabus); bir sonraki zorluğu açar
     daily: null, // günlük görevler (Bekçi): { day, q: [{ k, need, n, claimed }], chest }
     kills: 0, deaths: 0, bosses: 0, playTime: 0, bestPlus: 0, upgrades: 0,
+    duelW: 0, duelL: 0, // düello galibiyet / yenilgi (04k_net.js Duel)
     settings: { sound: true, autoPot: true, gfx: 'lowpoly', zoom: 1, cam: 'iso' },
     hp: 1, mp: 1, quick: { hp: 'hp1', mp: 'mp1' },
     looks: {}, // eşya yuvası olmayan görünüm yuvaları (legs/back/accessory…) için kıyafet id'leri — 05c_outfits.js
@@ -2393,7 +2404,7 @@ function applySave(o) {
     const q = dy.q.filter((x) => x && DAILY_KINDS[x.k]).slice(0, DAILY_N).map((x) => ({ k: x.k, need: Math.max(1, Math.floor(_num(x.need, 1, 1, 9999))), n: Math.floor(_num(x.n, 0, 0, 9999)), claimed: !!x.claimed }));
     if (q.length) T.daily = { day: dy.day.slice(0, 10), q, chest: !!dy.chest };
   }
-  for (const k of ['kills', 'deaths', 'bosses', 'playTime', 'bestPlus', 'upgrades']) T[k] = _num(o[k], 0, 0, 1e12);
+  for (const k of ['kills', 'deaths', 'bosses', 'playTime', 'bestPlus', 'upgrades', 'duelW', 'duelL']) T[k] = _num(o[k], 0, 0, 1e12);
   T.settings = Object.assign(T.settings, o.settings && typeof o.settings === 'object' ? o.settings : {});
   if (!['lowpoly', 'retro', 'perf'].includes(T.settings.gfx)) T.settings.gfx = 'lowpoly';
   T.settings.zoom = [0.8, 1, 1.25].includes(T.settings.zoom) ? T.settings.zoom : 1;
@@ -8000,6 +8011,7 @@ const Net = {
   send(event, payload) { return this.raw({ topic: this.topic(), event, payload, ref: String(this.ref++), join_ref: this.joinRef }); },
   bc(ev, payload) { if (this.state !== 'on') return false; this.sent++; return this.send('broadcast', { type: 'broadcast', event: ev, payload }); },
   leave(silent) {
+    Duel.abort();
     if (this.room && this.state === 'on') { this.bc('bye', { i: this.id }); this.send('phx_leave', {}); }
     const w = this.ws; this.ws = null;
     if (w) try { w.close(); } catch (e) {}
@@ -8049,6 +8061,7 @@ const Net = {
   dropPeer(id) {
     const q = this.peers[id];
     if (!q) return;
+    if (Duel.phase !== 'off' && Duel.foeId === id) Duel.peerGone();
     if (q.ent) q.ent.destroy();
     delete this.peers[id];
     UI.dirty = true;
@@ -8060,17 +8073,22 @@ const Net = {
     if (ev === 'bye') { this.dropPeer(id); return; }
     const q = this.peers[id] || (this.peers[id] = { st: null, ent: null, last: 0, chat: null, chatT: 0 });
     q.last = G.rt;
+    if (ev === 'di' || ev === 'da' || ev === 'dn' || ev === 'dc' || ev === 'dh' || ev === 'dr' || ev === 'dx') { Duel.onMsg(ev, d, q); return; }
+    if (ev === 'gj' || ev === 'gf') { Coop.onMsg(ev, d, q); return; }
     if (ev === 's') {
       const n = (v, a, b, def) => (typeof v === 'number' && isFinite(v) ? clamp(v, a, b) : def);
       const st = {
         l: typeof d.l === 'string' ? d.l.slice(0, 12) : '', x: n(d.x, -999, 999, 0), z: n(d.z, -999, 999, 0), r: n(d.r, -99, 99, 0), m: !!d.m,
         a: n(d.a, 0, 1e9, 0) | 0, k: n(d.k, 0, 1e9, 0) | 0, kn: typeof d.kn === 'string' && SKILLS[d.kn] ? d.kn : null,
         b: typeof d.b === 'string' && BALTACI_BODIES[d.b] ? d.b : 'bez', w: typeof d.w === 'string' && GEAR_SETS[d.w] && GEAR_SETS[d.w].look ? d.w : 'tas',
-        gc: n(d.gc, 0, 1, 0), gf: n(d.gf, 0, 1, 0), gw: n(d.gw, 0, 1, 0),
+        gc: n(d.gc, 0, 1, 0), gf: n(d.gf, 0, 1, 0), gw: n(d.gw, 0, 1, 0), dd: !!d.dd,
+        // ortak zindan örneği [sid, tohum, zorluk, host]
+        ii: Array.isArray(d.ii) && d.ii.length === 4 && typeof d.ii[0] === 'string' && typeof d.ii[3] === 'string' ? [d.ii[0].slice(0, 12), d.ii[1] | 0, clamp(d.ii[2] | 0, 0, DIFFS.length - 1), d.ii[3].slice(0, 16)] : null,
       };
       if (typeof d.n === 'string') q.name = d.n.slice(0, 16);
       if (typeof d.lv === 'number') q.lv = clamp(d.lv | 0, 1, MAX_LV);
       q.st = st;
+      Coop.onState(id, d); // canavar anlık görüntüsü (host) / vuruşlar (misafir)
     } else if (ev === 'c') {
       const t = NET_CHATS[d.c | 0];
       if (!t) return;
@@ -8095,8 +8113,8 @@ const Net = {
   },
   myState() {
     const pl = G.player, E = P.equip;
-    return { i: this.id, l: this.levelKey(), x: +pl.x.toFixed(2), z: +pl.z.toFixed(2), r: +pl.rot.toFixed(2), m: pl.moving ? 1 : 0, a: this.atk, k: this.sk, kn: this.skId,
-      b: pl.H.bodyKey || 'bez', w: (E.weapon && E.weapon.set) || 'tas', gc: gildLevel(E.chest), gf: gildLevel(E.feet), gw: gildLevel(E.weapon), n: P.name, lv: P.lv };
+    return Object.assign({ i: this.id, l: this.levelKey(), x: +pl.x.toFixed(2), z: +pl.z.toFixed(2), r: +pl.rot.toFixed(2), m: pl.moving ? 1 : 0, a: this.atk, k: this.sk, kn: this.skId,
+      b: pl.H.bodyKey || 'bez', w: (E.weapon && E.weapon.set) || 'tas', gc: gildLevel(E.chest), gf: gildLevel(E.feet), gw: gildLevel(E.weapon), n: P.name, lv: P.lv }, Coop.stateFields());
   },
   // her kare (frame): kalp atışı, yeniden bağlanma, durum gönderme, diğer oyuncuları çizme
   tick(dt) {
@@ -8108,6 +8126,8 @@ const Net = {
     this.hbT += rdt;
     if (this.hbT > 25 && this.ws && this.ws.readyState === 1) { this.hbT = 0; this.raw({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(this.ref++) }); }
     if (this.myChatT > 0) this.myChatT -= rdt;
+    Duel.tick(rdt);
+    Coop.tick(rdt);
     const pl = G.player;
     if (this.state === 'on' && pl && G.state === 'play') {
       if (pl.swing > this.prevSwing + 1e-4) { this.atk++; this.idleT = 99; } // yeni vuruş
@@ -8116,7 +8136,10 @@ const Net = {
       if (lk !== this.lastLk) { this.lastLk = lk; this.idleT = 99; }
       this.sendT -= rdt; this.idleT += rdt;
       const active = pl.moving || pl.swing > 0 || pl.leap || pl.dash;
-      if ((active && this.sendT <= 0) || this.idleT > 3) { this.bc('s', this.myState()); this.sendT = 1 / 6; this.idleT = 0; }
+      const dead = !!pl.dead;
+      if (dead !== this.wasDead) { this.wasDead = dead; this.idleT = 99; }
+      const cw = Coop.wantSend(rdt); // ortak zindan: canavar anlık görüntüsü / bekleyen vuruşlar
+      if (cw || (active && this.sendT <= 0) || this.idleT > 3) { this.bc('s', this.myState()); this.sendT = 1 / 6; this.idleT = 0; }
     }
     // diğer oyuncular: aynı seviyedeyse çiz, değilse kaldır; 20 sn ses yoksa düşür
     const lk = this.levelKey();
@@ -8124,13 +8147,217 @@ const Net = {
       const q = this.peers[id];
       if (q.chatT > 0) q.chatT -= rdt;
       if (q.last && G.rt - q.last > 20 && !q.st) continue;
-      const here = q.st && q.st.l === lk && G.level && G.state === 'play';
+      // aynı seviye: köy ya da aynı ortak zindan örneği (aynı kat ama başka örnekse düzen farklı → çizilmez)
+      const here = q.st && q.st.l === lk && G.level && G.state === 'play' && (lk === 'v' || Coop.sameInst(q));
       if (q.ent && (!here || q.ent.L !== G.level || q.ent.bodyKey !== q.st.b || q.ent.wset !== q.st.w)) { q.ent.destroy(); q.ent = null; }
       if (here && !q.ent) q.ent = new RemotePlayer(G.level, q, id);
       if (q.ent) q.ent.update(dt, q);
     }
   },
   count() { return Object.keys(this.peers).length + (this.room ? 1 : 0); },
+};
+
+// ---------- Düello (köyde, davetle; gerçek statlar) ----------
+// Akış: di (davet) → da (kabul) / dn (red) / dc (davet geri alındı) → 3 sn geri sayım → dövüş.
+// Vuruş: saldıran 'dh' {a: ham saldırı değeri, c: kritik} gönderir; hasarı VURULAN telefon kendi savunmasıyla hesaplar, kendi canını
+// düşürür ve 'dr' {d: hasar, hp, mh} ile bildirir (can çubuğu saldıranda bu yanıtla güncellenir). Can 0'a inerse vurulan 'dx' {w: kazanan}
+// gönderir, iki taraf da düelloyu bitirir: ölüm yok, ceza yok, ikisi de tam canla kalır; P.duelW / P.duelL sayılır.
+// Rakip, oyunun mevcut hedef sistemine L.mobs içinde "sahte canavar" (duelFoe) olarak girer → temel saldırı ve tüm yetenekler ona da vurur
+// (Combat.hitMob duelFoe'yu Duel.hitFoe'ya yönlendirir). Köyün canavar döngüsü çalışmadığından sahte canavarın yapay zekâsı yoktur.
+const DUEL_DMG = 0.6; // PvP hasar çarpanı (düellolar çok kısa sürmesin)
+const Duel = {
+  phase: 'off', // off | invite (ben davet ettim) | incoming (bana davet geldi) | count | fight
+  foeId: null, foe: null, t: 0, cnt: 0, mh: 1, L: null,
+  get armed() { return this.phase === 'count' || this.phase === 'fight'; },
+  armedWith(id) { return this.armed && this.foeId === id; },
+  nameOf(id) { const q = Net.peers[id]; return (q && q.name) || 'Oyuncu'; },
+  num(v, a, b, def) { return typeof v === 'number' && isFinite(v) ? clamp(v, a, b) : def; },
+  canDuel(id) {
+    const q = Net.peers[id], pl = G.player;
+    return Net.state === 'on' && this.phase === 'off' && !!q && !!q.st && q.st.l === 'v' && Net.levelKey() === 'v' && G.state === 'play' && !!pl && !pl.dead;
+  },
+  refresh() { UI.dirty = true; if (UI.panel === 'party') UI.render(); },
+  showInvite(on) {
+    const b = $('#duelq'); if (!b) return;
+    b.hidden = !on;
+    if (on) $('.dq-t', b).innerHTML = '<b>' + esc(this.nameOf(this.foeId)) + '</b> seni düelloya çağırıyor';
+  },
+  reset() { this.phase = 'off'; this.foeId = null; this.t = 0; this.showInvite(false); this.refresh(); },
+  invite(id) {
+    if (!this.canDuel(id)) { toast('Düello için ikiniz de köyde olmalısınız'); SFX.play('deny'); return false; }
+    this.phase = 'invite'; this.foeId = id; this.t = 15;
+    Net.bc('di', { i: Net.id, to: id, mh: Math.round(D.maxHp) });
+    feed(this.nameOf(id) + ' düelloya davet edildi', '#ff9a7a');
+    this.refresh();
+    return true;
+  },
+  cancelInvite() {
+    if (this.phase !== 'invite') return;
+    Net.bc('dc', { i: Net.id, to: this.foeId });
+    this.reset();
+  },
+  accept() {
+    if (this.phase !== 'incoming') return;
+    if (Net.levelKey() !== 'v') { this.decline(); return; }
+    Net.bc('da', { i: Net.id, to: this.foeId, mh: Math.round(D.maxHp) });
+    this.beginCount();
+  },
+  decline() {
+    if (this.phase !== 'incoming') return;
+    Net.bc('dn', { i: Net.id, to: this.foeId });
+    this.reset();
+  },
+  forfeit() {
+    if (this.phase === 'fight') { Net.bc('dx', { i: Net.id, to: this.foeId, w: this.foeId }); this.end(false); }
+    else if (this.phase === 'count') { Net.bc('dc', { i: Net.id, to: this.foeId }); this.end(null, 'Düello iptal edildi'); }
+    else if (this.phase === 'invite') this.cancelInvite();
+    else if (this.phase === 'incoming') this.decline();
+  },
+  abort() { if (this.phase === 'fight' || this.phase === 'count') this.end(null); else if (this.phase !== 'off') this.reset(); },
+  peerGone() {
+    if (this.phase === 'fight' || this.phase === 'count') this.end(null, 'Rakip ayrıldı · düello iptal');
+    else this.reset();
+  },
+  onMsg(ev, d, q) {
+    if (d.to !== Net.id) return;
+    const id = d.i;
+    if (ev === 'di') {
+      const pl = G.player;
+      if (this.phase !== 'off' || Net.levelKey() !== 'v' || !pl || pl.dead || G.state !== 'play') { Net.bc('dn', { i: Net.id, to: id }); return; }
+      this.phase = 'incoming'; this.foeId = id; this.t = 15; this.mh = this.num(d.mh, 1, 1e9, 1);
+      this.showInvite(true); SFX.play('portal');
+      feed((q.name || 'Oyuncu') + ' seni düelloya çağırıyor', '#ff9a7a');
+      this.refresh();
+    } else if (ev === 'da') {
+      if (this.phase === 'invite' && this.foeId === id) { this.mh = this.num(d.mh, 1, 1e9, 1); this.beginCount(); }
+    } else if (ev === 'dn') {
+      if (this.phase === 'invite' && this.foeId === id) { toast((q.name || 'Oyuncu') + ' düelloyu kabul etmedi'); this.reset(); }
+    } else if (ev === 'dc') {
+      if (this.foeId !== id) return;
+      if (this.phase === 'incoming') { toast('Davet geri alındı'); this.reset(); }
+      else if (this.phase === 'count') this.end(null, 'Rakip vazgeçti');
+    } else if (ev === 'dh') {
+      if (this.phase === 'fight' && this.foeId === id) this.takeHit(d);
+    } else if (ev === 'dr') {
+      if (this.phase === 'fight' && this.foeId === id) this.onResult(d);
+    } else if (ev === 'dx') {
+      if (this.phase === 'fight' && this.foeId === id) this.end(d.w === Net.id);
+    }
+  },
+  // iki taraf da tam canla başlar
+  beginCount() {
+    const pl = G.player;
+    this.phase = 'count'; this.cnt = 3; this.t = 0;
+    this.showInvite(false);
+    P.hp = D.maxHp; P.mp = D.maxMp;
+    for (const k in pl.cds) pl.cds[k] = 0;
+    pl.target = null; pl.engage = false; pl.engagedOn = null; pl.queued = null; pl.autoMove = null;
+    pl.refreshWeapon(); // köyde silah sırtta; düelloda ele alınır
+    banner('DÜELLO', esc(this.nameOf(this.foeId)) + ' · 3', 0.95);
+    SFX.play('click');
+    this.refresh();
+  },
+  startFight() {
+    const pl = G.player, L = G.level, self = this, q = Net.peers[this.foeId];
+    this.phase = 'fight'; this.L = L;
+    this.foe = {
+      duelFoe: true, name: esc(this.nameOf(this.foeId)), lv: (q && q.lv) || 1, rank: 'normal', hp: this.mh, maxHp: this.mh, def: 0, r: 0.45,
+      static: false, dead: false, removed: false, barH: 2, state: 'idle', stun: 0, hitT: 0, lastHit: 0,
+      get x() { const p = Net.peers[self.foeId]; return p ? (p.ent ? p.ent.x : p.st ? p.st.x : 0) : 0; },
+      get z() { const p = Net.peers[self.foeId]; return p ? (p.ent ? p.ent.z : p.st ? p.st.z : 0) : 0; },
+      flash() {}, aggro() {}, update() {}, animate() {}, onMetinDamage() {},
+    };
+    L.mobs.push(this.foe);
+    pl.target = this.foe;
+    banner('BAŞLA!', 'Rakibine vur · çekilmek için Ortak oyun panelini aç', 1.4);
+    SFX.play('boom');
+    this.refresh();
+  },
+  tick(rdt) {
+    if (this.phase === 'off') return;
+    const q = Net.peers[this.foeId], pl = G.player;
+    if (this.phase === 'invite' || this.phase === 'incoming') {
+      this.t -= rdt;
+      if (!q || Net.state !== 'on') { this.reset(); return; }
+      if (this.t <= 0) {
+        if (this.phase === 'invite') { Net.bc('dc', { i: Net.id, to: this.foeId }); toast('Davet yanıtsız kaldı'); this.reset(); }
+        else this.decline();
+      }
+      return;
+    }
+    if (Net.state !== 'on' || !q || !q.st || q.st.l !== 'v' || Net.levelKey() !== 'v' || !pl || pl.dead || G.state !== 'play') { this.end(null, 'Düello iptal edildi'); return; }
+    if (this.phase === 'count') {
+      this.t += rdt;
+      if (this.t >= 1) {
+        this.t -= 1; this.cnt--;
+        if (this.cnt > 0) { banner('DÜELLO', esc(this.nameOf(this.foeId)) + ' · ' + this.cnt, 0.95); SFX.play('click'); }
+        else this.startFight();
+      }
+    }
+  },
+  // Combat.hitMob → rakip vuruldu: ham değeri gönder (hasarı rakibin telefonu hesaplar)
+  hitFoe(m, mult, o) {
+    o = o || {};
+    if (this.phase !== 'fight' || o.dot) return null;
+    const crit = !o.noCrit && Math.random() * 100 < D.crit + (o.critAdd || 0);
+    let a = D.atk * mult * rand(0.92, 1.08);
+    if (crit) a *= 1.8;
+    Net.bc('dh', { i: Net.id, to: this.foeId, a: Math.round(a), c: crit ? 1 : 0 });
+    G.player.combatT = 0;
+    return { dmg: 0, crit };
+  },
+  // rakip beni vurdu
+  takeHit(d) {
+    const pl = G.player;
+    if (!pl || pl.dead) return;
+    const a = this.num(d.a, 0, 1e7, 0);
+    if (Math.random() * 100 < D.dodge) {
+      FX.num(pl.x, 2.2, pl.z, 'ISKA', 'miss');
+      Net.bc('dr', { i: Net.id, to: this.foeId, m: 1, hp: Math.round(P.hp), mh: Math.round(D.maxHp) });
+      return;
+    }
+    const dmg = Math.max(1, Math.round(a * (120 / (120 + D.def)) * DUEL_DMG * rand(0.95, 1.05)));
+    P.hp -= dmg; pl.combatT = 0;
+    pl.flash(); SFX.play('hurt');
+    FX.num(pl.x, 2.3, pl.z, '-' + dmg, 'pl');
+    UI.hurt(Math.min(1, dmg / D.maxHp * 4));
+    const dead = P.hp <= 0;
+    if (dead) P.hp = 0;
+    Net.bc('dr', { i: Net.id, to: this.foeId, d: dmg, c: d.c ? 1 : 0, hp: Math.round(P.hp), mh: Math.round(D.maxHp) });
+    if (dead) { Net.bc('dx', { i: Net.id, to: this.foeId, w: this.foeId }); this.end(false); }
+  },
+  // vurduğum rakipten sonuç: hasar sayısı + can çubuğu
+  onResult(d) {
+    const f = this.foe; if (!f) return;
+    f.maxHp = this.num(d.mh, 1, 1e9, f.maxHp);
+    f.hp = this.num(d.hp, 0, f.maxHp, f.hp);
+    if (d.m) FX.num(f.x, 2.2, f.z, 'ISKA', 'miss');
+    else {
+      const crit = !!d.c;
+      FX.num(f.x, 1.7, f.z, Math.round(this.num(d.d, 0, 1e9, 0)), crit ? 'crit' : '');
+      FX.burst(f.x, 1, f.z, crit ? 0xffd84a : 0xfff0d0, crit ? 10 : 5, 4, 0.1, 0.35);
+      SFX.play(crit ? 'crit' : 'hit');
+    }
+    UI.dirty = true;
+  },
+  // result: true kazandım, false yenildim, null iptal
+  end(result, msg) {
+    const pl = G.player, f = this.foe;
+    if (f) { f.dead = true; f.removed = true; if (this.L) this.L.mobs = this.L.mobs.filter((m) => m !== f); }
+    this.phase = 'off'; this.foe = null; this.foeId = null; this.t = 0; this.L = null;
+    this.showInvite(false);
+    if (pl) {
+      pl.target = null; pl.engage = false; pl.engagedOn = null; pl.queued = null; pl.dash = null;
+      if (!pl.dead) { P.hp = D.maxHp; P.mp = D.maxMp; }
+      for (const k in pl.cds) pl.cds[k] = 0;
+      if (G.level && G.level.group) pl.refreshWeapon(); // silah yeniden sırta
+    }
+    if (result === true) { P.duelW = (P.duelW | 0) + 1; banner('ZAFER', 'Düelloyu kazandın · canın yenilendi', 2.6); SFX.play('success'); }
+    else if (result === false) { P.duelL = (P.duelL | 0) + 1; banner('YENİLDİN', 'Düello bitti · canın yenilendi', 2.6); SFX.play('deny'); }
+    else if (msg) toast(msg);
+    if (result !== null) saveGame();
+    this.refresh();
+  },
 };
 
 // Diğer oyuncunun karakteri (yalnız görsel): PlayerEnt'in klip seçimini (animateGltf) kendi alanlarıyla kullanır
@@ -8145,19 +8372,27 @@ class RemotePlayer {
     L.group.add(this.H.root);
     if (this.H.gearSlots) { try { applyOutfit(this.H, () => 0); } catch (e) { /* kıyafet yoksa çıplak */ } }
     if (this.H.gild) { const u = this.H.gild.uLv.value; u[0] = u[1] = u[2] = u[3] = st.gc; u[4] = st.gf; }
+    this.mountWeapon(st, L.type !== 'dungeon' && !Duel.armedWith(id));
+    this.label = addLabel(L, esc(q.name || 'Oyuncu'), 'Sv ' + (q.lv || 1), st.x, 2.6, st.z, '#7ee0ff', 'ally');
+  }
+  // silahı kur: kınlı (sırtta) ya da elde (düello / zindan)
+  mountWeapon(st, sheathed) {
+    if (this.weapon) { if (this.weapon.parent) this.weapon.parent.remove(this.weapon); disposeGild(this.weapon); }
     const o = OUTFITS[GEAR_SETS[st.w].look], part = o && o.parts ? o.parts.find((x) => x.fit === 'sword') : null;
     this.weapon = (this.H.gearSlots && part && buildGearSword(part, st.gw)) || buildWeapon('axe', new THREE.Color(TIER_TINT[GEAR_SETS[st.w].tier]).getHex(), 0);
-    this.sheathed = L.type !== 'dungeon';
-    if (this.sheathed && this.H.back) { sheathWeapon(this.weapon, false, true); this.H.back.add(this.weapon); } else { this.weapon.rotation.set(0, 0, 0); this.H.hand.add(this.weapon); }
-    this.label = addLabel(L, esc(q.name || 'Oyuncu'), 'Sv ' + (q.lv || 1), st.x, 2.6, st.z, '#7ee0ff', 'ally');
+    this.sheathed = sheathed;
+    if (sheathed && this.H.back) { sheathWeapon(this.weapon, false, true); this.H.back.add(this.weapon); } else { this.weapon.rotation.set(0, 0, 0); this.H.hand.add(this.weapon); }
   }
   update(dt, q) {
     const st = q.st;
+    const wantSheath = this.L.type !== 'dungeon' && !Duel.armedWith(this.id);
+    if (wantSheath !== this.sheathed) this.mountWeapon(st, wantSheath);
     this.tx = st.x; this.tz = st.z;
     const dx = this.tx - this.x, dz = this.tz - this.z, d = Math.hypot(dx, dz);
     if (d > 6) { this.x = this.tx; this.z = this.tz; } // ışınlandı / çok geride
     else if (d > 0.02) { const k = Math.min(1, dt * 9); this.x += dx * k; this.z += dz * k; }
     this.moving = st.m || d > 0.25;
+    this.dead = !!st.dd; // ölüyse yere düşer (animateGltf)
     let dr = st.r - this.rot; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); this.rot += dr * Math.min(1, dt * 12);
     if (st.a !== this.a) { this.a = st.a; this.swing = this.swingDur; this.swingAlt = !this.swingAlt; }
     if (st.k !== this.k) { this.k = st.k; if (st.kn) this.skillCast = st.kn; }
@@ -8176,6 +8411,401 @@ class RemotePlayer {
     if (this.label) { this.label.el.remove(); const i = this.L.labels.indexOf(this.label); if (i >= 0) this.L.labels.splice(i, 1); }
   }
 }
+
+// ---------- Ortak zindan (ortak oyun 2. aşama) ----------
+// Her zindan katı bir "örnek"tir: { sid, seed, diff, host, key }. Kata ilk giren örneğin sahibi (host) olur; kat düzeni
+// tohumdan üretilir (buildDungeon(…, seed)), böylece katılan oyuncu aynı duvarları/odaları kurar. Canavarları YALNIZ host'un
+// telefonu yönetir (yapay zekâ, doğma, dalgalar); misafirde canavarlar "kukla"dır (m.puppet): konum/can/olaylar host'tan gelir.
+//
+// Trafik ayrı mesaj açmaz, oyuncu durumu 's' içine biner (mesaj bütçesi):
+//   ii  [sid, seed, zorluk, hostId]       — hangi örnekte olduğum (herkes; davet kutusu ve katılma bunu okur)
+//   dd  1 = ölüyüm (canavarlar başka hedefe döner)
+//   g   (host) { sid, m: [nid, x·10, z·10, rot·100, can, bayrak]…, e: olaylar[] }
+//   h   (misafir) { sid, h: [[nid, hasar, kritik, sersemletme]…] } — misafirin vuruşları; hasarı misafir hesaplar, host uygular
+// Ayrı olaylar: gj (misafir → host: tam durum iste), gf (host → misafir(ler): tüm canlı canavarlar + açık portallar).
+// Host olayları (e): n yeni canavar · k öldü · a saldırı (menzilliyse misafirde mermi) · d misafire doğrudan hasar ·
+//   t yer uyarısı (misafir kendi konumuna göre hasarı kendisi uygular) · v mermi yelpazesi · c kemik kral hareketi · x afiş
+// Ganimet ve EXP herkese ayrı: her telefon canavar ölünce Combat.killMob'u kendi çalıştırır (kendi düşüşleri, tam EXP).
+// Host örnekten çıkarsa (köye dönüş, alt kat, kopma) kalanlardan kimliği en küçük olan host olur: kuklalar yeniden canavar olur.
+const COOP_HP = 0.6; // her ek oyuncu için canavar canı +%60
+const Coop = {
+  inst: null, members: [], proxies: {}, evq: [], hitq: [], seen: {}, hpF: 1,
+  sendT: 0, fullT: 0, joinT: 0, lostT: 0, synced: false, offer: null, offerT: 0,
+  get hosting() { return !!this.inst && this.inst.host === Net.id; },
+  get guest() { return !!this.inst && this.inst.host !== Net.id && this.inst.host !== 'solo'; },
+  // başka oyuncuyla aynı örnekteyken oyun panel açıkken de durmaz (online oyun duraklamaz)
+  live() { return !!this.inst && Net.state === 'on' && (this.hosting ? this.members.length > 0 : true); },
+  frozen() { return (G.paused || G.rotPause) && !(this.live() && !G.transitioning); },
+  count() { return this.inst ? 1 + (this.hosting ? this.members.length : this.mates().length) : 1; },
+  ev(...a) { if (this.hosting && this.members.length) this.evq.push(a); },
+  mob(nid) { const L = G.level, m = L && L.byNid && L.byNid.get(nid); return m && !m.removed ? m : null; },
+  // aynı örnekteki diğer oyuncular (peer kayıtları)
+  mates() {
+    const out = [];
+    if (!this.inst) return out;
+    for (const id in Net.peers) { const q = Net.peers[id], s = q.st; if (s && s.l === this.inst.key && s.ii && s.ii[0] === this.inst.sid) out.push(id); }
+    return out;
+  },
+  sameInst(q) { return !!(this.inst && q && q.st && q.st.ii && q.st.l === this.inst.key && q.st.ii[0] === this.inst.sid); },
+
+  // setLevel her seviye değişiminde çağırır; goDungeon sonra enter() ile yeni örneği kurar
+  reset() {
+    this.inst = null; this.members = []; this.proxies = {}; this.evq = []; this.hitq = []; this.hpF = 1;
+    this.synced = false; this.lostT = 0;
+  },
+  // goDungeon: odadaki biri aynı kat + zorluktaysa onun örneğine katıl
+  findFor(dIdx, floor, diff) {
+    const key = 'd' + dIdx + '-' + floor;
+    let best = null;
+    for (const id in Net.peers) {
+      const s = Net.peers[id].st;
+      if (!s || s.l !== key || !s.ii || s.ii[2] !== (diff | 0)) continue;
+      let host = s.ii[3];
+      if (host === Net.id) host = id; // eski sahibi bendim (ayrıldım): kalan oyuncu sahiplenecek
+      const hq = Net.peers[host];
+      if (host !== id && !(hq && hq.st && hq.st.l === key)) continue; // sahibi artık orada değil
+      if (!best || host === id) best = { sid: s.ii[0], seed: s.ii[1], diff: s.ii[2], host };
+    }
+    return Net.state === 'on' ? best : null;
+  },
+  enter(L, seed, join) {
+    this.reset();
+    const key = Net.levelKey(L);
+    if (join) {
+      this.inst = { sid: join.sid, seed, diff: L.diff | 0, host: join.host, key };
+      for (const sp of L.spawns) { sp.timer = -1; sp.mob = null; } // misafir doğurmaz
+      this.joinT = 0; this.reqJoin();
+    } else {
+      this.inst = { sid: 'i' + Math.random().toString(36).slice(2, 9), seed, diff: L.diff | 0, host: Net.id || 'solo', key };
+    }
+    this.hideOffer();
+  },
+  stateFields() {
+    const out = {}, pl = G.player;
+    if (pl && pl.dead) out.dd = 1;
+    if (!this.inst || Net.levelKey() !== this.inst.key) return out;
+    if (this.inst.host === 'solo') this.inst.host = Net.id; // odaya sonradan girildi
+    out.ii = [this.inst.sid, this.inst.seed, this.inst.diff, this.inst.host];
+    if (this.hosting && this.members.length) out.g = this.snapshot();
+    if (this.guest && this.hitq.length) out.h = { sid: this.inst.sid, h: this.hitq.splice(0, 60) };
+    return out;
+  },
+  // Net.tick: 's' durumunu şimdi göndermek gerekiyor mu (canavar anlık görüntüsü / bekleyen vuruşlar)
+  wantSend(rdt) {
+    this.sendT -= rdt;
+    if (!this.inst || Net.state !== 'on' || this.sendT > 0) return false;
+    if (this.hosting && this.members.length) {
+      const busy = this.evq.length || G.level.mobs.some((m) => !m.dead && m.nid && (m.state !== 'idle' || m.moving));
+      this.sendT = busy ? 1 / 6 : 0.6;
+      return true;
+    }
+    if (this.guest && this.hitq.length) { this.sendT = 0.12; return true; }
+    return false;
+  },
+  snapshot() {
+    const L = G.level, m = [];
+    this.fullT -= 1;
+    const full = this.fullT <= 0;
+    if (full) this.fullT = 18;
+    for (const mob of L.mobs) {
+      if (mob.dead || !mob.nid) continue;
+      const x = Math.round(mob.x * 10), z = Math.round(mob.z * 10), r = Math.round(mob.rot * 100), hp = Math.max(0, Math.round(mob.hp));
+      const fl = (mob.moving ? 1 : 0) | (mob.casting > 0 ? 2 : 0) | (mob.charge ? 4 : 0);
+      const s = mob._ns;
+      if (full || !s || s[0] !== x || s[1] !== z || s[3] !== hp || s[4] !== fl || Math.abs(s[2] - r) > 25) { m.push(mob.nid, x, z, r, hp, fl); mob._ns = [x, z, r, hp, fl]; }
+    }
+    return { sid: this.inst.sid, f: this.hpF, m, e: this.evq.splice(0) };
+  },
+  fullState() {
+    const L = G.level, m = [];
+    for (const mob of L.mobs) {
+      if (mob.dead || !mob.nid) continue;
+      const sp = mob.sp || {};
+      m.push([mob.nid, mob.key, mob.lv, Math.round(mob.x * 10), Math.round(mob.z * 10), Math.max(1, Math.round(mob.hp)), Math.round(mob.maxHp), (sp.guardian ? 1 : 0) | (sp.boss ? 2 : 0)]);
+    }
+    const ex = L.interact.filter((it) => it.kind === 'exit').slice(1).map((it) => [Math.round(it.x * 10), Math.round(it.z * 10)]);
+    return { sid: this.inst.sid, f: this.hpF, m, dp: L.downPortal && L.downPortal.active ? 1 : 0, ex };
+  },
+  sendFull(to) { if (this.hosting) Net.bc('gf', Object.assign({ i: Net.id, to }, this.fullState())); },
+  reqJoin() { if (this.guest && Net.state === 'on') Net.bc('gj', { i: Net.id, to: this.inst.host, sid: this.inst.sid }); },
+
+  // ---- host tarafı ----
+  // spawnMob çağırır (yeni canavar): misafirlere bildir, ortak can çarpanı
+  onSpawn(m) {
+    if (!this.hosting) return;
+    if (this.hpF !== 1) { m.maxHp = Math.round(m.maxHp * this.hpF); m.hp = m.maxHp; }
+    m.hpF = this.hpF;
+    const sp = m.sp || {};
+    this.ev('n', m.nid, m.key, m.lv, Math.round(m.x * 10), Math.round(m.z * 10), Math.round(m.hp), Math.round(m.maxHp), (sp.guardian ? 1 : 0) | (sp.boss ? 2 : 0));
+  },
+  onKill(m) { if (m.nid && !m.puppet) this.ev('k', m.nid); },
+  rescale() {
+    const f = 1 + COOP_HP * this.members.length;
+    if (f === this.hpF) return;
+    this.hpF = f;
+    for (const m of G.level.mobs) {
+      if (m.dead || m.puppet) continue;
+      const k = f / (m.hpF || 1);
+      m.maxHp = Math.round(m.maxHp * k); m.hp = Math.max(1, Math.round(m.hp * k)); m.hpF = f;
+    }
+  },
+  // canavarın hedefi: host + misafirler arasında en yakın canlı oyuncu (2 m'lik bağlılık payıyla)
+  target(mob) {
+    const pl = G.player;
+    if (!this.hosting || !this.members.length) return pl;
+    let best = pl && !pl.dead ? pl : null, bd = best ? dist2(mob.x, mob.z, pl.x, pl.z) : Infinity;
+    for (const id of this.members) {
+      const g = this.proxies[id];
+      if (!g || g.dead) continue;
+      const d = dist2(mob.x, mob.z, g.x, g.z);
+      if (d < bd) { bd = d; best = g; }
+    }
+    const cur = mob.tgt;
+    if (cur && cur !== best && !cur.dead && (cur === pl || (cur.remote && this.proxies[cur.id] === cur))) {
+      const dc = dist2(mob.x, mob.z, cur.x, cur.z);
+      if (dc < bd + 4) best = cur;
+    }
+    return best || pl;
+  },
+  // canavardan oyuncuya hasar: kendime doğrudan, misafire olay olarak
+  hurt(t, raw, mob, o) {
+    if (!t || t.dead) return;
+    if (t.remote) { o = o || {}; this.ev('d', mob.nid, t.id, Math.round(raw), o.poison ? 1 : 0, o.slow || 0); }
+    else if (t === G.player) Combat.damagePlayer(raw, mob, o);
+  },
+  anyNear(x, z, r) {
+    const pl = G.player;
+    if (pl && !pl.dead && dist(x, z, pl.x, pl.z) < r) return true;
+    if (this.hosting) for (const id of this.members) { const g = this.proxies[id]; if (g && !g.dead && dist(x, z, g.x, g.z) < r) return true; }
+    return false;
+  },
+  // misafirin vuruşları
+  applyHits(list) {
+    for (const h of list) {
+      if (!Array.isArray(h)) continue;
+      const m = this.mob(h[0] | 0);
+      if (!m || m.dead) continue;
+      const dmg = clamp(+h[1] || 0, 0, 1e8), st = clamp(+h[3] || 0, 0, 5);
+      if (st && !m.static) m.stun = Math.max(m.stun, st);
+      if (dmg <= 0) continue;
+      m.hp -= dmg; m.hitT = 0; m.lastHit = 0;
+      m.flash();
+      FX.num(m.x, (m.barH || 2) * 0.8, m.z, Math.round(dmg), h[2] ? 'crit' : '');
+      if (m.static) m.onMetinDamage();
+      else if (m.state === 'idle' || m.state === 'return') m.aggro(true);
+      if (m.hp <= 0) Combat.killMob(m);
+    }
+  },
+
+  // ---- misafir tarafı ----
+  queueHit(m, dmg, crit) { if (m.nid) this.hitq.push([m.nid, Math.round(dmg), crit ? 1 : 0, 0]); m.hitLocal = G.time; },
+  stun(m, s) { if (m.puppet) { if (m.nid) this.hitq.push([m.nid, 0, 0, s]); } else m.stun = s; },
+  makePuppet(e, fx) {
+    const L = G.level;
+    const [nid, key, lv, x10, z10, hp, mh, fl] = e;
+    if (!MOBS[key] || this.mob(nid)) return null;
+    const x = x10 / 10, z = z10 / 10;
+    const sp = { key, lv, x, z, timer: -1, mob: null, respawn: false, guardian: !!(fl & 1), boss: !!(fl & 2) };
+    const m = spawnMob(L, key, clamp(lv | 0, 1, 99), x, z, sp, nid);
+    sp.mob = m;
+    m.puppet = true; m.maxHp = Math.max(1, mh); m.hp = clamp(hp, 0, m.maxHp); m.nx = x; m.nz = z; m.nr = m.rot;
+    if (fx) FX.burst(x, 0.5, z, 0xd8d0c0, 12, 4);
+    return m;
+  },
+  applyFull(d) {
+    const L = G.level;
+    if (!this.guest || d.sid !== this.inst.sid || !Array.isArray(d.m)) return;
+    this.hpF = clamp(+d.f || 1, 1, 9); // sahibin can çarpanı (sahiplenince yeniden ölçek için)
+    const alive = new Set();
+    for (const e of d.m) {
+      if (!Array.isArray(e) || e.length < 8) continue;
+      alive.add(e[0]);
+      const m = this.mob(e[0]);
+      if (!m) this.makePuppet(e, false);
+      else if (!m.dead) { m.maxHp = Math.max(1, e[6]); m.hp = clamp(e[5], 0, m.maxHp); }
+    }
+    for (const m of L.mobs) if (m.puppet && !m.dead && !alive.has(m.nid)) { m.dead = true; m.deadT = 9; } // host'ta artık yok
+    if (d.dp && L.downPortal && !L.downPortal.active) { L.downPortal.active = true; L.downPortal.portal.active = true; }
+    const exits = L.interact.filter((it) => it.kind === 'exit');
+    if (Array.isArray(d.ex)) for (const [x10, z10] of d.ex) {
+      const x = x10 / 10, z = z10 / 10;
+      if (!exits.some((it) => dist(it.x, it.z, x, z) < 1)) Combat.openExit(x, z);
+    }
+    this.synced = true;
+    UI.dirty = true;
+  },
+  applySnap(g) {
+    if (!this.guest || !g || g.sid !== this.inst.sid) return;
+    if (g.f) this.hpF = clamp(+g.f || 1, 1, 9);
+    const m = Array.isArray(g.m) ? g.m : [];
+    let unknown = false;
+    for (let i = 0; i + 5 < m.length; i += 6) {
+      const mob = this.mob(m[i]);
+      if (!mob) { unknown = true; continue; }
+      if (mob.dead) continue;
+      mob.nx = m[i + 1] / 10; mob.nz = m[i + 2] / 10; mob.nr = m[i + 3] / 100; mob.nfl = m[i + 5] | 0;
+      const hp = clamp(m[i + 4], 0, mob.maxHp);
+      mob.hp = mob.hitLocal && G.time - mob.hitLocal < 0.6 ? Math.min(mob.hp, hp) : hp;
+    }
+    if (Array.isArray(g.e)) for (const e of g.e) { try { this.applyEvent(e); } catch (err) { /* bozuk olay */ } }
+    if (unknown && this.joinT > 2) { this.joinT = 0; this.reqJoin(); }
+  },
+  applyEvent(e) {
+    if (!Array.isArray(e)) return;
+    const k = e[0], pl = G.player;
+    if (k === 'n') { this.makePuppet(e.slice(1), true); return; }
+    const m = this.mob(e[1] | 0);
+    if (k === 'k') { if (m && !m.dead) Combat.killMob(m); return; }
+    if (k === 'd') { // [d, nid, kime, ham, zehir, yavaşlatma]
+      if (e[2] === Net.id && pl && !pl.dead) Combat.damagePlayer(clamp(+e[3] || 0, 0, 1e7), m, { poison: e[4] ? 0.12 : 0, slow: clamp(+e[5] || 0, 0, 0.9) });
+      return;
+    }
+    if (k === 't') { // [t, nid, x, z, R, gecikme, renk, ham, yavaşlatma, grup]
+      const x = e[2] / 10, z = e[3] / 10, R = clamp(+e[4] || 1, 0.5, 12), col = e[6] | 0, raw = clamp(+e[7] || 0, 0, 1e7), slow = clamp(+e[8] || 0, 0, 0.9), grp = e[9];
+      const L = G.level;
+      telegraph(x, z, R, clamp(+e[5] || 1, 0.2, 4), col, () => {
+        if (G.level !== L) return;
+        FX.ring(x, z, R, col, 0.4); FX.burst(x, 0.4, z, 0xe8e0c8, 18, 6);
+        SFX.play('boom');
+        const me = G.player;
+        if (!me || me.dead || dist(me.x, me.z, x, z) >= R + 0.3) return;
+        if (grp) { this.grpHit = this.grpHit || {}; if (this.grpHit[grp]) return; this.grpHit[grp] = 1; }
+        Combat.damagePlayer(raw, m && !m.dead ? m : null, { slow });
+      });
+      return;
+    }
+    if (!m || m.dead) return;
+    if (k === 'a') { // saldırı: animasyon; menzilliyse benim tarafımda da mermi (beni vurursa hasar bende)
+      m.atkAnim = 0.35;
+      m.playAct((m.bkN = (m.bkN || 0) + 1) % 2 ? 'atk' : 'atk2', 0.6);
+      if (m.t.ranged) {
+        const tx = e[2] / 10, tz = e[3] / 10;
+        later(0.3, () => { if (!m.dead) Proj.mobShot(m, tx, tz, { dmg: m.atk, poison: m.t.poison, color: m.t.proj }); });
+      }
+    } else if (k === 'v') { // [v, nid, açı, adet, aralık, ham, renk, boyut, yavaşlatma]
+      const base = +e[2] || 0, n = clamp(e[3] | 0, 1, 9), stp = +e[4] || 0, h = (n - 1) / 2;
+      for (let q = 0; q < n; q++) {
+        const a = base + (q - h) * stp;
+        Proj.mobShot(m, m.x + Math.sin(a) * 10, m.z + Math.cos(a) * 10, { dmg: clamp(+e[5] || 0, 0, 1e7), color: e[6] | 0, size: +e[7] || 0.2, slow: clamp(+e[8] || 0, 0, 0.9) });
+      }
+    } else if (k === 'c') { m.playAct(String(e[2]), clamp(+e[3] || 1, 0.1, 3)); }
+    else if (k === 'x') {
+      const w = e[2];
+      if (w === 'enrage') { m.enraged = true; m.atk *= 1.2; banner(m.name, 'ÖFKELENDİ!', 2); SFX.play('boom'); FX.pillar(m.x, m.z, m.t.proj || 0xff4a2a, 8, 1.2, 2.2); }
+      else if (w === 'summon') { banner(m.name, 'yardım çağırıyor!', 1.6); SFX.play('boom'); }
+      else if (w === 'charge') banner('', m.name + ' saldırıya geçti!', 1);
+      else if (w === 'rain') banner('', m.name + ': kemik yağmuru!', 1);
+      else if (w === 'metin') { banner('KADİM METİN', 'Taşı kır, dalgalara dayan!', 2.5); SFX.play('boom'); }
+      else if (w === 'wave') { SFX.play('portal'); feed('Metin yeni bir dalga çağırdı!', '#ff7ab0'); }
+    }
+  },
+  // misafir: host gitti mi? → kalanlardan kimliği en küçük olan host olur
+  checkHost(rdt) {
+    const host = this.inst.host, q = Net.peers[host];
+    const here = q && this.sameInst(q);
+    if (here && q.st.ii[3] === host) { this.lostT = 0; return; } // sahip yerinde
+    // başka biri kendini sahip ilan ettiyse ona geç
+    for (const id of this.mates()) {
+      if (Net.peers[id].st.ii[3] === id) { this.inst.host = id; this.synced = false; this.joinT = 0; this.lostT = 0; this.reqJoin(); return; }
+    }
+    this.lostT += rdt;
+    // durumu hiç almadıysam (yeni katıldım) sahiplenmem: canavarlar elimde yok; sahibin gelmesini beklerim
+    if (!this.synced) { if (this.lostT > 15) this.promote(); return; }
+    // eski sahip geri döndü ve beni sahip sayıyor → hemen sahiplen
+    if (here && q.st.ii[3] === Net.id) { this.promote(); return; }
+    if (this.lostT < 2.5) return;
+    const cands = [Net.id].concat(this.mates().filter((id) => id !== host)).sort();
+    if (cands[0] === Net.id) this.promote();
+    else { this.inst.host = cands[0]; this.synced = false; this.lostT = 0; this.joinT = 0; }
+  },
+  promote() {
+    const L = G.level;
+    this.inst.host = Net.id; this.lostT = 0; this.members = []; this.synced = true;
+    for (const m of L.mobs) {
+      if (!m.puppet) continue;
+      m.puppet = false; m.hpF = this.hpF; m.hx = m.x; m.hz = m.z; m.state = 'idle';
+      if (m.nx != null) { m.x = m.nx; m.z = m.nz; }
+    }
+    this.rescale(); // tek kaldıysam canlar normale döner (yeni gelen olursa tick yeniden ölçekler)
+    L.nidSeq = Math.max(L.nidSeq || 0, ...L.mobs.map((m) => m.nid || 0)) + 1000; // eski host'un numaralarıyla çakışmasın
+    feed('Zindanın yönetimi sende (diğer oyuncu ayrıldı)', '#9fe0ff');
+    UI.dirty = true;
+  },
+
+  // ---- her kare (Net.tick, panel açıkken de) ----
+  tick(rdt) {
+    this.offerTick(rdt);
+    if (!this.inst || !G.level || G.level.type !== 'dungeon') return;
+    if (this.inst.host === 'solo' && Net.id) this.inst.host = Net.id;
+    if (Net.state !== 'on') return;
+    this.joinT += rdt;
+    if (this.guest) {
+      if (!this.synced && this.joinT > 2) { this.joinT = 0; this.reqJoin(); }
+      this.checkHost(rdt);
+      return;
+    }
+    // host: misafirler + onların hedef vekilleri ve akış alanları
+    const mem = this.mates().filter((id) => Net.peers[id].st.ii[3] === Net.id);
+    const changed = mem.length !== this.members.length || mem.some((id, i) => id !== this.members[i]);
+    this.members = mem;
+    const L = G.level;
+    for (const id in this.proxies) if (!mem.includes(id)) delete this.proxies[id];
+    mem.forEach((id) => {
+      const q = Net.peers[id];
+      const g = this.proxies[id] || (this.proxies[id] = { id, remote: true, r: 0.38, x: 0, z: 0, dead: false, flowKey: 'gfl_' + id, tile: -1 });
+      g.x = q.ent ? q.ent.x : q.st.x; g.z = q.ent ? q.ent.z : q.st.z; g.dead = !!q.st.dd;
+      const ti = Math.floor(g.z / T) * L.W + Math.floor(g.x / T);
+      if (ti !== g.tile) { g.tile = ti; bfsField(L, g.x, g.z, g.flowKey); }
+    });
+    if (changed) { this.rescale(); if (mem.length) this.sendFull('*'); }
+  },
+  onMsg(ev, d) {
+    if (ev === 'gj') { if (this.hosting && d.to === Net.id && d.sid === this.inst.sid) this.sendFull(d.i); }
+    else if (ev === 'gf') { if ((d.to === Net.id || d.to === '*') && this.guest && d.i === this.inst.host) this.applyFull(d); }
+  },
+  onState(id, d) {
+    if (!this.inst) return;
+    if (d.g && this.guest && id === this.inst.host) this.applySnap(d.g);
+    if (d.h && this.hosting && d.h.sid === this.inst.sid && this.members.includes(id) && Array.isArray(d.h.h)) this.applyHits(d.h.h);
+  },
+
+  // ---- davet kutusu: odadaki biri yeni bir zindan katına girdi ----
+  offerTick(rdt) {
+    if (this.offer) { this.offerT -= rdt; if (this.offerT <= 0 || !this.offerValid(this.offer)) this.hideOffer(); }
+    if (Net.state !== 'on' || G.state !== 'play') return;
+    for (const id in Net.peers) {
+      const s = Net.peers[id].st;
+      if (!s || !s.ii || s.ii[3] !== id || this.seen[s.ii[0]]) continue;
+      this.seen[s.ii[0]] = 1;
+      if (this.inst && this.inst.sid === s.ii[0]) continue;
+      if (Duel.armed || !G.player || G.player.dead) continue;
+      this.showOffer(id, s);
+    }
+  },
+  offerValid(o) { const q = Net.peers[o.id]; return !!(q && q.st && q.st.ii && q.st.ii[0] === o.sid && !(this.inst && this.inst.sid === o.sid)); },
+  showOffer(id, s) {
+    const b = $('#coopq'); if (!b) return;
+    this.offer = { id, sid: s.ii[0] }; this.offerT = 25;
+    $('.dq-t', b).innerHTML = '<b>' + esc(Net.peers[id].name || 'Oyuncu') + '</b> ' + esc(Net.levelName(s.l)) + (s.ii[2] ? ' · ' + DIFFS[s.ii[2]].name : '') + ' zindanına girdi';
+    b.hidden = false;
+    SFX.play('portal');
+  },
+  hideOffer() { this.offer = null; const b = $('#coopq'); if (b) b.hidden = true; },
+  acceptOffer() { const o = this.offer; this.hideOffer(); if (o) this.joinPeer(o.id); },
+  // arkadaşın bulunduğu zindan katına katıl
+  canJoin(id) {
+    const q = Net.peers[id], s = q && q.st;
+    return !!(s && s.ii && /^d\d+-\d+$/.test(s.l) && !(this.inst && this.inst.sid === s.ii[0]) && G.player && !G.player.dead && !Duel.armed && !G.transitioning);
+  },
+  joinPeer(id) {
+    if (!this.canJoin(id)) { toast('Şu an katılamazsın'); SFX.play('deny'); return false; }
+    const s = Net.peers[id].st, m = /^d(\d+)-(\d+)$/.exec(s.l);
+    const dIdx = +m[1], floor = +m[2];
+    if (!DUNGEONS[dIdx]) return false;
+    if (UI.panel) UI.close();
+    return goDungeon(dIdx, floor, s.ii[2], { sid: s.ii[0], seed: s.ii[1], diff: s.ii[2], host: s.ii[3] });
+  },
+};
 
 // ---------- Low-poly modeller (primitiflerden) ----------
 const MAT = {};
@@ -11039,7 +11669,14 @@ function genArena() {
 }
 
 // ---------- Zindan inşası ----------
-function buildDungeon(dIdx, floorIdx) {
+// seed: kat düzeni (odalar, koridorlar, engelleyici süsler) tohumdan üretilir → ortak zindanda iki telefonda aynı duvarlar.
+// Yalnız düzen bölümü tohumlu (grafik ayarına göre değişebilen süsler ve canavar yerleri değil; misafir canavarları host'tan alır).
+function buildDungeon(dIdx, floorIdx, seed) {
+  const R0 = Math.random;
+  if (seed != null) Math.random = mulberry32(seed >>> 0);
+  try { return buildDungeonInner(dIdx, floorIdx, () => { Math.random = R0; }); } finally { Math.random = R0; }
+}
+function buildDungeonInner(dIdx, floorIdx, unseed) {
   const dg = DUNGEONS[dIdx];
   const th = THEMES[dg.theme];
   const L = newLevel('dungeon');
@@ -11104,6 +11741,7 @@ function buildDungeon(dIdx, floorIdx) {
     }
   }
 
+  unseed(); // düzen bitti: gerisi (görsel süsler, canavar yerleri) normal rastgele
   // --- zemin ve duvarlar (taş örgü kiti) ---
   const hArr = new Float32Array(W * H);
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
@@ -11872,7 +12510,7 @@ const FX = {
     this.mesh.instanceMatrix.needsUpdate = true;
     for (let i = this.list.length - 1; i >= 0; i--) {
       const o = this.list[i];
-      if (!(o.game && (G.paused || G.rotPause))) o.t += dt; // hasar veren yer uyarıları panel/geçiş sırasında donar
+      if (!(o.game && Coop.frozen())) o.t += dt; // hasar veren yer uyarıları panel/geçiş sırasında donar
       const k = Math.min(1, o.t / o.dur);
       o.fn(o, k);
       if (k >= 1) {
@@ -12093,7 +12731,7 @@ class Mob {
     const L = this.L;
     let gx = tx, gz = tz;
     if (useFlow && !losClear(L, this.x, this.z, tx, tz, this.r)) {
-      const s = flowStep(L, this.x, this.z);
+      const s = flowStep(L, this.x, this.z, this.tgt && this.tgt.remote ? this.tgt.flowKey : undefined);
       if (s) { gx = s.x; gz = s.z; }
     }
     const dx = gx - this.x, dz = gz - this.z, d = Math.hypot(dx, dz);
@@ -12105,11 +12743,11 @@ class Mob {
     return moved;
   }
   update(dt) {
-    const pl = G.player;
     this.anim += dt;
     if (this.flashT > 0) { this.flashT -= dt; if (this.flashT <= 0) for (const m of this.meshes) m.material = m.userData.m0; }
     this.hitT += dt; this.lastHit += dt;
     if (this.dead) { this.updateDeath(dt); return; }
+    if (this.puppet) { this.updatePuppet(dt); return; } // ortak zindan misafiri: host'un canavarının kopyası
     // zehir vb.
     for (let i = this.dots.length - 1; i >= 0; i--) {
       const d = this.dots[i];
@@ -12119,6 +12757,8 @@ class Mob {
     }
     this.moving = false;
     if (this.static) { this.updateMetin(dt); this.animate(dt); return; }
+    const pl = Coop.target(this); // ortak zindan (host): en yakın oyuncu; tek başına G.player
+    this.tgt = pl;
     const d = pl && !pl.dead ? dist(this.x, this.z, pl.x, pl.z) : 999;
     if (this.stun > 0) { this.stun -= dt; this.animate(dt); return; }
     if (this.pending) {
@@ -12134,7 +12774,7 @@ class Mob {
       if (Math.random() < 0.6) FX.spark(this.x, 0.3, this.z, 0xd8d0c0, 0.4, 0.14);
       if (c.t <= 0 || d < 1.6) {
         this.charge = null;
-        if (d < 2.4) Combat.damagePlayer(this.atk * 1.5, this);
+        if (d < 2.4) Coop.hurt(pl, this.atk * 1.5, this);
       }
       this.animate(dt); return;
     }
@@ -12181,29 +12821,31 @@ class Mob {
     this.animate(dt);
   }
   // Kemik Kral'ın kemik animasyonu (başka modelde etkisiz)
-  playAct(k, d) { if (this.M.bk) this.bkAct = { k, t: 0, d }; }
+  playAct(k, d) { if (this.M.bk) { this.bkAct = { k, t: 0, d }; if (!this.puppet) Coop.ev('c', this.nid, k, d); } }
   doAttack() {
-    const pl = G.player;
+    const pl = this.tgt || G.player;
     this.atkAnim = 0.35;
-    this.playAct((this.bkN = (this.bkN || 0) + 1) % 2 ? 'atk' : 'atk2', 0.6);
+    if (this.M.bk) this.bkAct = { k: (this.bkN = (this.bkN || 0) + 1) % 2 ? 'atk' : 'atk2', t: 0, d: 0.6 };
+    if (pl) Coop.ev('a', this.nid, Math.round(pl.x * 10), Math.round(pl.z * 10)); // misafirde saldırı animasyonu (+ menzilliyse mermi)
     if (this.t.ranged) {
       this.pending = { t: 0.3, fn: () => { if (!this.dead && pl && !pl.dead) Proj.mobShot(this, pl.x, pl.z, { dmg: this.atk, poison: this.t.poison, color: this.t.proj }); } };
     } else {
       this.pending = { t: 0.28, fn: () => {
         if (this.dead || !pl || pl.dead) return;
-        if (dist(this.x, this.z, pl.x, pl.z) <= this.range + 0.7) Combat.damagePlayer(this.atk, this, { poison: this.t.poison ? 0.12 : 0 });
+        if (dist(this.x, this.z, pl.x, pl.z) <= this.range + 0.7) Coop.hurt(pl, this.atk, this, { poison: this.t.poison ? 0.12 : 0 });
       } };
     }
   }
   trySkill(dt, d) {
     const sk = this.t.skills;
     if (!sk) return false;
-    const pl = G.player;
+    const pl = this.tgt || G.player, me = G.player; // me: bu telefondaki oyuncu (yer uyarıları misafirde kendi telefonunda çözülür)
+    const tg = (x, z, R, dl, col, raw, slow, grp) => Coop.ev('t', this.nid, Math.round(x * 10), Math.round(z * 10), R, dl, col, Math.round(raw), slow || 0, grp || 0);
     // öfke (Kemik Kral): canı yarıya inince bir kez — daha sert, daha hızlı, yetenekleri sıklaşır
     if (this.t.enrage && !this.enraged && this.hp / this.maxHp < 0.5) {
       this.enraged = true; this.atk *= 1.2; this.atkCd *= 0.75; this.spd *= 1.15;
       this.casting = 1.0; this.playAct('enrage', 1.0);
-      banner(this.name, 'ÖFKELENDİ!', 2); SFX.play('boom'); camPunch(1.6);
+      banner(this.name, 'ÖFKELENDİ!', 2); SFX.play('boom'); camPunch(1.6); Coop.ev('x', this.nid, 'enrage');
       FX.pillar(this.x, this.z, this.t.proj || 0xff4a2a, 8, 1.2, 2.2); FX.ring(this.x, this.z, 7, this.t.proj || 0xff7a4a, 0.8);
       FX.burst(this.x, 2, this.z, this.t.proj || 0xff7a4a, 40, 8);
       return true;
@@ -12212,7 +12854,7 @@ class Mob {
     if (sk.includes('summon') && this.summons < 2 && this.hp / this.maxHp < (this.summons === 0 ? 0.7 : 0.35)) {
       this.summons++;
       this.casting = 0.8; this.playAct('summon', 1.0);
-      banner(this.name, 'yardım çağırıyor!', 1.6);
+      banner(this.name, 'yardım çağırıyor!', 1.6); Coop.ev('x', this.nid, 'summon');
       SFX.play('boom');
       for (let k = 0; k < 3; k++) {
         const a = rand(0, TAU);
@@ -12230,7 +12872,7 @@ class Mob {
     const big = this.rank === 'boss';
     switch (s) {
       case 'charge':
-        if (d > 3 && d < 11) { this.casting = 0.35; this.pending = { t: 0.35, fn: () => { const dx = pl.x - this.x, dz = pl.z - this.z, l = Math.hypot(dx, dz) || 1; this.charge = { t: 0.55, dx: dx / l, dz: dz / l }; } }; banner('', this.name + ' saldırıya geçti!', 1); return true; }
+        if (d > 3 && d < 11) { this.casting = 0.35; this.pending = { t: 0.35, fn: () => { const dx = pl.x - this.x, dz = pl.z - this.z, l = Math.hypot(dx, dz) || 1; this.charge = { t: 0.55, dx: dx / l, dz: dz / l }; } }; banner('', this.name + ' saldırıya geçti!', 1); Coop.ev('x', this.nid, 'charge'); return true; }
         return false;
       case 'slam': {
         if (d > 5) return false;
@@ -12238,11 +12880,12 @@ class Mob {
         this.casting = 1.05;
         this.atkAnim = 1.0; this.playAct('slam', 1.25);
         const x = this.x, z = this.z;
+        tg(x, z, R, 1.0, 0xff3020, this.atk * 1.8);
         telegraph(x, z, R, 1.0, 0xff3020, () => {
           if (this.dead) return;
           FX.ring(x, z, R, 0xffb060, 0.4); FX.burst(x, 0.3, z, 0xc8b8a0, 24, 6);
           SFX.play('boom');
-          if (pl && !pl.dead && dist(pl.x, pl.z, x, z) < R + 0.3) Combat.damagePlayer(this.atk * 1.8, this);
+          if (me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) Combat.damagePlayer(this.atk * 1.8, this);
         });
         return true;
       }
@@ -12251,11 +12894,12 @@ class Mob {
         const R = big ? 6.2 : 4.5;
         this.casting = 1.3;
         const x = this.x, z = this.z;
+        tg(x, z, R, 1.25, 0xff7a20, this.atk * 1.5);
         telegraph(x, z, R, 1.25, 0xff7a20, () => {
           if (this.dead) return;
           FX.ring(x, z, R, 0xff9a40, 0.5); FX.burst(x, 0.5, z, 0xff7a20, 30, 8);
           SFX.play('boom');
-          if (pl && !pl.dead && dist(pl.x, pl.z, x, z) < R + 0.3) Combat.damagePlayer(this.atk * 1.5, this);
+          if (me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) Combat.damagePlayer(this.atk * 1.5, this);
         });
         return true;
       }
@@ -12265,6 +12909,7 @@ class Mob {
         this.pending = { t: 0.5, fn: () => {
           if (this.dead || !pl) return;
           const base = Math.atan2(pl.x - this.x, pl.z - this.z);
+          Coop.ev('v', this.nid, +base.toFixed(3), 5, 0.22, Math.round(this.atk * 0.9), this.t.proj || 0xffe0a0, 0.2, 0);
           for (let k = -2; k <= 2; k++) {
             const a = base + k * 0.22;
             Proj.mobShot(this, this.x + Math.sin(a) * 10, this.z + Math.cos(a) * 10, { dmg: this.atk * 0.9, color: this.t.proj || 0xffe0a0 });
@@ -12279,12 +12924,15 @@ class Mob {
         const n = big ? (this.enraged ? 8 : 6) : 3, R = 1.9, hit = { v: false }, col = this.t.proj || 0x9affb0;
         const pts = [[pl.x, pl.z]];
         for (let k = 0, tries = 0; pts.length < n && tries < 40; tries++) { const a = rand(0, TAU), rr = rand(2, 5); const x = pl.x + Math.cos(a) * rr, z = pl.z + Math.sin(a) * rr; if (canStand(this.L, x, z, 0.3)) pts.push([x, z]); }
+        const grp = this.nid * 1000 + ((this.rainN = (this.rainN || 0) + 1) % 1000);
+        pts.forEach(([x, z], k) => tg(x, z, R, 1.15 + k * 0.12, col, this.atk * 1.4, 0, grp));
+        Coop.ev('x', this.nid, 'rain');
         pts.forEach(([x, z], k) => telegraph(x, z, R, 1.15 + k * 0.12, col, () => {
           if (this.dead) return;
           for (let q = 0; q < 4; q++) FX.pillar(x + rand(-0.6, 0.6), z + rand(-0.6, 0.6), 0xe8e0c8, rand(1.6, 2.6), 0.45, 0.22);
           FX.ring(x, z, R, col, 0.35); FX.burst(x, 0.4, z, 0xe8e0c8, 14, 6);
           if (k === 0) SFX.play('boom');
-          if (!hit.v && pl && !pl.dead && dist(pl.x, pl.z, x, z) < R + 0.3) { hit.v = true; Combat.damagePlayer(this.atk * 1.4, this); }
+          if (!hit.v && me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) { hit.v = true; Combat.damagePlayer(this.atk * 1.4, this); }
         }));
         banner('', this.name + ': kemik yağmuru!', 1);
         return true;
@@ -12292,19 +12940,24 @@ class Mob {
       case 'web': {
         if (d > 9) return false;
         this.casting = 0.5;
-        this.pending = { t: 0.4, fn: () => { if (!this.dead && pl) Proj.mobShot(this, pl.x, pl.z, { dmg: this.atk * 0.6, slow: 0.45, color: 0xf0f0ff, size: 0.35 }); } };
+        this.pending = { t: 0.4, fn: () => {
+          if (this.dead || !pl) return;
+          Coop.ev('v', this.nid, +Math.atan2(pl.x - this.x, pl.z - this.z).toFixed(3), 1, 0, Math.round(this.atk * 0.6), 0xf0f0ff, 0.35, 0.45);
+          Proj.mobShot(this, pl.x, pl.z, { dmg: this.atk * 0.6, slow: 0.45, color: 0xf0f0ff, size: 0.35 });
+        } };
         return true;
       }
       case 'frost': {
         if (d > 10) return false;
         this.casting = 1.1;
         const x = pl.x, z = pl.z, R = big ? 3.4 : 2.6;
+        tg(x, z, R, 1.1, 0x4ac0ff, this.atk * 1.4, 0.4);
         telegraph(x, z, R, 1.1, 0x4ac0ff, () => {
           if (this.dead) return;
           FX.ring(x, z, R, 0x9fe8ff, 0.4); FX.burst(x, 0.5, z, 0xcff0ff, 26, 6);
           for (let k = 0; k < 5; k++) FX.pillar(x + rand(-R, R) * 0.6, z + rand(-R, R) * 0.6, 0x9fe8ff, 1.6, 0.6, 0.4);
           SFX.play('zap');
-          if (pl && !pl.dead && dist(pl.x, pl.z, x, z) < R + 0.3) Combat.damagePlayer(this.atk * 1.4, this, { slow: 0.4 });
+          if (me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) Combat.damagePlayer(this.atk * 1.4, this, { slow: 0.4 });
         });
         return true;
       }
@@ -12316,10 +12969,9 @@ class Mob {
     M.orb.rotation.y += dt * 0.9;
     M.rune.emissiveIntensity = 1 + Math.sin(this.anim * 3) * 0.4 + (this.hitT < 0.2 ? 1.5 : 0);
     if (Math.random() < dt * 4) FX.spark(this.x + rand(-1, 1), rand(0.5, 4), this.z + rand(-1, 1), this.t.eye, 1, 0.12);
-    const pl = G.player;
-    if (!this.engaged && pl && dist(this.x, this.z, pl.x, pl.z) < 9) {
+    if (!this.engaged && Coop.anyNear(this.x, this.z, 9)) {
       this.engaged = true;
-      if (this.t.big) { banner('KADİM METİN', 'Taşı kır, dalgalara dayan!', 2.5); SFX.play('boom'); }
+      if (this.t.big) { banner('KADİM METİN', 'Taşı kır, dalgalara dayan!', 2.5); SFX.play('boom'); Coop.ev('x', this.nid, 'metin'); }
     }
     if (this.t.big && this.engaged) {
       // can azaldıkça dalgalar sıklaşır ve kalabalıklaşır
@@ -12369,7 +13021,24 @@ class Mob {
       k++;
     }
     SFX.play('portal');
-    if (this.t.big) feed('Metin yeni bir dalga çağırdı!', '#ff7ab0');
+    if (this.t.big) { feed('Metin yeni bir dalga çağırdı!', '#ff7ab0'); Coop.ev('x', this.nid, 'wave'); }
+  }
+  // ortak zindan misafiri: konum/dönüş host'un anlık görüntüsüne yumuşakça gider; yapay zekâ yok
+  updatePuppet(dt) {
+    if (this.static) {
+      this.M.orb.rotation.y += dt * 0.9;
+      this.M.rune.emissiveIntensity = 1 + Math.sin(this.anim * 3) * 0.4 + (this.hitT < 0.2 ? 1.5 : 0);
+    } else if (this.nx != null) {
+      const dx = this.nx - this.x, dz = this.nz - this.z, d = Math.hypot(dx, dz);
+      if (d > 5) { this.x = this.nx; this.z = this.nz; }
+      else if (d > 0.01) { const k = Math.min(1, dt * 10); this.x += dx * k; this.z += dz * k; }
+      let dr = (this.nr || 0) - this.rot; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); this.rot += dr * Math.min(1, dt * 12);
+      const fl = this.nfl | 0;
+      this.moving = !!(fl & 1) || d > 0.12;
+      this.casting = fl & 2 ? 0.1 : 0;
+      this.charge = fl & 4 ? this.charge || {} : null;
+    }
+    this.animate(dt);
   }
   animate(dt) {
     const M = this.M, t = this.anim;
@@ -12432,15 +13101,20 @@ class Mob {
     }
     if (this.deadT > (this.M.bk ? 2.6 : 1.4) && !this.removed) {
       this.removed = true;
+      if (this.L.byNid) this.L.byNid.delete(this.nid);
       this.L.group.remove(root);
       this.L.group.remove(this.bar);
       if (this.label) { this.label.el.remove(); const li = this.L.labels.indexOf(this.label); if (li >= 0) this.L.labels.splice(li, 1); this.label = null; }
     }
   }
 }
-function spawnMob(L, key, lv, x, z, sp) {
+// nid: ortak zindanda canavar kimliği (host verir; misafir kuklası host'un numarasıyla kurulur)
+function spawnMob(L, key, lv, x, z, sp, nid) {
   const m = new Mob(L, key, lv, x, z, sp);
   L.mobs.push(m);
+  m.nid = nid || (L.nidSeq = (L.nidSeq || 0) + 1);
+  (L.byNid || (L.byNid = new Map())).set(m.nid, m);
+  if (!nid) Coop.onSpawn(m);
   return m;
 }
 
@@ -12595,7 +13269,7 @@ class PlayerEnt {
     // GLB savaşçı: kademeye göre GLB kılıç (Hurda/Lonca/Magma); yüklenmediyse prosedürel kılıç
     this.weapon = (this.H.gearSlots && buildGearSword(weaponLookPart(w), glow)) || buildWeapon(CLASS_WEAPON[P.cls], new THREE.Color(TIER_TINT[w.tier]).getHex(), glowE);
     // Zından dışında (köy) silah sırtta kınlı taşınır; zındanda ele alınır.
-    const sheathed = !!(this.H.back && (!G.level || G.level.type !== 'dungeon'));
+    const sheathed = !!(this.H.back && (!G.level || G.level.type !== 'dungeon') && !Duel.armed); // düelloda silah ele alınır
     if (P.cls === 'ninja') {
       if (this.weapon2 && this.weaponParent2) this.weaponParent2.remove(this.weapon2);
       this.weapon2 = buildWeapon('dagger', new THREE.Color(TIER_TINT[w.tier]).getHex(), glowE);
@@ -12686,10 +13360,11 @@ class PlayerEnt {
       if (this.poisonTick <= 0) { this.poisonTick = 1; Combat.damagePlayer(this.poisonDps, null, { raw: true, poisonTick: true }); if (this.dead) return; }
     }
     // yenilenme
-    const inTown = L.type === 'village';
+    const dueling = Duel.armed; // düelloda köy yenilenmesi kapalı (can düello boyunca düşer)
+    const inTown = L.type === 'village' && !dueling;
     const ooc = this.combatT > 5;
-    const hpR = inTown ? 0.06 : (ooc ? 0.012 : 0.003) + D.regenPct;
-    const mpR = inTown ? 0.06 : ooc ? 0.02 : 0.008;
+    const hpR = dueling ? 0 : inTown ? 0.06 : (ooc ? 0.012 : 0.003) + D.regenPct;
+    const mpR = dueling ? 0.008 : inTown ? 0.06 : ooc ? 0.02 : 0.008;
     P.hp = Math.min(D.maxHp, P.hp + (D.maxHp * hpR + D.regen) * dt);
     P.mp = Math.min(D.maxMp, P.mp + D.maxMp * mpR * dt);
     // buff süreleri
@@ -12738,7 +13413,7 @@ class PlayerEnt {
       if (Input.atkTap) this.engage = true;
       if (this.engage && this.engagedOn && this.engagedOn.dead && !Input.atkHeld && !Input.atkTap) { this.engage = false; this.engagedOn = null; }
       const wantAtk = Input.atkHeld || Input.atkTap || this.engage || (G.auto && !this.autoMove); // dokunarak yürürken oto-saldırı araya girmesin
-      if (L.type === 'dungeon' && (wantAtk || this.queued)) {
+      if ((L.type === 'dungeon' || Duel.phase === 'fight') && (wantAtk || this.queued)) {
         if (!this.target || this.target.dead) this.target = Combat.findTarget(G.auto ? 11 : 10);
         if (!this.target) this.engage = false;
       }
@@ -12967,6 +13642,7 @@ const Combat = {
   hitMob(m, mult, o) {
     o = o || {};
     if (m.dead) return;
+    if (m.duelFoe) return Duel.hitFoe(m, mult, o); // düello: hasarı rakibin telefonu hesaplar
     const r = this.calc(mult, m, o.critAdd);
     if (o.noCrit && r.crit) { r.crit = false; r.dmg = Math.round(r.dmg / 1.8); }
     m.hp -= r.dmg;
@@ -12974,7 +13650,8 @@ const Combat = {
     if (!o.dot) { m.flash(); FX.burst(m.x, 1, m.z, r.crit ? 0xffd84a : 0xfff0d0, r.crit ? 10 : 5, 4, 0.1, 0.35); }
     FX.num(m.x, (m.barH || 2) * 0.8, m.z, r.dmg, r.crit ? 'crit' : o.color || '');
     if (!o.dot) SFX.play(r.crit ? 'crit' : 'hit');
-    if (m.static) m.onMetinDamage();
+    if (m.puppet) Coop.queueHit(m, r.dmg, r.crit); // ortak zindan misafiri: vuruş host'a gider (dalga/öfke host'ta)
+    else if (m.static) m.onMetinDamage();
     else if (m.state === 'idle' || m.state === 'return') m.aggro(true);
     G.player.combatT = 0;
     if (m.hp <= 0) this.killMob(m);
@@ -12982,6 +13659,7 @@ const Combat = {
   },
   killMob(m) {
     m.dead = true; m.hp = 0;
+    Coop.onKill(m); // ortak zindan (host): misafirler de ödüllerini alsın
     const L = G.level;
     if (G.player.target === m) G.player.target = null;
     P.kills++;
@@ -13143,7 +13821,7 @@ const Combat = {
     const sk = SKILLS[id];
     const lvl = P.skills[id] || 0;
     if (!lvl) { toast(sk.name + ': Usta\'dan öğren (Sv ' + sk.unlock + ')'); SFX.play('deny'); return; }
-    if (G.level.type === 'village' && sk.type !== 'buff' && sk.type !== 'heal') { toast('Köyde saldırı yeteneği kullanılamaz'); return; }
+    if (G.level.type === 'village' && sk.type !== 'buff' && sk.type !== 'heal' && Duel.phase !== 'fight') { toast('Köyde saldırı yeteneği kullanılamaz'); return; }
     if ((pl.cds[id] || 0) > 0) return;
     if (P.mp < sk.mp) { toast('Mana yetersiz'); SFX.play('deny'); return; }
     const pw = skillPower(lvl);
@@ -13235,7 +13913,7 @@ const Combat = {
           FX.ring(pl.x, pl.z, sk.radius, 0xffd060, 0.35);
           FX.burst(pl.x, 0.4, pl.z, 0xd8c8a0, 20, 6);
           SFX.play('boom'); camPunch();
-          for (const m of G.level.mobs) if (!m.dead && dist(pl.x, pl.z, m.x, m.z) <= sk.radius + m.r) { this.hitMob(m, sk.mult * pw); if (!m.static) m.stun = sk.stun; }
+          for (const m of G.level.mobs) if (!m.dead && dist(pl.x, pl.z, m.x, m.z) <= sk.radius + m.r) { this.hitMob(m, sk.mult * pw); if (!m.static) Coop.stun(m, sk.stun); }
         } };
         break;
       }
@@ -13264,7 +13942,7 @@ const Combat = {
           const cx = pl.x + Math.sin(pl.rot) * 0.8, cz = pl.z + Math.cos(pl.rot) * 0.8; // balta önde yere iner
           FX.quake(cx, cz, sk.radius);
           SFX.play('boom'); camPunch(2.4);
-          for (const m of G.level.mobs) if (!m.dead && dist(cx, cz, m.x, m.z) <= sk.radius + m.r) { this.hitMob(m, sk.mult * pw); if (!m.static) m.stun = sk.stun; }
+          for (const m of G.level.mobs) if (!m.dead && dist(cx, cz, m.x, m.z) <= sk.radius + m.r) { this.hitMob(m, sk.mult * pw); if (!m.static) Coop.stun(m, sk.stun); }
         } };
         break;
       }
@@ -13379,6 +14057,7 @@ const Combat = {
     const pl = G.player;
     if (!pl || pl.dead) return false;
     if (pl.potT > 0) return false;
+    if (Duel.armed) { if (!auto) toast('Düelloda iksir kullanılamaz'); return false; }
     const missing = kind === 'hp' ? D.maxHp - P.hp : D.maxMp - P.mp;
     if (missing < 1) { if (!auto) toast(kind === 'hp' ? 'Canın zaten dolu' : 'Manan zaten dolu'); return false; }
     const ids = (kind === 'hp' ? ['hp1', 'hp2', 'hp3'] : ['mp1', 'mp2', 'mp3']).filter((id) => countStack(id) > 0);
@@ -13487,6 +14166,10 @@ const UI = {
     tapBtn('#b-char', () => this.open('char'));
     tapBtn('#b-menu', () => this.open('menu'));
     tapBtn('#party', () => this.open('party'));
+    tapBtn('#duel-ok', () => Duel.accept());
+    tapBtn('#duel-no', () => Duel.decline());
+    tapBtn('#coop-ok', () => Coop.acceptOffer());
+    tapBtn('#coop-no', () => Coop.hideOffer());
     tapBtn('#b-auto', () => { G.auto = !G.auto; $('#b-auto').classList.toggle('on', G.auto); toast(G.auto ? 'Otomatik saldırı açık' : 'Otomatik saldırı kapalı'); });
     tapBtn('#pot-hp', () => Combat.drinkPotion('hp'));
     tapBtn('#pot-mp', () => Combat.drinkPotion('mp'));
@@ -13721,7 +14404,7 @@ const UI = {
         cb.classList.toggle('gold', it.kind !== 'down' || it.active);
       } else cb.hidden = true;
       const L = G.level;
-      $('#zone').innerHTML = L.type === 'village' ? 'Fener Köyü' : `${L.dg.name} · ${L.floorIdx + 1}. kat` + (L.diff ? ` · <b style="color:${DIFFS[L.diff].color}">${DIFFS[L.diff].name}</b>` : '');
+      $('#zone').innerHTML = L.type === 'village' ? 'Fener Köyü' : `${L.dg.name} · ${L.floorIdx + 1}. kat` + (L.diff ? ` · <b style="color:${DIFFS[L.diff].color}">${DIFFS[L.diff].name}</b>` : '') + (Coop.count() > 1 ? ` · <b style="color:#7ee0ff">${Coop.count()} kişi</b>` : '');
       const pt = $('#party');
       pt.hidden = !Net.room;
       if (Net.room) {
@@ -14157,7 +14840,7 @@ const UI = {
       return;
     }
     if (!Net.room) {
-      b.appendChild(el('div', 'muted', 'Oda kur ve 4 harfli kodu arkadaşına söyle; o da "Odaya katıl" ile kodu yazsın. Köyde birbirinizi görürsünüz (zindanlar şimdilik herkese ayrı). Karakterin ve eşyaların kendi telefonunda kalır.'));
+      b.appendChild(el('div', 'muted', 'Oda kur ve 4 harfli kodu arkadaşına söyle; o da "Odaya katıl" ile kodu yazsın. Köyde birbirinizi görürsünüz; biri zindana girince diğerine "Katıl" kutusu çıkar ve aynı zindanda birlikte savaşırsınız. Ganimet herkese ayrı düşer. Karakterin ve eşyaların kendi telefonunda kalır.'));
       const row = el('div', 'tabs'); row.style.marginTop = '10px';
       row.appendChild(this.btn('Oda kur', 'gold', () => { Net.join(Net.newCode()); this.render(); }));
       const inp = el('input'); inp.id = 'roomIn'; inp.maxLength = 4; inp.placeholder = 'KOD'; inp.autocapitalize = 'characters';
@@ -14175,10 +14858,18 @@ const UI = {
     for (const id in Net.peers) {
       const q = Net.peers[id], r = el('div', 'li');
       r.innerHTML = `<div class="t"><b style="color:#7ee0ff">${esc(q.name || 'Oyuncu')} · Sv ${q.lv || '?'}</b><span>${q.st ? Net.levelName(q.st.l) : 'bağlanıyor…'}</span></div>`;
+      if (q.st && /^d\d+-\d+$/.test(q.st.l) && q.st.ii) r.appendChild(this.btn(Coop.sameInst(q) ? 'Yanında' : 'Katıl', 'blue', () => Coop.joinPeer(id), !Coop.canJoin(id)));
+      else r.appendChild(this.btn('Düello', 'red', () => { if (Duel.invite(id)) toast('Davet gönderildi'); this.render(); }, !Duel.canDuel(id)));
       list.appendChild(r);
     }
     if (!Object.keys(Net.peers).length) list.appendChild(el('div', 'muted', 'Henüz kimse yok. Kodu arkadaşına söyle.'));
     b.appendChild(list);
+    // düello durumu + galibiyet/yenilgi
+    const dm = { invite: 'Düello daveti gönderildi · yanıt bekleniyor', incoming: 'Sana düello daveti geldi', count: 'Düello başlıyor…', fight: 'Düello sürüyor' };
+    const ds = el('div', 'li');
+    ds.innerHTML = `<div class="t"><b style="color:#ff9a7a">Düello</b><span>${Duel.phase === 'off' ? 'Yalnız köyde ve davetle. Karşı tarafın yanındaki "Düello" düğmesine dokun.' : dm[Duel.phase] + ' · ' + esc(Duel.nameOf(Duel.foeId))}</span><span>Sonuçların: ${P.duelW | 0} galibiyet · ${P.duelL | 0} yenilgi</span></div>`;
+    if (Duel.phase !== 'off') ds.appendChild(this.btn(Duel.phase === 'fight' ? 'Çekil' : 'İptal', 'red', () => { Duel.forfeit(); this.render(); }));
+    b.appendChild(ds);
     const ch = el('div', 'tabs'); ch.style.marginTop = '10px'; ch.style.flexWrap = 'wrap';
     NET_CHATS.forEach((t, i) => ch.appendChild(this.btn(t, '', () => { if (Net.chat(i)) toast('Gönderildi'); }, Net.state !== 'on')));
     b.appendChild(ch);
@@ -14652,6 +15343,7 @@ function setLevel(L) {
   G.timers.length = 0;
   G.level = L;
   G.player = null;
+  Coop.reset(); // ortak zindan örneği: goDungeon yenisini kurar
   if (!G.targetRing) {
     G.targetRing = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 20), basicMat(0xff4a3a, 0.8));
     G.targetRing.rotation.x = -Math.PI / 2;
@@ -14690,17 +15382,23 @@ function goVillage(fromPortal) {
   });
 }
 // diff: zorluk (0 Normal, 1 Zor, 2 Kabus) — yalnız 1. katta verilir, alt katlar aynı zorlukla devam eder
-function goDungeon(dIdx, floor, diff) {
+// join: ortak zindan örneği {sid, seed, diff, host} — verilmezse odada aynı kat + zorlukta biri varsa ona katılır
+function goDungeon(dIdx, floor, diff, join) {
   if (G.transitioning) return false;
   if (!floor) G.diff = clamp(diff | 0, 0, DIFFS.length - 1);
+  if (join) G.diff = clamp(join.diff | 0, 0, DIFFS.length - 1);
+  else join = Coop.findFor(dIdx, floor, G.diff | 0);
   SFX.play('portal');
   return transition(() => {
-    const L = buildDungeon(dIdx, floor);
+    const seed = join ? join.seed | 0 : (Math.random() * 2147483647) | 0;
+    const L = buildDungeon(dIdx, floor, seed);
     setLevel(L);
-    // başlangıç doğumları
-    for (const sp of L.spawns) { sp.mob = spawnMob(L, sp.key, sp.lv, sp.x, sp.z, sp); }
+    // başlangıç doğumları (ortak zindana katılan doğurmaz: canavarlar host'tan gelir)
+    if (!join) for (const sp of L.spawns) { sp.mob = spawnMob(L, sp.key, sp.lv, sp.x, sp.z, sp); }
     placePlayer(L.spawn.x, L.spawn.z);
     computeFlow(L, G.player.x, G.player.z);
+    Coop.enter(L, seed, join);
+    if (join) feed((Net.peers[join.host] && Net.peers[join.host].name || 'Arkadaşın') + ' ile aynı zindandasın', '#9fe0ff');
     const d = DUNGEONS[dIdx];
     banner(d.name + (L.diff ? ' · ' + DIFFS[L.diff].name : ''), `${floor + 1}. kat / ${d.floors}` + (L.lastFloor ? (d.final ? ' · Kadim Metin burada' : ' · Son odada ' + MOBS[d.boss].name) : ''), 2.2);
   });
@@ -14723,9 +15421,9 @@ function update(dt) {
     // ayrışma
     const ms = L.mobs;
     for (let i = 0; i < ms.length; i++) {
-      const a = ms[i]; if (a.dead || a.static) continue;
+      const a = ms[i]; if (a.dead || a.static || a.puppet) continue; // kuklaların yerini host belirler
       for (let j = i + 1; j < ms.length; j++) {
-        const b = ms[j]; if (b.dead) continue;
+        const b = ms[j]; if (b.dead || b.puppet) continue;
         const dx = b.x - a.x, dz = b.z - a.z, rr = a.r + b.r;
         const d2 = dx * dx + dz * dz;
         if (d2 < rr * rr && d2 > 1e-4) {
@@ -14842,7 +15540,7 @@ function frame(now) {
   G.rt = now / 1000;
   GILD_T.value = G.gildT != null ? G.gildT : (now / 1000) % 630; // ışıltı saati (630 = 7 sn dokuma döngüsünün tam katı); gildT: test için dondurma
   try {
-    if (G.state === 'play' && !G.paused && !G.rotPause && P) {
+    if (G.state === 'play' && !Coop.frozen() && P) { // ortak zindanda panel açıkken de oyun sürer
       update(dt);
       const f = G.fps;
       if (f && !f.warned && P.settings.gfx === 'lowpoly') {
@@ -14858,8 +15556,8 @@ function frame(now) {
     if (G.state === 'play') Net.tick(dt); // ortak oyun: bağlantı + diğer oyuncular (panel açıkken de)
     const L = G.level;
     if (L) for (const a of L.anims) a(now / 1000, dt);
-    if (L && L.type === 'dungeon' && G.paused) for (const m of L.mobs) m.animate(0);
-    FX.update(G.paused || G.rotPause ? dt * 0.3 : dt);
+    if (L && L.type === 'dungeon' && Coop.frozen()) for (const m of L.mobs) m.animate(0);
+    FX.update(Coop.frozen() ? dt * 0.3 : dt);
     if (L) Atmo.update(dt, now / 1000, G.player ? G.player.x : 31, G.player ? G.player.z : 31);
     updateCamera(dt);
     UI.update(dt);
@@ -15043,7 +15741,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { Net, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; } };
+window.__tm = { Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; } };
 try {
   const hot = window.claude && window.claude.hot;
   if (hot && hot.ready) hot.ready(boot); else boot(hot && hot.data ? hot.data : {});
