@@ -654,7 +654,7 @@ const CLASSES = {
     name: 'Savaşçı', main: 'str', weapon: 'Kılıç', icon: 'sword',
     desc: 'Tek elli kılıç; hızlı, dengeli darbeler. Atılır, döner, mühür dalgası savurur.',
     base: { vit: 9, str: 10, int: 3, dex: 4 }, rec: { str: 2, vit: 1 },
-    atkRange: 2.4, atkCd: 0.72, ranged: false,
+    atkRange: 2.4, atkCd: 0.72, hitDelay: 0.24, ranged: false, // hitDelay: kombo klibindeki kesiş anı
     skills: ['w1', 'w2', 'w3', 'w4'],
     starterSet: true, starterChest: false, // Fantazi Savaşçı görünümüyle başlar; ilk göğüs zırhı Bez Zırh
     armorSets: true,
@@ -7938,7 +7938,7 @@ const BALTACI_BODIES = {};
 // Gövde, göğüs eşyasının setine göre: boş → fantazi, Bez → bez, Kurt Dişi → kurt, Nihai / Bronz Taş → nihai, Efsanevi → efsane.
 // Büyük oldukları için ihtiyaç anında yüklenir (savasci_<ad>.js → window.TM_ASSETS → GLTFLoader); yüklenene dek
 // yüklenmiş en yakın gövde, o da yoksa prosedürel savaşçı görünür.
-const SAVASCI_FILES = { fantazi: 'savasci_fantazi.js?v=8743fafc88', bez: 'savasci_bez.js?v=b1b47020c1', kurt: 'savasci_kurt.js?v=d5e7b82f95', nihai: 'savasci_nihai.js?v=1e2870a8cb', efsane: 'savasci_efsane.js?v=60e92de00e' };
+const SAVASCI_FILES = { fantazi: 'savasci_fantazi.js?v=edc75c3f6c', bez: 'savasci_bez.js?v=0480f159a0', kurt: 'savasci_kurt.js?v=32aa8a49ae', nihai: 'savasci_nihai.js?v=689fd60a84', efsane: 'savasci_efsane.js?v=4fe47cd009' };
 const SAVASCI_ORDER = ['fantazi', 'bez', 'kurt', 'nihai', 'efsane'];
 const SAVASCI_BODY_OF = { bez: 'bez', kurt: 'kurt', nihai: 'nihai', bronzz: 'nihai', efsane: 'efsane' };
 const SAVASCI_BODIES = {}, SAVASCI_LOAD = {};
@@ -9568,12 +9568,12 @@ function buildBaltaciModel(key) {
 
 // ---- Savaşçı (savasci_*.js: beş tam gövde kostümü, kendi rig'imiz + gömülü klipler) ----
 const SAVASCI_SCALE = 2.12; // Tripo gövdeleri 1 birim boyunda → ~2.12 (Baltacı ~2.16)
-// Yetenek kliplerinin süreleri ve olay anları (09_combat.js useSkill bunlarla eşzamanlı; klipler anim_warrior.mjs'de)
+// Yetenek kliplerinin süreleri ve olay anları (useSkill bunlarla eşzamanlı; klipler tools/anim_warrior2.mjs'de, hareket yakalama)
 const SAVASCI_SKILL_T = {
-  w1: { dur: 0.8, windup: 0.22, dash: 0.16 }, // Mühür Kıran: çömel → atıl (0.22–0.38) → varışta kesiş
-  w2: { dur: 0.97, hits: [0.26, 0.57] }, // Girdap Muhafızı: iki tur, her turun ortasında vuruş
-  w3: { dur: 0.78, windup: 0.34 }, // Yarım Mühür: omuz üstünden savuruş anında dalga
-  w4: { dur: 0.95 }, // Taşın Nefesi: selam → kılıç göğe → savaş duruşu
+  w1: { dur: 1.2, windup: 0.42, dash: 0.16 }, // Mühür Kıran: çömel, kılıcı geri çek → atıl → varışta yükselen kesiş
+  w2: { dur: 1.38, hits: [0.32, 1.05] }, // Girdap Muhafızı: kılıç açık, iki dönüş; her dönüşte vuruş
+  w3: { dur: 1.05, windup: 0.4 }, // Yarım Mühür: iki elle dönerek büyük savuruş, kesiş anında dalga
+  w4: { dur: 1.1 }, // Taşın Nefesi: güç topla → kılıç göğe → savaş duruşu
 };
 function buildSavasciModel(key) {
   const gl = SAVASCI_BODIES[key], info = gl.scene.userData.savasci || {};
@@ -9612,8 +9612,8 @@ function buildSavasciModel(key) {
     hand: mount('mixamorigRightHand', info.handMount), handL: ghost(), back: mount('mixamorigSpine2', info.backMount), chest: ghost(), height: 2.1,
     gltf: true, mixer, actions, curAnim: null, skel: scene, gearSlots: true, gearMeshes: [],
     bodyKey: key, costume: true, gild, cls: 'warrior',
-    // üçlü kombo (atkA çapraz iniş, atkB ters yatay, atkC iki elle tepeden); atkDur: klip süresi (vuruş karesi ~0.14 sn)
-    clips: ok ? { idle: 'idleA', idleCombat: 'idleReady', look: 'idleLook', run: 'run', walk: actions.walk ? 'walk' : null, attack: ['atkA', 'atkB', 'atkC'], atkDur: info.atkDur || 0.56,
+    // üçlü kombo (atkA yükselen çapraz kesiş, atkB iki elle tepeden çapraz iniş, atkC dönerek ters savuruş); atkDur: klip süresi, kesiş ~0.24 sn (CLASSES.warrior.hitDelay)
+    clips: ok ? { idle: 'idleA', idleCombat: 'idleReady', look: 'idleLook', run: 'run', walk: actions.walk ? 'walk' : null, attack: ['atkA', 'atkB', 'atkC'], atkDur: info.atkDur || 0.7,
       skills: { w1: ['skW1', S.w1.dur], w2: ['skW2', S.w2.dur], w3: ['skW3', S.w3.dur], w4: ['skW4', S.w4.dur] } } : { idle: actions.idleA ? 'idleA' : 'run', run: 'run', attack: [] },
     runSpeed: (info.runSpeed || 2.1) * SAVASCI_SCALE, walkSpeed: (info.walkSpeed || 0.75) * SAVASCI_SCALE,
     idleT: 0, lookAt: 6 + Math.random() * 4, spd: 0,
@@ -14044,7 +14044,7 @@ const Combat = {
     if (c.ranged) {
       Proj.playerShot(pl, t, 0x7af0e0, (m) => this.hitMob(m, 1), 18, 0.18);
     } else {
-      later(0.12, () => {
+      later(c.hitDelay || 0.12, () => {
         if (t.dead || pl.dead) return;
         if (dist(pl.x, pl.z, t.x, t.z) <= c.atkRange + t.r + 0.8) {
           this.hitMob(t, 1);
