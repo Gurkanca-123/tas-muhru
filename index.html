@@ -699,6 +699,10 @@ const DUNGEONS = [
   // 7. zindan: Kadim Metin mühürlendikten sonra açılır (needSeal). pow: kat gücü (Mob yapıcısı, L.mobPow)
   { id: 'd7', name: 'Kemik Taht', theme: 'bone', req: 45, lv: [45, 50], diffLv: [0, 7, 16], floors: 3, mobs: ['bonewarrior', 'bonemage'], elite: 'deathknight', boss: 'boneking', junk: 'j7', needSeal: true, throne: true,
     pow: { hp: 1.3, atk: 1.25, def: 1.2, exp: 1.3 }, desc: 'Kadim Metin\'in altındaki ölüler diyarı. Kemik ordular, ruh büyücüleri ve tahtında bekleyen Kemik Kral.' },
+  // 8. zindan: Bronz Taş Tapınağı — 10 dairesel arena katı (TEMPLE_FLOORS). Her deneme 1. kattan başlar; kat ödülü
+  // temizlenince kaydedilir. Kat düzeni / dalgalar / ödüller "BRONZ TAŞ TAPINAĞI" bölümünde (Temple).
+  { id: 'd8', name: 'Bronz Taş Tapınağı', theme: 'bronze', req: 40, lv: [42, 63], floors: 10, mobs: ['tasmuhafiz', 'kiriksavasci'], elite: 'tascanavari', boss: 'bronzmuhur', junk: 'j7', temple: true,
+    desc: 'Bronz mühürlü dairesel arenalarda 10 kat. Kat temizlenince ödül kaydedilir: üst kata çık ya da köye dön. 7-10. katlar ve Bronz Mühür Muhafızı 3-4 kişilik grup içindir.' },
 ];
 
 // hp/atk/def/spd çarpanları şablondan; seviyeye göre ölçeklenir
@@ -739,6 +743,17 @@ const MOBS = {
   boneking: { name: 'Kemik Kral Karaçor', model: 'boneking', color: 0xe8dcc0, armor: 0x2a1a30, eye: 0x6aff8a, weapon: 'sword', size: 2.2, rank: 'boss', hpMul: 1.6, atk: 1.3, def: 1.3,
     skills: ['slam', 'volley', 'bonerain', 'summon'], summon: 'bonewarrior', proj: 0x8aff9a, crown: true, enrage: true },
   guardian: { name: 'Taş Muhafız', model: 'golem', color: 0x1e1a22, eye: 0xff2a6a, size: 2.4, rank: 'boss', skills: ['slam', 'nova'], crown: true, hpMul: 0.6 },
+
+  // Bronz Taş Tapınağı (GLB modeller: tapinak_*.js, TempleAssets; yüklenemezse fb prosedürel model). tm: model dosyası,
+  // set: aynı gövdede klip takımı, wR / wL / sh: sağ el / sol el silahı, kalkan. Taş Canavarı: dört ayaklı kristal canavar
+  // modeli yok — kullanıcının taş golem modeli kullanılır.
+  tasmuhafiz: { name: 'Taş Muhafızı', model: 'tapinak', tm: 'tas', set: 'muhafiz', fb: 'golem', color: 0x5a4a3e, eye: 0xffa040, hp: 1.35, def: 1.6, spd: 3.3, skills: ['slam'], wR: 'mace', sh: 'shield' },
+  kiriksavasci: { name: 'Kırık Savaşçı', model: 'tapinak', tm: 'tas', set: 'kirik', fb: 'skeleton', weapon: 'sword', color: 0x6a5a4a, eye: 0xffa040, hp: 1.0, atk: 1.2, spd: 4.4, skills: ['charge'], wR: 'axe' },
+  tasokcu: { name: 'Taş Okçu', model: 'tapinak', tm: 'okcu', fb: 'skeleton', weapon: 'bow', color: 0x5a5048, ranged: true, range: 8, proj: 0xffb060, hp: 0.8, spd: 3.6, skills: ['volley'], wL: 'bow' },
+  muhurbuyucu: { name: 'Mühür Büyücüsü', model: 'tapinak', tm: 'buyucu', fb: 'witch', color: 0x3a3030, eye: 0xff8a3a, ranged: true, range: 7.5, proj: 0xff8a3a, hp: 0.85, spd: 3.4, skills: ['sealrune'], crystal: true },
+  tascanavari: { name: 'Taş Canavarı', model: 'tapinak', tm: 'canavar', fb: 'golem', color: 0x3a3430, eye: 0xff6a20, size: 1.3, rank: 'elite', hp: 0.9, def: 1.4, spd: 3.0, skills: ['slam', 'roar'] },
+  kirikmuhur: { name: 'Kırık Mühür Muhafızı', model: 'tapinak', tm: 'minib', fb: 'golem', color: 0x4a3a30, eye: 0xff5a2a, size: 1.35, rank: 'boss', hpMul: 0.55, atk: 1.1, def: 1.2, skills: ['slam', 'spin', 'charge'], wR: 'warhammer', frenzy: true },
+  bronzmuhur: { name: 'Bronz Mühür Muhafızı', model: 'tapinak', tm: 'boss', fb: 'golem', color: 0x8a5a2a, eye: 0xffb040, size: 1.75, rank: 'boss', hpMul: 2.0, atk: 1.35, def: 1.3, proj: 0xffa040, skills: ['slam', 'spin', 'shock'], wR: 'lavahammer', phases: true },
 
   metin: { name: 'Kadim Metin', model: 'metin', color: 0x1a1620, eye: 0xff2a8a, rank: 'metin', big: true },
   minimetin: { name: 'Metin Taşı', model: 'metin', color: 0x2a2630, eye: 0x9a4aff, rank: 'metin' },
@@ -891,6 +906,7 @@ const STACKS = {
   j4: { name: 'Kor Kömürü', kind: 'dmat', sell: 30, icon: 'ore', tint: '#e0602a', desc: 'Kurt Dişi Zırh, Bronz Taş Balta ve kademe 4 eşya geliştirmede kullanılır. Kor Ocağı\'nda düşer.' },
   j5: { name: 'Buz Kristali', kind: 'dmat', sell: 43, icon: 'soul', tint: '#9fe0ff', desc: 'Kademe 5 eşya ve Nihai Zırh geliştirmede kullanılır. Ayaz Mağarası\'nda düşer.' },
   j7: { name: 'Ruh Kemiği', kind: 'dmat', sell: 80, icon: 'bone', tint: '#9affb0', desc: 'Kademe 5-7 eşyaların +7 … +9 geliştirmesinde ve Kemik Taht\'tan çıkan son oyun setlerinde (Bronz Taş, Efsanevi) kullanılır. Kemik Taht\'ta düşer.' },
+  bronzparca: { name: 'Bronz Mühür Parçası', kind: 'mat', icon: 'ore', tint: '#e0a050', sell: 900, desc: 'Bronz Taş Tapınağı\'nın kırık mührünün parçası. Simyacı 2 parçayı istediğin yuvanın Kadim Öz\'üne çevirir. Tapınağın 6. ve 7-10. katlarında kazanılır.' },
   j6: { name: 'Kara Taş Tozu', kind: 'dmat', sell: 60, icon: 'ore', tint: '#6a4a7a', desc: 'Kademe 6 eşya geliştirmede kullanılır. Kara Taş Tapınağı\'nda düşer.' },
 };
 const STACK_MAX = 200;
@@ -995,6 +1011,7 @@ const THEMES = {
   fire: { floor: 0x604840, wall: 0x4a302a, wallTop: 0x5e3a2e, fog: 0x3a1a0e, fogNear: 12, fogFar: 46, hemiSky: 0xffd0b0, hemiGround: 0x6a3e28, hemiI: 1.0, sun: 0xffc090, sunI: 0.55, exposure: 1.15, light: 0xff8a40, lightI: 1.7, torch: 0xff6a20, deco: 'fire', vignette: 0.28, ambient: 'ember', ambientN: 36 },
   ice: { floor: 0x8aa8bc, wall: 0x56788f, wallTop: 0xcfe8f5, fog: 0x0e1c2b, fogNear: 10, fogFar: 38, hemiSky: 0xcfe8ff, hemiGround: 0x4e6071, hemiI: 0.72, sun: 0xdff0ff, sunI: 0.4, light: 0xbfe6ff, torch: 0x7fd8ff, deco: 'ice', vignette: 0.3, ambient: 'snow', ambientN: 42 },
   bone: { floor: 0x5e5850, wall: 0x46403a, wallTop: 0x8a8070, fog: 0x14140f, fogNear: 10, fogFar: 40, hemiSky: 0xd4d8cc, hemiGround: 0x46423a, hemiI: 0.92, sun: 0xe8f0e0, sunI: 0.45, exposure: 1.08, light: 0x9affb0, lightI: 1.6, torch: 0x6aff8a, deco: 'bone', vignette: 0.34, ambient: 'spore', ambientN: 26 },
+  bronze: { floor: 0x6e5c4a, wall: 0x4a3e34, wallTop: 0x6a5642, fog: 0x1c120a, fogNear: 16, fogFar: 54, hemiSky: 0xf2dcbc, hemiGround: 0x5a4030, hemiI: 1.0, sun: 0xffd8a8, sunI: 0.55, exposure: 1.15, light: 0xffa050, lightI: 1.7, torch: 0xffa040, deco: 'temple', vignette: 0.3, ambient: 'ember', ambientN: 24 },
   temple: { floor: 0x5a5264, wall: 0x40384a, wallTop: 0x5a4a66, fog: 0x22162a, fogNear: 12, fogFar: 46, hemiSky: 0xe0c8ec, hemiGround: 0x5a4062, hemiI: 1.05, sun: 0xffc0e0, sunI: 0.5, exposure: 1.2, light: 0xff6aa8, lightI: 1.7, torch: 0xff3a8a, deco: 'temple', vignette: 0.28, ambient: 'dust', ambientN: 30 },
 };
 
@@ -2481,6 +2498,9 @@ function applySave(o) {
   if (CLASSES[o.cls].starterSet && ver < 2) giveStarterSet(T, hadLegs ? ['head', 'shield'] : null);
   migrateSets(T); // set sınıfı: setsiz zırhlar Bez Zırh parçasına
   T.sealed = !!o.sealed;
+  // Bronz Taş Tapınağı: rekor (ulaşılan / temizlenen kat), ilk temizleme bitleri, deneme ve mühür sayısı, alınmış kat ödülleri
+  const tp = o.temple;
+  if (tp && typeof tp === 'object') T.temple = { best: Math.floor(_num(tp.best, 0, 0, 10)), bestClear: Math.floor(_num(tp.bestClear, 0, 0, 10)), first: Math.floor(_num(tp.first, 0, 0, 1023)), runs: Math.floor(_num(tp.runs, 0, 0, 1e9)), seals: Math.floor(_num(tp.seals, 0, 0, 1e9)), claims: Array.isArray(tp.claims) ? tp.claims.filter((x) => typeof x === 'string' && x.length < 80).slice(-40) : [] };
   T.clearDiff = {};
   if (o.clearDiff && typeof o.clearDiff === 'object') for (const d of DUNGEONS) { const v = Math.floor(_num(o.clearDiff[d.id], -1, -1, DIFFS.length - 1)); if (v >= 0) T.clearDiff[d.id] = v; }
   for (const id in T.cleared) if (T.clearDiff[id] == null) T.clearDiff[id] = 0; // zorluklardan önce bitirilmiş zindan = Normal
@@ -8682,7 +8702,7 @@ const Coop = {
       m.push([mob.nid, mob.key, mob.lv, Math.round(mob.x * 10), Math.round(mob.z * 10), Math.max(1, Math.round(mob.hp)), Math.round(mob.maxHp), (sp.guardian ? 1 : 0) | (sp.boss ? 2 : 0)]);
     }
     const ex = L.interact.filter((it) => it.kind === 'exit').slice(1).map((it) => [Math.round(it.x * 10), Math.round(it.z * 10)]);
-    return { sid: this.inst.sid, f: this.hpF, m, dp: L.downPortal && L.downPortal.active ? 1 : 0, ex };
+    return { sid: this.inst.sid, f: this.hpF, m, dp: L.downPortal && L.downPortal.active ? 1 : 0, ex, tp: L.temple ? Temple.pack(L) : 0 };
   },
   sendFull(to) { if (this.hosting) Net.bc('gf', Object.assign({ i: Net.id, to }, this.fullState())); },
   reqJoin() { if (this.guest && Net.state === 'on') Net.bc('gj', { i: Net.id, to: this.inst.host, sid: this.inst.sid }); },
@@ -8784,6 +8804,7 @@ const Coop = {
     }
     for (const m of L.mobs) if (m.puppet && !m.dead && !alive.has(m.nid)) { m.dead = true; m.deadT = 9; } // host'ta artık yok
     if (d.dp && L.downPortal && !L.downPortal.active) { L.downPortal.active = true; L.downPortal.portal.active = true; }
+    if (d.tp && L.temple) Temple.applyState(d.tp); // tapınak: dalga, temizlenme, patron aşaması, mühür noktaları
     const exits = L.interact.filter((it) => it.kind === 'exit');
     if (Array.isArray(d.ex)) for (const [x10, z10] of d.ex) {
       const x = x10 / 10, z = z10 / 10;
@@ -8811,6 +8832,8 @@ const Coop = {
   applyEvent(e) {
     if (!Array.isArray(e)) return;
     const k = e[0], pl = G.player;
+    if (k === 'T') { Temple.onEvent(e); return; } // tapınak: [T, w|c|ph|so|sb, değer]
+    if (k === 'tr') { templeShock(e[2] / 10, e[3] / 10, clamp(+e[4] || 1, 0.5, 12), clamp(+e[5] || 2, 1, 16), clamp(+e[6] || 0, 0, 1e7), this.mob(e[1] | 0), G.level); return; } // halka şok dalgası
     if (k === 'n') { this.makePuppet(e.slice(1), true); return; }
     const m = this.mob(e[1] | 0);
     if (k === 'k') { if (m && !m.dead) Combat.killMob(m); return; }
@@ -8838,7 +8861,7 @@ const Coop = {
       m.playAct((m.bkN = (m.bkN || 0) + 1) % 2 ? 'atk' : 'atk2', 0.6);
       if (m.t.ranged) {
         const tx = e[2] / 10, tz = e[3] / 10;
-        later(0.3, () => { if (!m.dead) Proj.mobShot(m, tx, tz, { dmg: m.atk, poison: m.t.poison, color: m.t.proj }); });
+        later(m.M.tm ? tmHitIn(m.M.tm) : 0.3, () => { if (!m.dead) Proj.mobShot(m, tx, tz, { dmg: m.atk, poison: m.t.poison, color: m.t.proj }); });
       }
     } else if (k === 'v') { // [v, nid, açı, adet, aralık, ham, renk, boyut, yavaşlatma]
       const base = +e[2] || 0, n = clamp(e[3] | 0, 1, 9), stp = +e[4] || 0, h = (n - 1) / 2;
@@ -8851,7 +8874,8 @@ const Coop = {
       const w = e[2];
       if (w === 'enrage') { m.enraged = true; m.atk *= 1.2; banner(m.name, 'ÖFKELENDİ!', 2); SFX.play('boom'); FX.pillar(m.x, m.z, m.t.proj || 0xff4a2a, 8, 1.2, 2.2); }
       else if (w === 'summon') { banner(m.name, 'yardım çağırıyor!', 1.6); SFX.play('boom'); }
-      else if (w === 'charge') banner('', m.name + ' saldırıya geçti!', 1);
+      else if (w === 'charge') { if (m.rank !== 'normal') banner('', m.name + ' saldırıya geçti!', 1); }
+      else if (w === 'frenzy') { m.frenzyN = (m.frenzyN || 0) + 1; if (m.M.tm) m.M.tm.spd *= 1.2; banner(m.name, 'saldırıları hızlanıyor!', 2); SFX.play('boom'); FX.pillar(m.x, m.z, 0xff7a30, 6, 1.0, 1.6); }
       else if (w === 'rain') banner('', m.name + ': kemik yağmuru!', 1);
       else if (w === 'metin') { banner('KADİM METİN', 'Taşı kır, dalgalara dayan!', 2.5); SFX.play('boom'); }
       else if (w === 'wave') { SFX.play('portal'); feed('Metin yeni bir dalga çağırdı!', '#ff7ab0'); }
@@ -10055,6 +10079,7 @@ function buildNPC(id) {
 
 // ---------- Canavar modelleri ----------
 function buildMobModel(t) {
+  if (t.model === 'tapinak') return buildTempleMob(t) || buildMobModel(Object.assign({}, t, { model: t.fb || 'golem' }));
   if (t.model === 'boneking') {
     const k = buildBoneKing(t);
     if (k) return k;
@@ -11479,7 +11504,7 @@ function tileAt(L, x, z) {
   if (i < 0 || j < 0 || i >= L.W || j >= L.H) return 0;
   return L.grid[j * L.W + i];
 }
-const walkable = (L, x, z) => tileAt(L, x, z) === 1;
+const walkable = (L, x, z) => (L.circ ? templeWalk(L, x, z) : tileAt(L, x, z) === 1); // tapınak: gerçek daire (L.circ)
 function canStand(L, x, z, r) {
   return walkable(L, x - r, z - r) && walkable(L, x + r, z - r) && walkable(L, x - r, z + r) && walkable(L, x + r, z + r);
 }
@@ -12041,6 +12066,7 @@ function genArena() {
 // seed: kat düzeni (odalar, koridorlar, engelleyici süsler) tohumdan üretilir → ortak zindanda iki telefonda aynı duvarlar.
 // Yalnız düzen bölümü tohumlu (grafik ayarına göre değişebilen süsler ve canavar yerleri değil; misafir canavarları host'tan alır).
 function buildDungeon(dIdx, floorIdx, seed) {
+  if (DUNGEONS[dIdx].temple) return buildTempleFloor(dIdx, floorIdx, seed); // dairesel arena katı
   const R0 = Math.random;
   if (seed != null) Math.random = mulberry32(seed >>> 0);
   try { return buildDungeonInner(dIdx, floorIdx, () => { Math.random = R0; }); } finally { Math.random = R0; }
@@ -13371,16 +13397,18 @@ class Mob {
     this.animate(dt);
   }
   // Kemik Kral'ın kemik animasyonu (başka modelde etkisiz)
-  playAct(k, d) { if (this.M.bk) { this.bkAct = { k, t: 0, d }; if (!this.puppet) Coop.ev('c', this.nid, k, d); } }
+  playAct(k, d) { if (this.M.bk || this.M.tm) { if (this.M.tm) tmPlay(this, k); else this.bkAct = { k, t: 0, d }; if (!this.puppet) Coop.ev('c', this.nid, k, d); } }
   doAttack() {
     const pl = this.tgt || G.player;
     this.atkAnim = 0.35;
     if (this.M.bk) this.bkAct = { k: (this.bkN = (this.bkN || 0) + 1) % 2 ? 'atk' : 'atk2', t: 0, d: 0.6 };
+    let hitIn = null; // GLB düşman: vuruş / mermi anı klibin vuruş anına göre
+    if (this.M.tm) { tmPlay(this, (this.bkN = (this.bkN || 0) + 1) % 2 ? 'atk' : 'atk2'); hitIn = tmHitIn(this.M.tm); }
     if (pl) Coop.ev('a', this.nid, Math.round(pl.x * 10), Math.round(pl.z * 10)); // misafirde saldırı animasyonu (+ menzilliyse mermi)
     if (this.t.ranged) {
-      this.pending = { t: 0.3, fn: () => { if (!this.dead && pl && !pl.dead) Proj.mobShot(this, pl.x, pl.z, { dmg: this.atk, poison: this.t.poison, color: this.t.proj }); } };
+      this.pending = { t: hitIn != null ? hitIn : 0.3, fn: () => { if (!this.dead && pl && !pl.dead) Proj.mobShot(this, pl.x, pl.z, { dmg: this.atk, poison: this.t.poison, color: this.t.proj }); } };
     } else {
-      this.pending = { t: 0.28, fn: () => {
+      this.pending = { t: hitIn != null ? hitIn : 0.28, fn: () => {
         if (this.dead || !pl || pl.dead) return;
         if (dist(this.x, this.z, pl.x, pl.z) <= this.range + 0.7) Coop.hurt(pl, this.atk, this, { poison: this.t.poison ? 0.12 : 0 });
       } };
@@ -13391,6 +13419,19 @@ class Mob {
     if (!sk) return false;
     const pl = this.tgt || G.player, me = G.player; // me: bu telefondaki oyuncu (yer uyarıları misafirde kendi telefonunda çözülür)
     const tg = (x, z, R, dl, col, raw, slow, grp) => Coop.ev('t', this.nid, Math.round(x * 10), Math.round(z * 10), R, dl, col, Math.round(raw), slow || 0, grp || 0);
+    // Kırık Mühür Muhafızı: canı %50 ve %25'in altına inince saldırıları hızlanır
+    if (this.t.frenzy && (this.frenzyN || 0) < 2 && this.hp / this.maxHp < (this.frenzyN ? 0.25 : 0.5)) {
+      this.frenzyN = (this.frenzyN || 0) + 1; this.atkCd *= 0.72; this.spd *= 1.1; if (this.M.tm) this.M.tm.spd *= 1.2;
+      this.casting = 1.0; this.playAct('frenzy', 1.0);
+      banner(this.name, this.frenzyN > 1 ? 'Çılgına döndü — saldırıları çok hızlı!' : 'Mühür çatladı — saldırıları hızlanıyor!', 2); SFX.play('boom'); camPunch(1.2); Coop.ev('x', this.nid, 'frenzy');
+      FX.pillar(this.x, this.z, 0xff7a30, 6, 1.0, 1.6); FX.ring(this.x, this.z, 5, 0xffa040, 0.6);
+      return true;
+    }
+    // Bronz Mühür Muhafızı: can eşiğinde aşama geçişi (beklemeden)
+    if (this.t.phases) {
+      const f = this.hp / this.maxHp, want = f > 0.7 ? 1 : f > 0.4 ? 2 : f > 0.15 ? 3 : 4;
+      if (want > (this.phase || 1)) { Temple.bossPhase(this); return true; }
+    }
     // öfke (Kemik Kral): canı yarıya inince bir kez — daha sert, daha hızlı, yetenekleri sıklaşır
     if (this.t.enrage && !this.enraged && this.hp / this.maxHp < 0.5) {
       this.enraged = true; this.atk *= 1.2; this.atkCd *= 0.75; this.spd *= 1.15;
@@ -13417,12 +13458,13 @@ class Mob {
     if (this.skT > 0) return false;
     const opts = sk.filter((s) => s !== 'summon');
     if (!opts.length) { this.skT = 99; return false; }
-    const s = pick(opts);
+    let s = pick(opts);
     this.skT = this.rank === 'boss' ? (this.enraged ? rand(3, 4.5) : rand(4.5, 6.5)) : rand(6, 9);
+    if (this.t.phases) s = Temple.bossPick(this, d); // aşamaya göre yetenek ve sıklık
     const big = this.rank === 'boss';
     switch (s) {
       case 'charge':
-        if (d > 3 && d < 11) { this.casting = 0.35; this.pending = { t: 0.35, fn: () => { const dx = pl.x - this.x, dz = pl.z - this.z, l = Math.hypot(dx, dz) || 1; this.charge = { t: 0.55, dx: dx / l, dz: dz / l }; } }; banner('', this.name + ' saldırıya geçti!', 1); Coop.ev('x', this.nid, 'charge'); return true; }
+        if (d > 3 && d < 11) { this.casting = 0.35; this.pending = { t: 0.35, fn: () => { const dx = pl.x - this.x, dz = pl.z - this.z, l = Math.hypot(dx, dz) || 1; this.charge = { t: 0.55, dx: dx / l, dz: dz / l }; } }; if (this.rank !== 'normal') banner('', this.name + ' saldırıya geçti!', 1); Coop.ev('x', this.nid, 'charge'); return true; }
         return false;
       case 'slam': {
         if (d > 5) return false;
@@ -13485,6 +13527,58 @@ class Mob {
           if (!hit.v && me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) { hit.v = true; Combat.damagePlayer(this.atk * 1.4, this); }
         }));
         banner('', this.name + ': kemik yağmuru!', 1);
+        return true;
+      }
+      case 'spin': { // çekiçle dönüş: çevresine yer uyarılı alan vuruşu
+        if (d > 4.5) return false;
+        const R = big ? 4.3 : 3.4;
+        this.casting = 1.05; this.playAct('spin', 1.2);
+        const x = this.x, z = this.z;
+        tg(x, z, R, 0.65, 0xffa040, this.atk * 1.5);
+        telegraph(x, z, R, 0.65, 0xffa040, () => {
+          if (this.dead) return;
+          FX.ring(x, z, R, 0xffc070, 0.35); FX.burst(x, 0.6, z, 0xd8b890, 20, 6); SFX.play('swing');
+          if (me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) Combat.damagePlayer(this.atk * 1.5, this);
+        });
+        return true;
+      }
+      case 'roar': { // Taş Canavarı: kükreyip yeri sarsar — yavaşlatan alan
+        if (d > 5.5) return false;
+        const R = 4.2, x = this.x, z = this.z;
+        this.casting = 1.15; this.playAct('roar', 1.2);
+        tg(x, z, R, 1.0, 0xff8a30, this.atk * 1.2, 0.35);
+        telegraph(x, z, R, 1.0, 0xff8a30, () => {
+          if (this.dead) return;
+          FX.ring(x, z, R, 0xffb060, 0.5); FX.burst(x, 0.5, z, 0xc8a080, 24, 6); SFX.play('boom'); camPunch(0.6);
+          if (me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) Combat.damagePlayer(this.atk * 1.2, this, { slow: 0.35 });
+        });
+        return true;
+      }
+      case 'sealrune': { // Mühür Büyücüsü: oyuncunun altına bronz mühür — 1.4 sn sonra patlar (kaçılabilir)
+        if (d > 10 || !pl) return false;
+        const R = 2.6, x = pl.x, z = pl.z;
+        this.casting = 0.9; this.playAct('sealrune', 1.0);
+        tg(x, z, R, 1.4, 0xffa040, this.atk * 1.6);
+        FX.seal(x, z, R, 1.5, 0xffb050);
+        telegraph(x, z, R, 1.4, 0xffa040, () => {
+          if (this.dead) return;
+          FX.pillar(x, z, 0xffb050, 4, 0.5, 0.7); FX.ring(x, z, R, 0xffc070, 0.35); SFX.play('zap');
+          if (me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) Combat.damagePlayer(this.atk * 1.6, this);
+        });
+        return true;
+      }
+      case 'shock': { // Bronz Mühür Muhafızı: çekiç yere — önce çevresi, ardından dışa doğru halka şok dalgası
+        if (d > 10) return false;
+        const R1 = big ? 4.6 : 3.4, R2 = big ? 8.8 : 6.4, x = this.x, z = this.z, lv = this.L;
+        this.casting = 1.25; this.playAct('shock', 1.3);
+        tg(x, z, R1, 1.0, 0xffa040, this.atk * 1.6);
+        Coop.ev('tr', this.nid, Math.round(x * 10), Math.round(z * 10), R1, R2, Math.round(this.atk * 1.3));
+        telegraph(x, z, R1, 1.0, 0xffa040, () => {
+          if (this.dead) return;
+          FX.ring(x, z, R1, 0xffc070, 0.4); FX.burst(x, 0.4, z, 0xd8b890, 26, 7); SFX.play('boom'); camPunch(1);
+          if (me && !me.dead && dist(me.x, me.z, x, z) < R1 + 0.3) Combat.damagePlayer(this.atk * 1.6, this);
+        });
+        templeShock(x, z, R1, R2, this.atk * 1.3, this, lv);
         return true;
       }
       case 'web': {
@@ -13618,13 +13712,14 @@ class Mob {
       M.body.position.z = atk * 0.4;
     }
     if (M.bk) animateBoneKing(this, dt);
+    if (M.tm) animateTempleMob(this, dt);
     if (M.float) { M.body.position.y = 0.2 + Math.sin(t * 2.5) * 0.1; if (M.armR) M.armR.rotation.x = -0.4 - atk * 1.4; }
     const root = M.root;
     root.position.set(this.x, 0, this.z);
     if (!this.static) root.rotation.y = this.rot;
     const sq = this.flashT > 0 ? 1.08 : 1;
     if (!this.static) root.scale.setScalar(this.size * sq);
-    if (this.casting > 0 && !this.static) root.position.y = Math.abs(Math.sin(t * 20)) * 0.06;
+    if (this.casting > 0 && !this.static && !M.tm) root.position.y = Math.abs(Math.sin(t * 20)) * 0.06;
     // can barı
     const show = !this.dead && (this.hitT < 6 || G.player && G.player.target === this);
     this.bar.visible = show;
@@ -13641,6 +13736,12 @@ class Mob {
     if (this.static) {
       root.scale.setScalar((this.t.big ? 1.8 : 1) * Math.max(0.01, 1 - this.deadT / 1.2));
       root.rotation.y += dt * 4;
+    } else if (this.M.tm) {
+      // GLB düşman: ölüm klibi (geri sendeler, dizleri çöker) → öne yığılır, yere gömülür
+      if (!this.M.tm.died) { this.M.tm.died = true; tmDie(this); }
+      this.M.tm.mixer.update(dt);
+      this.M.body.rotation.x = Math.min(1.35, Math.max(0, this.deadT - 0.95) * 2.6);
+      root.position.y = -Math.max(0, this.deadT - 1.8) * 1.1;
     } else if (this.M.bk) {
       // diz çöker, bir süre durur, sonra yana devrilir
       root.rotation.z = Math.min(1.45, Math.max(0, this.deadT - 1.1) * 3) * (this.key.length % 2 ? 1 : -1);
@@ -13649,7 +13750,7 @@ class Mob {
       root.rotation.z = Math.min(1.4, this.deadT * 5) * (this.key.length % 2 ? 1 : -1);
       root.position.y = -Math.max(0, this.deadT - 0.7) * 1.2;
     }
-    if (this.deadT > (this.M.bk ? 2.6 : 1.4) && !this.removed) {
+    if (this.deadT > (this.M.bk || this.M.tm ? 2.6 : 1.4) && !this.removed) {
       this.removed = true;
       if (this.L.byNid) this.L.byNid.delete(this.nid);
       this.L.group.remove(root);
@@ -13664,8 +13765,747 @@ function spawnMob(L, key, lv, x, z, sp, nid) {
   L.mobs.push(m);
   m.nid = nid || (L.nidSeq = (L.nidSeq || 0) + 1);
   (L.byNid || (L.byNid = new Map())).set(m.nid, m);
+  if (L.temple) { L.temple.seenN++; L.temple.fought = true; } // tapınak: dalga canavarı görüldü (misafirde kukla) → kat savaşına katıldı
   if (!nid) Coop.onSpawn(m);
   return m;
+}
+
+// ======================= BRONZ TAŞ TAPINAĞI — 10 katlı grup zindanı =======================
+// Düzen: TEMPLE_FLOORS (kat içerikleri, dalgalar) · TEMPLE_REWARDS (merkezi, düzenlenebilir ödül tablosu) ·
+// TempleAssets (GLB düşmanların tembel yüklenmesi: tapinak_*.js) · buildTempleMob / animateTempleMob (GLB düşman yolu:
+// AnimationMixer, silah bağlama, vuruş anı hizalama) · buildTempleFloor (dairesel arena, ortak altyapı + kata göre dekor)
+// · Temple (kat akışı, dalgalar, portal ve seçim, rekor, patron aşamaları, mühür noktaları, ödül kaydı, ortak oyun olayları).
+// Ortak oyun: mevcut Coop örneği aynen kullanılır (anahtar 'd7-<kat>'). Dalga / temizleme / aşama kararlarını yalnız
+// örneğin sahibi (host) verir ve 'T' olaylarıyla misafirlere yollar; her oyuncu kendi ödülünü kendi kaydına bir kez yazar
+// (örnek kimliği + kat → P.temple.claims).
+const TEMPLE_MOB_H = 2.3; // GLB düşman boyu (dünya birimi, boyut 1): modeller ~1 birim boyunda
+const TEMPLE_FILES = { tas: 'tapinak_tas.js?v=258632ec66', canavar: 'tapinak_canavar.js?v=1e86a41f16', okcu: 'tapinak_okcu.js?v=c7bb7584a6', buyucu: 'tapinak_buyucu.js?v=454c2e0b9e', minib: 'tapinak_minib.js?v=0331bafdd1', boss: 'tapinak_boss.js?v=c385f9a666', silah: 'tapinak_silah.js?v=383afc10d6' };
+const TEMPLE_WEAPONS = ['mace', 'axe', 'warhammer', 'lavahammer', 'bow', 'shield', 'crystal'];
+// Kat içerikleri: waves = [[ [canavar, adet], ... ], ...] — sonraki dalga öncekinin tamamı ölünce gelir
+const TEMPLE_FLOORS = [
+  { name: 'Kırık Mühür Kapısı', waves: [[['tasmuhafiz', 3]], [['kiriksavasci', 2]]] },
+  { name: 'Kırık Savaşçılar', waves: [[['kiriksavasci', 4]], [['tasmuhafiz', 2]]] },
+  { name: 'Okçu Avlusu', waves: [[['tasmuhafiz', 3], ['tasokcu', 3]]] },
+  { name: 'Mühür Büyüsünün Yankısı', waves: [[['tasmuhafiz', 3], ['muhurbuyucu', 2]]] },
+  { name: 'Taş Canavarı\'nın Eşiği', waves: [[['tascanavari', 1], ['kiriksavasci', 2], ['tasokcu', 2]]] },
+  { name: 'Kırık Mühür Muhafızı', boss: true, waves: [[['kirikmuhur', 1], ['tasmuhafiz', 2]]] },
+  { name: 'Mührün Öfkesi', group: true, waves: [[['tascanavari', 2], ['kiriksavasci', 3], ['muhurbuyucu', 2]]] },
+  { name: 'Muhafızların Son Hattı', group: true, waves: [[['tascanavari', 3], ['tasokcu', 3], ['muhurbuyucu', 2]]] },
+  { name: 'Son Mühür', group: true, waves: [[['tascanavari', 2], ['tasmuhafiz', 3], ['muhurbuyucu', 2]]] },
+  { name: 'Bronz Mühür Muhafızı', boss: true, group: true, waves: [[['bronzmuhur', 1]]] },
+];
+// canavar seviyesi ve kat gücü (7-10: grup için)
+const templeFloorLv = (f) => 42 + 2 * f;
+const TEMPLE_POW = [null, null, null, { hp: 1.1, atk: 1.05, def: 1.05, exp: 1.1 }, { hp: 1.15, atk: 1.1, def: 1.1, exp: 1.15 }, { hp: 1.2, atk: 1.1, def: 1.1, exp: 1.2 },
+  { hp: 1.45, atk: 1.3, def: 1.25, exp: 1.35 }, { hp: 1.5, atk: 1.32, def: 1.25, exp: 1.4 }, { hp: 1.55, atk: 1.35, def: 1.3, exp: 1.45 }, { hp: 1.6, atk: 1.35, def: 1.3, exp: 1.5 }];
+// ---- Ödül tablosu (kat temizleme; canavarların kendi EXP / altın / eşya düşüşü buna ek olarak normal işler) ----
+// Mevcut ekonomiye göre: normal canavar altını ≈ 3 + 1.6·Sv (Sv 42-62 → 70-100), boss ×20; günlük görev ≈ seviye EXP'inin
+// %6.5-10'u; ilk zindan temizleme 150·n² altın. exp: o anki seviyenin EXP ihtiyacına oran. mats: [yığın, en az, en çok, şans].
+// gear: { chance, rank, n } — rollGear (kademe 6, son oyun setleri dahil). ess: Kadim Öz (yuvası rastgele) şansı.
+// seal: Bronz Mühür Parçası [en az, en çok, şans]. first: kat ilk kez temizlenince bir kerelik ek ödül.
+const TEMPLE_REWARDS = [
+  { gold: 450, exp: 0.02, mats: [['ore', 2, 3, 1]] },
+  { gold: 550, exp: 0.025, mats: [['ore', 2, 4, 1], ['soul', 1, 1, 0.3]] },
+  { gold: 750, exp: 0.03, mats: [['ore', 3, 4, 1], ['soul', 1, 1, 0.5], ['j7', 1, 2, 0.5]], gear: { chance: 0.12, rank: 'elite', n: 1 } },
+  { gold: 850, exp: 0.035, mats: [['ore', 3, 5, 1], ['soul', 1, 2, 0.6], ['j7', 1, 2, 0.6]], gear: { chance: 0.16, rank: 'elite', n: 1 } },
+  { gold: 1000, exp: 0.04, mats: [['ore', 4, 5, 1], ['soul', 1, 2, 0.8], ['j7', 1, 3, 0.8]], gear: { chance: 0.2, rank: 'elite', n: 1 } },
+  { gold: 1600, exp: 0.06, chest: true, mats: [['soul', 2, 3, 1], ['j7', 2, 3, 1], ['bless', 1, 1, 0.25]], gear: { chance: 1, rank: 'boss', n: 1 }, ess: 0.25, seal: [1, 1, 0.45] },
+  { gold: 1900, exp: 0.05, mats: [['soul', 2, 3, 1], ['j7', 2, 4, 1], ['bless', 1, 1, 0.1]], gear: { chance: 0.25, rank: 'elite', n: 1 }, ess: 0.3, seal: [1, 1, 0.1] },
+  { gold: 2200, exp: 0.055, mats: [['soul', 2, 4, 1], ['j7', 3, 4, 1], ['bless', 1, 1, 0.15]], gear: { chance: 0.3, rank: 'elite', n: 1 }, ess: 0.35, seal: [1, 1, 0.15] },
+  { gold: 2500, exp: 0.06, mats: [['soul', 3, 4, 1], ['j7', 3, 5, 1], ['bless', 1, 1, 0.2]], gear: { chance: 0.35, rank: 'elite', n: 1 }, ess: 0.4, seal: [1, 1, 0.2] },
+  { gold: 5000, exp: 0.12, chest: true, mats: [['soul', 3, 5, 1], ['j7', 4, 6, 1], ['bless', 1, 2, 0.6]], gear: { chance: 1, rank: 'boss', n: 2 }, rare: 0.35, ess: 1, ess2: 0.4, seal: [2, 3, 1] },
+];
+const TEMPLE_FIRST = (f) => ({ gold: 400 * (f + 1), soul: f >= 5 ? 2 : 1, seal: f === 9 ? 2 : f === 5 ? 1 : 0 });
+
+// ---------- Tembel varlık yükleme ----------
+const TempleAssets = {
+  gl: {}, w: {}, state: {}, wait: {},
+  needOf(f) {
+    const s = new Set(['silah']);
+    const F = TEMPLE_FLOORS[f]; if (!F) return [...s];
+    for (const wave of F.waves) for (const [k] of wave) if (MOBS[k] && MOBS[k].tm) s.add(MOBS[k].tm);
+    return [...s];
+  },
+  ready(keys) { return keys.every((k) => this.state[k] === 'hazır' || this.state[k] === 'hata'); },
+  load(keys, cb) {
+    let left = 0;
+    const done = () => { if (--left === 0 && cb) cb(); };
+    for (const k of keys) {
+      if (this.state[k] === 'hazır' || this.state[k] === 'hata') continue;
+      left++;
+      (this.wait[k] = this.wait[k] || []).push(done);
+      if (this.state[k] === 'yükleniyor') continue;
+      this.state[k] = 'yükleniyor';
+      this.fetch(k);
+    }
+    if (!left && cb) cb();
+  },
+  parse(key, onDone) {
+    const A = window.TM_ASSETS || {}, b64 = A[key];
+    if (!b64) { console.error('Tapınak varlığı yok:', key); onDone(null); return; }
+    try {
+      const bin = atob(b64), buf = new ArrayBuffer(bin.length), v = new Uint8Array(buf);
+      for (let i = 0; i < bin.length; i++) v[i] = bin.charCodeAt(i);
+      delete A[key]; // base64 metni bellekten bırak
+      new THREE.GLTFLoader().parse(buf, '', (g) => onDone(g), (e) => { console.error('Tapınak varlığı ayrıştırılamadı:', key, e); onDone(null); });
+    } catch (e) { console.error('Tapınak varlığı çözümlenemedi:', key, e); onDone(null); }
+  },
+  fetch(k) {
+    const finish = (ok) => { this.state[k] = ok ? 'hazır' : 'hata'; const w = this.wait[k] || []; this.wait[k] = []; w.forEach((f) => f()); };
+    const after = () => {
+      if (k === 'silah') {
+        let n = TEMPLE_WEAPONS.length, any = false;
+        for (const w of TEMPLE_WEAPONS) this.parse('tapinak_w_' + w, (g) => { if (g) { this.w[w] = g; any = true; } if (--n === 0) finish(any); });
+      } else this.parse('tapinak_' + k, (g) => { if (g) this.gl[k] = g; finish(!!g); });
+    };
+    const A = window.TM_ASSETS;
+    if (A && A[k === 'silah' ? 'tapinak_w_mace' : 'tapinak_' + k]) { after(); return; } // sayfaya gömülü derleme
+    const s = document.createElement('script');
+    s.src = TEMPLE_FILES[k]; s.async = true;
+    s.onload = after;
+    s.onerror = () => { console.error('Tapınak varlığı indirilemedi:', s.src); finish(false); };
+    document.head.appendChild(s);
+  },
+};
+
+// ---------- GLB düşman modeli ----------
+// Klipler (tools/anim_enemy.mjs, sahne extras'ında enemy.ev = { klip: { dur, hit } }): idle · walk · run · death +
+// türüne göre atk1/atk2(/k_atk1..3) · slam · spin · roar · plant · cast · seal · shoot.
+function buildTempleMob(t) {
+  const gl = TempleAssets.gl[t.tm];
+  if (!gl) return null;
+  const info = gl.scene.userData.enemy || {};
+  const root = new THREE.Group(), body = new THREE.Group();
+  root.add(body);
+  const wrap = new THREE.Group(); wrap.scale.setScalar(TEMPLE_MOB_H); body.add(wrap);
+  const scene = THREE.SkeletonUtils.clone(gl.scene); wrap.add(scene);
+  scene.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
+  const mixer = new THREE.AnimationMixer(scene);
+  const actions = {};
+  for (const c of gl.animations) actions[c.name] = mixer.clipAction(c);
+  const mount = (bone, m, wk) => {
+    const b = scene.getObjectByName(bone), w = TempleAssets.w[wk];
+    if (!b || !m || !w) return null;
+    const g = new THREE.Group(); g.position.fromArray(m.p); g.quaternion.fromArray(m.q);
+    const ws = w.scene.clone(true); ws.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
+    g.add(ws); b.add(g);
+    return g;
+  };
+  if (t.wR) mount('mixamorigRightHand', info.handMount, t.wR);
+  if (t.wL) mount('mixamorigLeftHand', info.handMountL, t.wL);
+  if (t.sh) mount('mixamorigLeftForeArm', info.shieldMount, t.sh);
+  let crystal = null;
+  if (t.crystal && TempleAssets.w.crystal) { crystal = TempleAssets.w.crystal.scene.clone(true); crystal.traverse((o) => { if (o.isMesh) o.frustumCulled = false; }); wrap.add(crystal); }
+  const names = Object.keys(actions);
+  const atk = t.tm === 'okcu' ? ['shoot'] : t.tm === 'buyucu' ? ['cast'] : names.filter((n) => (t.set === 'kirik' ? /^k_atk\d$/ : /^atk\d$/).test(n)).sort();
+  root.add(blobShadow(0.55));
+  return {
+    root, body, legs: [], wings: [], kind: 'tapinak', height: TEMPLE_MOB_H,
+    tm: { mixer, actions, ev: info.ev || {}, info, atk: atk.length ? atk : ['idle'], cur: null, act: null, spd: 1, v: 0, px: null, pz: null, crystal, wrap, hand: scene.getObjectByName('mixamorigRightHand') },
+  };
+}
+// eylem adı → klip; vuruş anının hizalanacağı süre (yer uyarısı / mermi zamanlamasıyla aynı an)
+const TM_CLIP = { volley: 'shoot', sealrune: 'seal', shock: 'slam', enrage: 'roar', summon: 'roar', bonerain: 'roar', frenzy: 'roar', phase: 'roar' };
+const TM_ALIGN = { slam: 1.0, volley: 0.5, spin: 0.65, shock: 1.0, roar: 1.0, sealrune: 0.75, plant: 0.95 };
+function tmPlay(mob, name) {
+  const K = mob.M.tm; if (!K || mob.dead) return null;
+  const A = K.actions;
+  let clip = name === 'atk' ? K.atk[0] : name === 'atk2' ? K.atk[1 % K.atk.length] : A[name] ? name : TM_CLIP[name];
+  if (!clip || !A[clip]) clip = K.atk[0];
+  const a = A[clip]; if (!a) return null;
+  a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true;
+  const ev = K.ev[clip] || {}, hit = ev.hit != null ? ev.hit : 0.35, al = TM_ALIGN[name];
+  K.act = { clip, a, hit, pre: al ? clamp(hit / al, 0.3, 2.5) : 1, dur: a.getClip().duration };
+  a.timeScale = K.act.pre * K.spd;
+  if (K.cur === clip) a.setEffectiveWeight(1);
+  a.play(); // etkin (isRunning); başka klipten geliyorsa animateTempleMob yumuşak geçişle ağırlığını açar
+  return K.act;
+}
+// saniye cinsinden: oynayan eylemin vuruş anına kalan süre
+const tmHitIn = (K) => (K && K.act ? (K.act.hit - K.act.a.time) / Math.max(0.05, K.act.pre * K.spd) : 0.3);
+function animateTempleMob(mob, dt) {
+  const K = mob.M.tm, A = K.actions;
+  if (K.px != null && dt > 0) { const v = Math.hypot(mob.x - K.px, mob.z - K.pz) / dt; K.v += (Math.min(v, 25) - K.v) * Math.min(1, dt * 10); }
+  K.px = mob.x; K.pz = mob.z;
+  if (K.act && (K.act.a.time >= K.act.dur - 0.02 || !K.act.a.isRunning())) K.act = null;
+  const W = TEMPLE_MOB_H * mob.size, runW = (K.info.runSpeed || 2.7) * W, walkW = (K.info.walkSpeed || 0.72) * W;
+  let want = 'idle', ts = 1;
+  if (K.act) want = K.act.clip;
+  else if ((mob.moving || mob.charge) && K.v > 0.3) {
+    if (mob.charge || K.v / runW > 0.5) { want = 'run'; ts = clamp(K.v / runW, 0.6, 1.7); }
+    else { want = A.walk ? 'walk' : 'run'; ts = clamp(K.v / walkW, 0.6, 2.2); }
+  }
+  if (want !== K.cur && A[want]) {
+    const next = A[want], prev = K.cur && A[K.cur], f = K.act ? 0.1 : 0.22;
+    if (!K.act) next.reset();
+    next.setEffectiveWeight(1); next.fadeIn(f).play();
+    if (prev && prev !== next) prev.fadeOut(f);
+    K.cur = want;
+  }
+  if (K.act) K.act.a.timeScale = (K.act.a.time < K.act.hit ? K.act.pre : 1) * K.spd;
+  else if (A[want]) A[want].timeScale = ts;
+  K.mixer.update(dt);
+  if (K.crystal && K.hand) { // Mühür Büyücüsü: kristal sağ elin üstünde süzülür, döner
+    const p = K.hand.getWorldPosition(_tmV); K.wrap.worldToLocal(p);
+    K.crystal.position.set(p.x, p.y + 0.14 + Math.sin(mob.anim * 2.4) * 0.015, p.z);
+    K.crystal.rotation.y += dt * 1.6;
+  }
+}
+const _tmV = new THREE.Vector3();
+function tmDie(mob) {
+  const K = mob.M.tm, a = K.actions.death;
+  K.act = null;
+  for (const n in K.actions) if (K.actions[n] !== a) K.actions[n].fadeOut(0.15);
+  if (!a) return;
+  a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; a.timeScale = 1;
+  a.setEffectiveWeight(1); a.fadeIn(0.1).play(); K.cur = 'death';
+}
+
+// ---------- Dairesel arena ----------
+// Ortak altyapı: merkez (AX, AZ), yürünebilir yarıçap AR. Gerçek daire: walkable() L.circ'e bakar (iç sütunlar delik);
+// L.grid yalnız mini harita / BFS için dairenin karo yaklaşımı. Kuzey (-z): üst kat portalı, güney (+z, kameraya yakın): giriş.
+const TEMPLE_AR = 12.2, TEMPLE_PILLAR_R = 7.4;
+function templeWalk(L, x, z) {
+  const C = L.circ, dx = x - C.x, dz = z - C.z;
+  if (dx * dx + dz * dz > C.r * C.r) return false;
+  for (const h of C.holes) { const hx = x - h.x, hz = z - h.z; if (hx * hx + hz * hz < h.r * h.r) return false; }
+  return true;
+}
+// kat → renk aksanı (1-5 sıcak bronz, 6 kızıl, 7-9 kor, 10 erimiş altın)
+const templeAccent = (f) => (f === 9 ? 0xffc050 : f >= 6 ? 0xff5a28 : f === 5 ? 0xff7a30 : 0xffa040);
+// merkez mühür dokusu (taş zemin + bronz kakma + rünler; kırık katlarda çatlaklar) ve parıltı dokusu
+function templeSealTex(f) {
+  const key = 'tseal' + (f >= 5 ? 'b' : 'a');
+  if (GEO[key]) return GEO[key];
+  const N = 1024, C = N / 2;
+  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = N; return c; };
+  const cv = mk(), g = cv.getContext('2d'), ce = mk(), e = ce.getContext('2d');
+  const rnd = mulberry32(77 + f);
+  // taş taban
+  const grd = g.createRadialGradient(C, C, 40, C, C, C);
+  grd.addColorStop(0, '#6a5a4a'); grd.addColorStop(1, '#4a4038');
+  g.fillStyle = grd; g.beginPath(); g.arc(C, C, C - 2, 0, TAU); g.fill();
+  for (let i = 0; i < 2600; i++) { const a = rnd() * TAU, r = Math.sqrt(rnd()) * (C - 6); g.fillStyle = `rgba(${rnd() < 0.5 ? '20,16,12' : '140,120,96'},${0.05 + rnd() * 0.08})`; g.fillRect(C + Math.cos(a) * r, C + Math.sin(a) * r, 2 + rnd() * 6, 2 + rnd() * 6); }
+  // döşeme halkaları
+  g.strokeStyle = 'rgba(20,14,10,0.7)'; g.lineWidth = 4;
+  for (const r of [C * 0.36, C * 0.62]) { g.beginPath(); g.arc(C, C, r, 0, TAU); g.stroke(); }
+  for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; g.beginPath(); g.moveTo(C + Math.cos(a) * C * 0.62, C + Math.sin(a) * C * 0.62); g.lineTo(C + Math.cos(a) * (C - 4), C + Math.sin(a) * (C - 4)); g.stroke(); }
+  // bronz kakma: iki halka + 8 köşeli yıldız + iç halka + artı (kalkandaki mühür)
+  const both = (fn) => { fn(g, '#c88a48', '#7a4a20'); fn(e, '#ffb060', '#ff7a20'); };
+  both((x, c1, c2) => {
+    x.lineCap = 'round'; x.lineJoin = 'round';
+    x.strokeStyle = c2; x.lineWidth = 26; x.beginPath(); x.arc(C, C, C * 0.93, 0, TAU); x.stroke();
+    x.strokeStyle = c1; x.lineWidth = 14; x.beginPath(); x.arc(C, C, C * 0.93, 0, TAU); x.stroke();
+    x.lineWidth = 9; x.beginPath(); x.arc(C, C, C * 0.8, 0, TAU); x.stroke();
+    x.lineWidth = 12;
+    for (const off of [0, Math.PI / 4]) { x.beginPath(); for (let k = 0; k <= 4; k++) { const a = off + (k / 4) * TAU, px = C + Math.cos(a) * C * 0.74, py = C + Math.sin(a) * C * 0.74; if (k) x.lineTo(px, py); else x.moveTo(px, py); } x.stroke(); }
+    x.lineWidth = 10; x.beginPath(); x.arc(C, C, C * 0.36, 0, TAU); x.stroke();
+    x.lineWidth = 8; x.beginPath(); x.arc(C, C, C * 0.2, 0, TAU); x.stroke();
+    x.lineWidth = 12; x.beginPath(); x.moveTo(C, C - C * 0.36); x.lineTo(C, C + C * 0.36); x.moveTo(C - C * 0.36, C); x.lineTo(C + C * 0.36, C); x.stroke();
+    // rün kuşağı
+    x.lineWidth = 6;
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * TAU; x.save(); x.translate(C + Math.cos(a) * C * 0.865, C + Math.sin(a) * C * 0.865); x.rotate(a + Math.PI / 2);
+      x.beginPath(); x.moveTo(-12, -14); x.lineTo(0, 14); x.lineTo(12, -14); if (i % 3 === 0) { x.moveTo(-14, 0); x.lineTo(14, 0); } else if (i % 3 === 1) { x.moveTo(0, -16); x.lineTo(0, 6); }
+      x.stroke(); x.restore();
+    }
+    x.fillStyle = c1; x.beginPath(); x.arc(C, C, 30, 0, TAU); x.fill();
+  });
+  // kırık mühür (1-5. kat): çatlaklar parıltıyı da böler
+  if (f < 5) {
+    g.strokeStyle = 'rgba(16,10,6,0.95)'; e.strokeStyle = '#000';
+    for (let k = 0; k < 7; k++) {
+      let a = rnd() * TAU, r = C * (0.15 + rnd() * 0.3), px = C + Math.cos(a) * r, py = C + Math.sin(a) * r;
+      g.lineWidth = e.lineWidth = 5 + rnd() * 5; g.beginPath(); e.beginPath(); g.moveTo(px, py); e.moveTo(px, py);
+      for (let s = 0; s < 6; s++) { a += (rnd() - 0.5) * 0.9; r += C * (0.08 + rnd() * 0.08); px = C + Math.cos(a) * r; py = C + Math.sin(a) * r; g.lineTo(px, py); e.lineTo(px, py); }
+      g.stroke(); e.stroke();
+    }
+  }
+  const map = new THREE.CanvasTexture(cv), emi = new THREE.CanvasTexture(ce);
+  map.colorSpace = THREE.SRGBColorSpace; emi.colorSpace = THREE.SRGBColorSpace;
+  map.anisotropy = emi.anisotropy = 4;
+  return (GEO[key] = { map, emi });
+}
+// sancak dokusu (kızıl kumaş, bronz mühür)
+function templeBannerTex() {
+  if (GEO.tBanner) return GEO.tBanner;
+  const c = document.createElement('canvas'); c.width = 128; c.height = 320;
+  const g = c.getContext('2d');
+  g.fillStyle = '#6a1a12'; g.beginPath(); g.moveTo(0, 0); g.lineTo(128, 0); g.lineTo(128, 280); g.lineTo(64, 320); g.lineTo(0, 280); g.closePath(); g.fill();
+  g.fillStyle = '#8a2a1a'; g.fillRect(8, 0, 112, 270);
+  g.strokeStyle = '#d8a050'; g.lineWidth = 6; g.strokeRect(14, 8, 100, 252);
+  g.lineWidth = 7; g.beginPath(); g.arc(64, 120, 34, 0, TAU); g.stroke();
+  g.lineWidth = 6; g.beginPath(); g.moveTo(64, 78); g.lineTo(64, 162); g.moveTo(22, 120); g.lineTo(106, 120); g.stroke();
+  g.beginPath(); g.arc(64, 120, 12, 0, TAU); g.stroke();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return (GEO.tBanner = t);
+}
+// polar döşeme: halkalara bölünmüş, kenarları pahlı taş levhalar (tek geometri, köşe renkli)
+function templeFlagstones(cx, cz, rings, baseCol, rnd) {
+  const pos = [], col = [], idx = [], c = new THREE.Color();
+  const quad = (a, b, cc, d, cr) => { const o = pos.length / 3; for (const p of [a, b, cc, d]) { pos.push(p[0], p[1], p[2]); col.push(cr.r, cr.g, cr.b); } idx.push(o, o + 1, o + 2, o, o + 2, o + 3); };
+  for (const [r0, r1, n, tone] of rings) {
+    const off = rnd() * TAU;
+    for (let i = 0; i < n; i++) {
+      const a0 = off + (i / n) * TAU, a1 = off + ((i + 1) / n) * TAU, gap = 0.045;
+      const ga = gap / ((r0 + r1) / 2), h = rnd() * 0.02 - 0.01, sub = Math.max(1, Math.ceil(((a1 - a0) * r1) / 0.8));
+      c.setHex(baseCol).multiplyScalar(tone * (0.84 + rnd() * 0.3));
+      const top = c.clone(), side = c.clone().multiplyScalar(0.62);
+      const P_ = (r, a, y) => [cx + Math.cos(a) * r, y, cz + Math.sin(a) * r];
+      const ri = r0 + gap, ro = r1 - gap;
+      for (let s = 0; s < sub; s++) {
+        const b0 = a0 + ga + ((a1 - a0 - 2 * ga) * s) / sub, b1 = a0 + ga + ((a1 - a0 - 2 * ga) * (s + 1)) / sub;
+        quad(P_(ri, b0, h), P_(ri, b1, h), P_(ro, b1, h), P_(ro, b0, h), top);
+        quad(P_(ro, b0, h), P_(ro, b1, h), P_(ro + 0.03, b1, -0.08), P_(ro + 0.03, b0, -0.08), side);
+        quad(P_(ri - 0.03, b0, -0.08), P_(ri - 0.03, b1, -0.08), P_(ri, b1, h), P_(ri, b0, h), side);
+      }
+      const e0 = a0 + ga, e1 = a1 - ga;
+      quad(P_(ri, e0, h), P_(ro, e0, h), P_(ro, e0 - 0.004, -0.08), P_(ri, e0 - 0.004, -0.08), side);
+      quad(P_(ro, e1, h), P_(ri, e1, h), P_(ri, e1 + 0.004, -0.08), P_(ro, e1 + 0.004, -0.08), side);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  return geo;
+}
+function buildTempleFloor(dIdx, f, seed) {
+  const dg = DUNGEONS[dIdx], th = THEMES[dg.theme], F = TEMPLE_FLOORS[f];
+  const R0 = Math.random; Math.random = mulberry32((seed >>> 0) || 1);
+  try {
+    const L = newLevel('dungeon');
+    L.theme = th; L.dg = dg; L.dIdx = dIdx; L.floorIdx = f; L.diff = 0;
+    L.lastFloor = f === TEMPLE_FLOORS.length - 1;
+    L.floorLv = templeFloorLv(f);
+    if (TEMPLE_POW[f]) L.mobPow = TEMPLE_POW[f];
+    setAtmosphere(th);
+    const W = 32, H = 36, AX = 32, AZ = 30, AR = TEMPLE_AR;
+    const grid = new Uint8Array(W * H);
+    L.circ = { x: AX, z: AZ, r: AR, holes: [] };
+    const pillars = [45, 135, 225, 315].map((d) => { const a = (d * Math.PI) / 180; return { x: AX + Math.cos(a) * TEMPLE_PILLAR_R, z: AZ + Math.sin(a) * TEMPLE_PILLAR_R }; });
+    for (const p of pillars) L.circ.holes.push({ x: p.x, z: p.z, r: 1.05 });
+    Object.assign(L, { W, H, grid, rooms: [{ x0: (AX - AR) / T, y0: (AZ - AR) / T, w: (2 * AR) / T, h: (2 * AR) / T, cx: AX / T, cy: AZ / T, kind: 'arena', round: AR / T }] });
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (templeWalk(L, (i + 0.5) * T, (j + 0.5) * T)) grid[j * W + i] = 1;
+    const acc = templeAccent(f), boss = !!F.boss;
+    const G_ = L.group;
+    // --- zemin: merkez mühür + iç döşeme + bronz kuşak + dış yürüyüş halkası ---
+    const flo = new THREE.Mesh(templeFlagstones(AX, AZ, [[4.55, 5.9, 18, 1], [5.9, 7.25, 22, 0.96], [7.25, 8.5, 26, 1], [8.5, 9.55, 30, 0.95], [9.95, 11.1, 38, 0.88], [11.1, 12.5, 44, 0.84]], th.floor, Math.random), new THREE.MeshLambertMaterial({ vertexColors: true }));
+    flo.userData.dyn = true; flo.userData.noCast = true; flo.receiveShadow = true; G_.add(flo); L.disposables.push(flo.geometry, flo.material);
+    const under = new THREE.Mesh(new THREE.CircleGeometry(13.2, 64), mat(0x231a14)); under.rotation.x = -Math.PI / 2; under.position.set(AX, -0.07, AZ); under.userData.dyn = true; under.userData.noCast = true; G_.add(under); L.disposables.push(under.geometry);
+    const ST = templeSealTex(f);
+    const sealM = new THREE.MeshLambertMaterial({ map: ST.map, emissiveMap: ST.emi, emissive: new THREE.Color(acc).multiplyScalar(0.85), emissiveIntensity: boss ? 0.5 : 0.32 });
+    const seal = new THREE.Mesh(new THREE.CircleGeometry(4.6, 64), sealM); seal.rotation.x = -Math.PI / 2; seal.position.set(AX, 0.012, AZ); seal.receiveShadow = true; seal.userData.dyn = true; seal.userData.noCast = true; G_.add(seal);
+    L.disposables.push(seal.geometry, sealM);
+    const bronze = mat(0x9a6a34, { e: 0x3a1a04, ei: 0.4 }), bronzeD = mat(0x6a4422);
+    const band = new THREE.Mesh(new THREE.RingGeometry(9.58, 9.92, 96), bronze); band.rotation.x = -Math.PI / 2; band.position.set(AX, 0.015, AZ); band.userData.dyn = true; band.userData.noCast = true; G_.add(band); L.disposables.push(band.geometry);
+    const runeM = new THREE.MeshBasicMaterial({ map: ST.emi, color: acc, transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const glow = new THREE.Mesh(new THREE.CircleGeometry(4.6, 64), runeM); glow.rotation.x = -Math.PI / 2; glow.position.set(AX, 0.03, AZ); glow.userData.dyn = true; G_.add(glow); L.disposables.push(glow.geometry, runeM);
+    glowDecal(G_, AX, 0.02, AZ, 6.5, acc, boss ? 0.22 : 0.14).userData.dyn = true;
+    L.anims.push((t) => { const k = 0.5 + 0.5 * Math.sin(t * (boss ? 2.2 : 1.4)); sealM.emissiveIntensity = (boss ? 0.42 : 0.26) + k * 0.24; runeM.opacity = (boss ? 0.14 : 0.06) + k * 0.08; });
+    // kuşaktaki rün taşları (parıltılı)
+    const runeDot = mat(acc, { e: acc, ei: 1.2 });
+    for (let i = 0; i < 24; i++) { const a = (i / 24) * TAU + 0.13; box(G_, 0.22, 0.05, 0.12, runeDot, AX + Math.cos(a) * 9.75, 0.03, AZ + Math.sin(a) * 9.75).rotation.y = -a; }
+    // --- çevre duvarı (kuzey yüksek, güney alçak: kamera) + kapı açıklıkları ---
+    const wallM = mat(th.wall), capM = mat(th.wallTop), darkM = mat(0x2e241c);
+    const NSEG = 40, WR = 13.7;
+    for (let i = 0; i < NSEG; i++) {
+      const a = ((i + 0.5) / NSEG) * TAU, sx = Math.cos(a), sz = Math.sin(a);
+      const deg = ((a * 180) / Math.PI + 360) % 360; // 90° = güney (+z), 270° = kuzey
+      if (Math.abs(deg - 90) < 13 || Math.abs(deg - 270) < 10) continue;
+      const hgt = 0.8 + 2.8 * clamp(0.35 - sz, 0, 1) + rand(-0.1, 0.15); // kuzey 3.6, yanlar ~1.8, güney (kamera) 0.8
+      const seg = new THREE.Group(); seg.position.set(AX + sx * WR, 0, AZ + sz * WR); seg.rotation.y = -a - Math.PI / 2; G_.add(seg); // yerel +z arenaya bakar
+      const w = (TAU * WR) / NSEG + 0.06;
+      box(seg, w, hgt, 1.2, wallM, 0, hgt / 2, 0);
+      box(seg, w + 0.08, 0.18, 1.36, capM, 0, hgt + 0.09, 0);
+      if (hgt > 1.6) { box(seg, w * 0.92, 0.12, 0.08, bronzeD, 0, hgt * 0.62, 0.62); box(seg, w * 0.86, hgt * 0.38, 0.05, darkM, 0, hgt * 0.3, 0.61); }
+      // sütun (segment başında)
+      if (i % 4 === 0) {
+        const pa = (i / NSEG) * TAU, px = AX + Math.cos(pa) * (WR - 0.75), pz = AZ + Math.sin(pa) * (WR - 0.75), ph = hgt + 0.9;
+        part(G_, cylGeo(0.5, 0.58, ph, 8), wallM, px, ph / 2, pz);
+        part(G_, cylGeo(0.62, 0.62, 0.16, 8), bronzeD, px, 0.5, pz);
+        part(G_, cylGeo(0.6, 0.6, 0.14, 8), bronze, px, ph * 0.72, pz);
+        box(G_, 1.25, 0.3, 1.25, capM, px, ph + 0.15, pz);
+      }
+    }
+    // --- dört iç sütun (çarpışma deliği) + tepelerinde ateş kaseleri ---
+    const pilM = mat(varyColor(th.wall, 0.04)), runeStrip = mat(acc, { e: acc, ei: 1.1 });
+    for (const p of pillars) {
+      const south = p.z > AZ, hgt = south ? 2.1 : 2.8;
+      const gg = new THREE.Group(); gg.position.set(p.x, 0, p.z); gg.rotation.y = Math.atan2(p.x - AX, p.z - AZ); G_.add(gg);
+      box(gg, 1.7, 0.35, 1.7, capM, 0, 0.17, 0);
+      box(gg, 1.32, hgt, 1.32, pilM, 0, 0.35 + hgt / 2, 0);
+      box(gg, 1.42, 0.14, 1.42, bronze, 0, 0.35 + hgt * 0.25, 0);
+      box(gg, 1.42, 0.14, 1.42, bronze, 0, 0.35 + hgt * 0.8, 0);
+      for (const [rx, rz, ry] of [[0, 0.67, 0], [0, -0.67, 0], [0.67, 0, Math.PI / 2], [-0.67, 0, Math.PI / 2]]) box(gg, 0.16, hgt * 0.4, 0.04, runeStrip, rx, 0.35 + hgt * 0.52, rz).rotation.y = ry;
+      box(gg, 1.6, 0.25, 1.6, capM, 0, 0.35 + hgt + 0.12, 0);
+      const top = 0.35 + hgt + 0.25;
+      part(gg, latheGeo('tBowl', [[0, 0], [0.3, 0.02], [0.62, 0.22], [0.7, 0.4], [0.6, 0.4], [0.5, 0.26], [0, 0.22]], 12), bronzeD, 0, top, 0);
+      makeFlame(L, p.x, top + 0.3, p.z, th.torch, 1.35);
+      addLightSpot(L, p.x, top + 1.1, p.z, th.torch, 1.35, 11, { pri: 1.2 });
+      addGlowHalo(L, p.x, top + 0.6, p.z, th.torch, 1.5);
+    }
+    // --- kenar mangalları ---
+    const nB = boss ? 10 : 6;
+    for (let k = 0; k < nB; k++) {
+      const a = ((k + 0.5) / nB) * TAU + Math.PI / 2, x = AX + Math.cos(a) * 12.75, z = AZ + Math.sin(a) * 12.75;
+      if (Math.abs(Math.cos(a)) < 0.25) continue; // tam kuzey/güney kapı önleri boş
+      const gg = new THREE.Group(); gg.position.set(x, 0, z); G_.add(gg);
+      part(gg, latheGeo('tBrz', [[0, 0], [0.34, 0], [0.3, 0.14], [0.16, 0.24], [0.13, 0.7], [0.4, 0.86], [0.46, 1.0], [0, 0.94]], 10), bronzeD, 0, 0, 0);
+      makeFlame(L, x, 1.02, z, th.torch, 0.9);
+      addLightSpot(L, x, 1.8, z, th.torch, 1.0, 8);
+      glowDecal(G_, x, 0.03, z, 1.8, th.torch, 0.2).userData.dyn = true;
+    }
+    // --- kuzey: üst kat portalı (kemer + basamaklar + sancaklar) ---
+    const nz = AZ - AR - 1.0;
+    for (let s = 0; s < 3; s++) box(G_, 4.6 - s * 0.6, 0.18, 0.9, capM, AX, 0.09 + s * 0.18, nz - 0.4 - s * 0.7);
+    for (const sx of [-1, 1]) {
+      box(G_, 1.0, 4.6, 1.2, wallM, AX + sx * 2.3, 2.3, nz - 1.4);
+      box(G_, 1.12, 0.16, 1.32, bronze, AX + sx * 2.3, 3.2, nz - 1.4);
+      const bn = new THREE.Mesh(GEO.tBanPl || (GEO.tBanPl = new THREE.PlaneGeometry(1.1, 2.75)), LOOK.tBanM || (LOOK.tBanM = new THREE.MeshLambertMaterial({ map: templeBannerTex(), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide })));
+      bn.position.set(AX + sx * 4.1, 2.6, nz - 1.9); bn.userData.dyn = true; G_.add(bn);
+    }
+    box(G_, 5.6, 0.8, 1.3, capM, AX, 4.95, nz - 1.4);
+    box(G_, 5.0, 0.18, 1.4, bronze, AX, 4.55, nz - 1.4);
+    const upP = makePortal(L, AX, nz - 1.2, acc);
+    upP.active = false;
+    const up = { kind: 'tup', x: AX, z: AZ - AR + 0.6, r: 2.6, label: L.lastFloor ? 'Tapınaktan ayrıl' : 'Üst Kata Çık / Köye Dön', lockLabel: 'Mühürlü · tüm düşmanları yen', active: false, portal: upP };
+    L.interact.push(up);
+    // --- güney: giriş (basamaklar, kırık mühür kapısı) + köye dönüş portalı ---
+    const sz0 = AZ + AR + 0.6;
+    for (let s = 0; s < 4; s++) box(G_, 4.2, 0.16, 0.8, capM, AX, -0.08 - s * 0.16, sz0 + 0.4 + s * 0.75);
+    for (const sx of [-1, 1]) {
+      box(G_, 1.0, 1.6, 1.0, wallM, AX + sx * 2.4, 0.8, sz0 + 0.2);
+      box(G_, 1.1, 0.14, 1.1, bronze, AX + sx * 2.4, 1.2, sz0 + 0.2);
+      // kırık lento parçaları (yerde)
+      if (f < 5) part(G_, boxGeo(1.6, 0.5, 0.6), capM, AX + sx * 1.3, 0.2, sz0 + 1.2 + rand(0, 0.6), 0, rand(-0.4, 0.4), sx * 0.2);
+    }
+    const exitP = makePortal(L, AX, sz0 + 4.4, 0x4ab0ff);
+    exitP.g.scale.setScalar(0.55); exitP.g.position.y = -0.62;
+    L.interact.push({ kind: 'exit', x: AX, z: AZ + AR - 0.4, r: 1.8, label: 'Köye dön', active: true, portal: exitP });
+    L.spawn = { x: AX, z: AZ + AR - 2.4 };
+    // --- patron katı süsleri: ek sütun halkası, kızıl sancaklar, dört mühür kaidesi (10. kat) ---
+    if (boss) {
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * TAU + Math.PI / 8; if (Math.sin(a) > 0.5) continue; // kamera tarafı boş
+        const x = AX + Math.cos(a) * 12.9, z = AZ + Math.sin(a) * 12.9;
+        const bn = new THREE.Mesh(GEO.tBanPl, LOOK.tBanM); bn.position.set(x, 2.4, z); bn.rotation.y = -a - Math.PI / 2; bn.userData.dyn = true; G_.add(bn);
+      }
+    }
+    L.sealPads = [];
+    if (f === 9) for (const d of [270, 0, 90, 180]) {
+      const a = (d * Math.PI) / 180, x = AX + Math.cos(a) * 7.0, z = AZ + Math.sin(a) * 7.0;
+      const pad = new THREE.Mesh(GEO.tPad || (GEO.tPad = new THREE.CylinderGeometry(1.5, 1.6, 0.1, 24)), bronzeD); pad.position.set(x, 0.05, z); G_.add(pad);
+      const pm = new THREE.MeshBasicMaterial({ map: ST.emi, color: acc, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false });
+      const pg = new THREE.Mesh(GEO.fxplane || (GEO.fxplane = new THREE.PlaneGeometry(1, 1)), pm); pg.rotation.x = -Math.PI / 2; pg.position.set(x, 0.12, z); pg.scale.setScalar(3.0); pg.userData.dyn = true; G_.add(pg);
+      L.disposables.push(pm);
+      L.sealPads.push({ x, z, pm, pg });
+    }
+    // dağınık süsler: taş parçaları / kırık rün levhaları (yürünebilir)
+    const rubM = mat(0x3a3028), rubM2 = mat(0x5a4a3a);
+    for (let k = 0; k < 22; k++) { const a = rand(0, TAU), r = rand(11.4, 12.6); if (Math.abs(Math.cos(a)) < 0.2) continue; part(G_, icoGeo(rand(0.1, 0.24), 0), k % 3 ? rubM : rubM2, AX + Math.cos(a) * r, 0.06, AZ + Math.sin(a) * r, rand(0, 3), rand(0, 3), 0).scale.y = 0.6; }
+    mergeStatic(L);
+    markShadows(L);
+    LightPool.reset(L.lightSpots);
+    // --- kat durumu + ilk dalga ---
+    L.temple = { floor: f, wave: 0, waves: F.waves, state: 'fight', idleT: 0, seenN: 0, fought: false, cleared: false, uid: Math.random().toString(36).slice(2, 8), up, ax: AX, az: AZ, seals: null, sealT: 6 };
+    Math.random = R0;
+    for (const s of Temple.wavePlan(L, 0)) L.spawns.push(Object.assign({ timer: -1, mob: null, respawn: false }, s));
+    return L;
+  } finally { Math.random = R0; }
+}
+
+// ---------- Kat akışı ----------
+const Temple = {
+  loading: false,
+  dIdx() { return DUNGEONS.findIndex((d) => d.temple); },
+  save() {
+    if (!P.temple || typeof P.temple !== 'object') P.temple = { best: 0, bestClear: 0, first: 0, runs: 0, seals: 0, claims: [] };
+    return P.temple;
+  },
+  assetsReady(f) { return TempleAssets.ready(TempleAssets.needOf(f)); },
+  // goDungeon: modeller hazır değilse önce yükle (yüklenemezse prosedürel yedek modellerle devam)
+  preload(f, cb) {
+    this.after = cb; // yükleme sürerken gelen son istek bekler (tekrar dokunuş / koop katılım daveti)
+    if (this.loading) return true;
+    this.loading = true;
+    toast('Bronz Taş Tapınağı yükleniyor…');
+    TempleAssets.load(TempleAssets.needOf(f), () => { this.loading = false; const c = this.after; this.after = null; if (c) c(); });
+    return true;
+  },
+  title(L) { const f = L.floorIdx; return `${f + 1}. Kat — ${TEMPLE_FLOORS[f].name}`; },
+  // giriş: rekor (ulaşılan kat), grup uyarısı, sonraki katın modellerini arkada yükle
+  enter(L) {
+    const S = this.save(), f = L.floorIdx;
+    if (f === 0 && !Coop.guest) S.runs = (S.runs || 0) + 1;
+    if (f + 1 > (S.best || 0)) { S.best = f + 1; feed('Tapınak rekoru: ' + (f + 1) + '. kat', '#ffd07a'); }
+    if (TEMPLE_FLOORS[f].group && Coop.count() <= 1) later(2.6, () => feed('Bu kat grup için dengelendi: 3-4 kişiyle girmek önerilir', '#ffb24a'));
+    if (f + 1 < TEMPLE_FLOORS.length) TempleAssets.load(TempleAssets.needOf(f + 1));
+    saveGame();
+  },
+  // dalga yerleşimi: menzilliler arkada (kuzey r 9), yakın dövüş önde (r 5.5-6.5), elit / patron kuzey-merkez;
+  // sonraki dalgalar arenanın ortasında belirir
+  wavePlan(L, w) {
+    const TS = L.temple, list = TS.waves[w] || [], out = [], lv = L.floorLv;
+    const groups = { boss: [], elite: [], ranged: [], melee: [] };
+    for (const [k, n] of list) for (let i = 0; i < n; i++) { const t = MOBS[k]; groups[t.rank === 'boss' ? 'boss' : t.rank === 'elite' ? 'elite' : t.ranged ? 'ranged' : 'melee'].push(k); }
+    const arc = (keys, r, spread, base) => keys.forEach((k, i) => {
+      const n = keys.length, a = base + (n > 1 ? (i / (n - 1) - 0.5) * spread : 0);
+      out.push({ key: k, x: TS.ax + Math.cos(a) * r, z: TS.az + Math.sin(a) * r });
+    });
+    const N = -Math.PI / 2;
+    if (w === 0) {
+      arc(groups.boss, 3.2, 0, N);
+      arc(groups.elite, groups.boss.length ? 6 : 3.8, 1.6, N);
+      arc(groups.melee, groups.boss.length || groups.elite.length ? 6.2 : 5.4, Math.min(2.6, 0.75 * groups.melee.length), N);
+      arc(groups.ranged, 9.2, Math.min(2.2, 0.7 * groups.ranged.length), N);
+    } else {
+      const all = [...groups.boss, ...groups.elite, ...groups.melee, ...groups.ranged];
+      all.forEach((k, i) => { const a = N + (i / all.length) * TAU * 0.999 + 0.4, r = all.length > 1 ? 2.6 : 0; out.push({ key: k, x: TS.ax + Math.cos(a) * r, z: TS.az - 0.5 + Math.sin(a) * r }); });
+    }
+    for (const o of out) { const t = MOBS[o.key]; o.lv = lv + (t.rank === 'boss' ? (t.phases ? 3 : 2) : t.rank === 'elite' ? 1 : 0); o.temple = true; }
+    return out;
+  },
+  // her kare (tüm oyuncularda): mühür noktası görselleri; dalga / temizleme / mühür kararları yalnız host'ta
+  update(L, dt) {
+    const TS = L.temple; if (!TS) return;
+    this.sealVisuals(L, dt);
+    if (Coop.guest) return;
+    if (TS.state === 'fight') {
+      if (L.mobs.some((m) => !m.dead)) TS.idleT = 0;
+      else if (TS.seenN > 0) {
+        TS.idleT += dt;
+        if (TS.idleT > 1.0) { if (TS.wave + 1 < TS.waves.length) this.nextWave(L); else this.clear(L); }
+      }
+    }
+    if (TS.seals) this.sealTick(L, dt);
+  },
+  nextWave(L) {
+    const TS = L.temple;
+    TS.wave++; TS.seenN = 0; TS.idleT = 0;
+    for (const s of this.wavePlan(L, TS.wave)) {
+      FX.burst(s.x, 0.6, s.z, templeAccent(TS.floor), 16, 5); FX.seal(s.x, s.z, 1.3, 1.2, templeAccent(TS.floor));
+      const m = spawnMob(L, s.key, s.lv, s.x, s.z, { key: s.key, lv: s.lv, x: s.x, z: s.z, timer: -1, mob: null, respawn: false });
+      m.state = 'chase';
+    }
+    SFX.play('portal');
+    banner('', (TS.wave + 1) + '. dalga: ' + this.waveText(TS.waves[TS.wave]), 2);
+    Coop.ev('T', 'w', TS.wave);
+  },
+  waveText(w) { return (w || []).map(([k, n]) => n + ' ' + MOBS[k].name).join(', '); },
+  clear(L) {
+    const TS = L.temple;
+    if (TS.state === 'clear') return;
+    TS.state = 'clear';
+    Coop.ev('T', 'c', TS.floor);
+    this.onClear(L);
+  },
+  // tüm oyuncularda: portal açılır, ödül (bir kez) kaydedilir, seçim paneli
+  onClear(L) {
+    const TS = L.temple;
+    if (TS.cleared) return;
+    TS.cleared = true; TS.state = 'clear';
+    TS.up.active = true; TS.up.portal.active = true;
+    FX.burst(TS.up.x, 1.5, TS.up.z - 1, templeAccent(TS.floor), 40, 7);
+    FX.seal(TS.ax, TS.az, 4.6, 2.4, templeAccent(TS.floor));
+    SFX.play('success');
+    const got = this.grant(L);
+    TS.got = got;
+    banner(L.lastFloor ? 'TAPINAK MÜHÜRLENDİ' : 'KAT TEMİZLENDİ', L.lastFloor ? 'Bronz Mühür Muhafızı yenildi' : TEMPLE_FLOORS[TS.floor].name + ' · üst kat portalı açıldı', 3);
+    later(1.8, () => { if (G.level === L && G.player && !G.player.dead && !UI.panel) UI.open('tapinak'); });
+  },
+  // ödül: merkezi tablodan; çantaya → doluysa depoya → o da doluysa satış değeri altın. Hemen kaydedilir.
+  grant(L) {
+    const TS = L.temple, f = TS.floor, R = TEMPLE_REWARDS[f], S = this.save();
+    // ortak örnekte kimlik herkes için aynı (inst.sid); host'un kat uid'si fullState/olayla gelmeyebilir → sid + kat
+    const key = (Coop.inst ? Coop.inst.sid : 'solo' + TS.uid) + ':' + f;
+    S.claims = Array.isArray(S.claims) ? S.claims : [];
+    if (S.claims.includes(key)) return null;
+    if (!TS.fought) { feed('Bu katın savaşına katılmadığın için kat ödülü yok', '#c8b89a'); return null; }
+    S.claims.push(key); if (S.claims.length > 40) S.claims.splice(0, S.claims.length - 40);
+    const got = [], n = (a, b) => randi(a, b);
+    const give = (it) => {
+      if (addItem(it)) return 'çanta';
+      const j = P.depot.indexOf(null); if (j >= 0) { P.depot[j] = it; return 'depo'; }
+      P.gold += sellPrice(it) * (it.type === 'stack' ? it.n : 1); return 'altın';
+    };
+    const stack = (id, c) => { if (c > 0) { const w = give(makeStack(id, c)); got.push(c + ' ' + STACKS[id].name + (w === 'depo' ? ' (depoya)' : w === 'altın' ? ' (çanta dolu → altın)' : '')); } };
+    const gold = Math.round(R.gold * rand(0.95, 1.1));
+    P.gold += gold; got.push(fmtFull(gold) + ' altın');
+    const ex = Math.max(1, Math.round(expNeed(P.lv) * R.exp)); addExp(ex); got.push(fmtFull(ex) + ' EXP');
+    for (const [id, a, b, p] of R.mats || []) if (Math.random() < p) stack(id, n(a, b));
+    if (R.ess && Math.random() < R.ess) stack(RAREMAT[pick(SLOTS)], 1);
+    if (R.ess2 && Math.random() < R.ess2) stack(RAREMAT[pick(SLOTS)], 1);
+    if (R.seal && Math.random() < R.seal[2]) stack('bronzparca', n(R.seal[0], R.seal[1]));
+    const G_ = R.gear;
+    if (G_ && Math.random() < G_.chance) for (let k = 0; k < (G_.n || 1); k++) { const it = rollGear(6, G_.rank, 7, true); const w = give(it); got.push(itemName(it) + (w === 'depo' ? ' (depoya)' : w === 'altın' ? ' (çanta dolu → altın)' : '')); }
+    if (R.rare && Math.random() < R.rare) { const it = rollGear(6, 'boss', 7, true); it.rarity = Math.max(it.rarity, 2); const w = give(it); got.push('Nadir: ' + itemName(it) + (w === 'depo' ? ' (depoya)' : '')); }
+    // ilk kez temizlenen kat: bir kerelik başarı ödülü
+    const bit = 1 << f;
+    if (!((S.first | 0) & bit)) {
+      S.first = (S.first | 0) | bit;
+      const F1 = TEMPLE_FIRST(f);
+      P.gold += F1.gold; got.push('İlk kez: +' + fmtFull(F1.gold) + ' altın');
+      stack('soul', F1.soul);
+      if (F1.seal) stack('bronzparca', F1.seal);
+    }
+    S.bestClear = Math.max(S.bestClear | 0, f + 1);
+    if (f === TEMPLE_FLOORS.length - 1) { S.seals = (S.seals | 0) + 1; P.cleared[L.dg.id] = (P.cleared[L.dg.id] || 0) + 1; got.push('Bronz Mühür ilerlemesi: ' + S.seals); }
+    feed('Kat ödülü kaydedildi: ' + got.slice(0, 3).join(', ') + (got.length > 3 ? '…' : ''), '#ffd07a');
+    saveGame();
+    UI.dirty = true;
+    return got;
+  },
+  onKill(L, m) {
+    if (m.rank !== 'boss') return;
+    P.bosses++; Daily.progress('boss');
+    if (m.t.phases && L.temple) this.sealsOff(L, true);
+  },
+  // ---- Bronz Mühür Muhafızı: 4 aşama ----
+  // 1 (%100-70): ağır çekiç vuruşları · 2 (%70-40): dört mühür noktası (aktifken %60 hasar azaltma; üzerinde 2 sn durarak
+  // söndürülür, sönmemişler rün yağdırır) · 3 (%40-15): sık şok dalgası · 4 (%15 altı): hızlı saldırı, düşük savunma
+  bossPick(m, d) {
+    const f = m.hp / m.maxHp, want = f > 0.7 ? 1 : f > 0.4 ? 2 : f > 0.15 ? 3 : 4;
+    if (want > (m.phase || 1)) return 'phase';
+    const ph = m.phase || 1;
+    m.skT = ph === 1 ? rand(4.5, 6) : ph === 2 ? rand(4, 5.5) : ph === 3 ? rand(2.6, 3.4) : rand(2.2, 2.9);
+    return ph === 1 ? (d < 5 ? 'slam' : 'shock') : ph === 2 ? pick(['slam', 'spin']) : pick(['shock', 'shock', 'slam', 'spin']);
+  },
+  bossPhase(m) {
+    const ph = (m.phase || 1) + 1, L = m.L;
+    this.applyPhase(m, ph);
+    m.casting = ph === 2 ? 1.3 : 1.1;
+    m.playAct(ph === 2 ? 'plant' : 'roar', 1.2);
+    camPunch(1.4); SFX.play('boom');
+    FX.pillar(m.x, m.z, 0xffa040, 9, 1.2, 2.4); FX.ring(m.x, m.z, 8, 0xffc070, 0.9);
+    if (ph === 2 && L.temple) this.sealsOn(L);
+    Coop.ev('T', 'ph', ph);
+  },
+  applyPhase(m, ph) {
+    if ((m.phase || 1) >= ph) return;
+    m.phase = ph;
+    if (ph === 2) { m.dmgK = 0.4; banner(m.name, 'Dört mühür noktası uyandı! Üzerlerinde durarak söndürün', 3); }
+    if (ph === 3) { m.dmgK = 1; if (m.L.temple) this.sealsOff(m.L, false); banner(m.name, 'Şok dalgaları sıklaşıyor!', 2.4); }
+    if (ph === 4) {
+      m.dmgK = 1.35; m.atkCd *= 0.65; m.atk *= 1.15; m.spd *= 1.12; if (m.M.tm) m.M.tm.spd *= 1.25;
+      banner(m.name, 'SON ÖFKE — saldırıları hızlandı, savunması çöktü!', 3);
+    }
+  },
+  sealsOn(L) {
+    const TS = L.temple; if (!TS || TS.seals) return;
+    TS.seals = (L.sealPads.length ? L.sealPads : [270, 0, 90, 180].map((d) => ({ x: TS.ax + Math.cos((d * Math.PI) / 180) * 7, z: TS.az + Math.sin((d * Math.PI) / 180) * 7 }))).map((p) => ({ x: p.x, z: p.z, on: true, p: 0, lp: 0, pad: p }));
+    TS.sealT = 5;
+    for (const s of TS.seals) { FX.pillar(s.x, s.z, 0xffa040, 6, 1, 1.4); FX.seal(s.x, s.z, 1.6, 1.8, 0xffb050); }
+  },
+  sealsOff(L, silent) {
+    const TS = L.temple; if (!TS || !TS.seals) return;
+    for (const s of TS.seals) if (s.on) { s.on = false; if (!silent) FX.burst(s.x, 0.6, s.z, 0xffb050, 16, 5); }
+    TS.seals = null;
+    for (const p of L.sealPads) p.pm.opacity = 0.08;
+  },
+  bossOf(L) { return L.mobs.find((m) => !m.dead && m.t.phases); },
+  // host: mühür söndürme ilerlemesi (oyuncu + misafir vekilleri), sönmemiş mühürlerden rün vuruşu
+  sealTick(L, dt) {
+    const TS = L.temple, boss = this.bossOf(L);
+    if (!boss) { this.sealsOff(L, true); return; }
+    const players = [];
+    if (G.player && !G.player.dead) players.push(G.player);
+    if (Coop.hosting) for (const id of Coop.members) { const g = Coop.proxies[id]; if (g && !g.dead) players.push(g); }
+    TS.seals.forEach((s, i) => {
+      if (!s.on) return;
+      const on = players.some((q) => dist(q.x, q.z, s.x, s.z) < 1.8);
+      s.p = on ? s.p + dt : Math.max(0, s.p - dt * 0.6);
+      if (s.p >= 2.0) { s.on = false; this.sealFx(s); Coop.ev('T', 'so', i); feed('Bir mühür noktası söndü', '#ffd07a'); }
+    });
+    if (TS.seals.every((s) => !s.on)) {
+      boss.dmgK = 1; boss.stun = Math.max(boss.stun, 2.5);
+      banner(boss.name, 'MÜHÜR KALKANI KIRILDI — sersemledi!', 2.4); SFX.play('boom'); camPunch(1.2);
+      Coop.ev('T', 'sb');
+      this.sealsOff(L, true);
+      return;
+    }
+    TS.sealT -= dt;
+    if (TS.sealT <= 0 && players.length) {
+      TS.sealT = rand(5.5, 7);
+      const me = G.player, col = 0xffa040, R = 2.3;
+      for (const s of TS.seals) {
+        if (!s.on) continue;
+        const q = pick(players), x = q.x + rand(-0.6, 0.6), z = q.z + rand(-0.6, 0.6);
+        FX.burst(s.x, 1, s.z, 0xffb050, 10, 4);
+        Coop.ev('t', boss.nid, Math.round(x * 10), Math.round(z * 10), R, 1.3, col, Math.round(boss.atk * 1.1), 0, 0);
+        telegraph(x, z, R, 1.3, col, () => {
+          if (G.level !== L) return;
+          FX.pillar(x, z, 0xffb050, 4, 0.5, 0.5); FX.ring(x, z, R, 0xffc070, 0.35); SFX.play('zap');
+          if (me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) Combat.damagePlayer(boss.atk * 1.1, boss);
+        });
+      }
+    }
+  },
+  sealFx(s) { FX.pillar(s.x, s.z, 0xfff0c0, 7, 0.8, 1.2); FX.burst(s.x, 0.8, s.z, 0xffd890, 26, 7); SFX.play('magic'); },
+  // tüm oyuncularda: mühür noktalarının parıltısı; misafirde üzerinde durunca yerel ilerleme halkası (karar host'ta)
+  sealVisuals(L, dt) {
+    const TS = L.temple, me = G.player;
+    if (!TS.seals) return;
+    for (const s of TS.seals) {
+      const pad = s.pad;
+      if (pad && pad.pm) { pad.pm.opacity = s.on ? 0.55 + Math.sin(G.time * 5) * 0.2 : 0.08; pad.pg.rotation.z += dt * (s.on ? 1.2 : 0.2); }
+      if (!s.on) continue;
+      if (Math.random() < dt * 10) FX.spark(s.x + rand(-1.2, 1.2), rand(0.1, 1.6), s.z + rand(-1.2, 1.2), 0xffb050, 0.8, 0.12);
+      const here = me && !me.dead && dist(me.x, me.z, s.x, s.z) < 1.8;
+      s.lp = here ? s.lp + dt : 0;
+      if (here && (s.ringT = (s.ringT || 0) - dt) <= 0) { s.ringT = 0.35; FX.ring(s.x, s.z, 0.6 + Math.min(1, (Coop.guest ? s.lp : s.p) / 2) * 1.2, 0xfff0c0, 0.3); }
+    }
+  },
+  // ---- ortak oyun ----
+  onEvent(e) {
+    const L = G.level, TS = L && L.temple; if (!TS) return;
+    const w = e[1];
+    if (w === 'w') { TS.wave = clamp(e[2] | 0, 0, TS.waves.length - 1); TS.seenN = 0; banner('', (TS.wave + 1) + '. dalga: ' + this.waveText(TS.waves[TS.wave]), 2); SFX.play('portal'); }
+    else if (w === 'c') this.onClear(L);
+    else if (w === 'ph') { const m = this.bossOf(L); if (m) { const to = clamp(e[2] | 0, 1, 4); for (let p = (m.phase || 1) + 1; p <= to; p++) this.applyPhase(m, p); if (m.phase === 2) this.sealsOn(L); } }
+    else if (w === 'so') { const s = TS.seals && TS.seals[e[2] | 0]; if (s && s.on) { s.on = false; this.sealFx(s); } }
+    else if (w === 'sb') { const m = this.bossOf(L); if (m) m.dmgK = 1; banner(m ? m.name : '', 'MÜHÜR KALKANI KIRILDI', 2); this.sealsOff(L, true); }
+  },
+  pack(L) {
+    const TS = L.temple, m = this.bossOf(L);
+    return [TS.wave, TS.cleared ? 1 : 0, m ? m.phase || 1 : 0, TS.seals ? TS.seals.reduce((a, s, i) => a | (s.on ? 1 << i : 0), 0) : -1];
+  },
+  applyState(a) {
+    const L = G.level, TS = L && L.temple;
+    if (!TS || !Array.isArray(a)) return;
+    TS.wave = clamp(a[0] | 0, 0, TS.waves.length - 1);
+    const m = this.bossOf(L);
+    if (m && a[2] > 1) for (let ph = 2; ph <= Math.min(4, a[2] | 0); ph++) this.applyPhase(m, ph);
+    if (a[3] >= 0 && m && (m.phase || 1) === 2) { this.sealsOn(L); TS.seals.forEach((s, i) => { s.on = !!(a[3] & (1 << i)); }); if (m && !a[3]) m.dmgK = 1; }
+    if (a[1] && !TS.cleared) this.onClear(L);
+  },
+};
+// halka biçimli yer uyarısı (iç r0 – dış r1): şok dalgasının ikinci halkası; içeri kaçan kurtulur
+function telegraphRing(x, z, r0, r1, dur, color, onDone) {
+  const g = new THREE.Group(); g.position.set(x, 0.06, z);
+  const k0 = r0 / r1;
+  const key = 'tgR' + k0.toFixed(2);
+  const edge = new THREE.Mesh(GEO[key + 'e'] || (GEO[key + 'e'] = new THREE.RingGeometry(0.95, 1, 40)), basicMat(color || 0xff3020, 0.8));
+  const inner = new THREE.Mesh(GEO[key + 'i'] || (GEO[key + 'i'] = new THREE.RingGeometry(k0, k0 + 0.04, 40)), basicMat(color || 0xff3020, 0.8));
+  const fill = new THREE.Mesh(GEO[key] || (GEO[key] = new THREE.RingGeometry(k0, 1, 40)), basicMat(color || 0xff3020, 0.22));
+  edge.rotation.x = inner.rotation.x = fill.rotation.x = -Math.PI / 2;
+  g.add(edge, inner, fill); g.scale.set(r1, 1, r1);
+  W3.scene.add(g);
+  const o = { mesh: g, t: 0, dur, game: true, fn: (o, k) => { fill.material.opacity = 0.18 + k * 0.32; if (k >= 1 && !o.done) { o.done = true; onDone && onDone(); } } };
+  FX.list.push(o);
+  return o;
+}
+// şok dalgası (yer uyarılı): önce çevresi (r1), sonra dışa halka (r1-r2) — host'ta ve misafirde aynı kod
+function templeShock(x, z, R1, R2, raw, src, L) {
+  const col = 0xffa040;
+  telegraphRing(x, z, R1, R2, 1.6, col, () => {
+    if (G.level !== L) return;
+    FX.ring(x, z, R2, 0xffc070, 0.5); FX.ring(x, z, (R1 + R2) / 2, 0xffd890, 0.4);
+    for (let k = 0; k < 10; k++) { const a = (k / 10) * TAU; FX.burst(x + Math.cos(a) * (R1 + R2) / 2, 0.4, z + Math.sin(a) * (R1 + R2) / 2, 0xd8b890, 4, 4); }
+    SFX.play('boom'); camPunch(0.8);
+    const me = G.player, d = me ? dist(me.x, me.z, x, z) : 99;
+    if (me && !me.dead && d >= R1 - 0.3 && d < R2 + 0.3) Combat.damagePlayer(raw, src && !src.dead ? src : null);
+  });
 }
 
 // ---------- Mermiler ----------
@@ -14219,6 +15059,7 @@ const Combat = {
     if (m.duelFoe) return Duel.hitFoe(m, mult, o); // düello: hasarı rakibin telefonu hesaplar
     const r = this.calc(mult, m, o.critAdd);
     if (o.noCrit && r.crit) { r.crit = false; r.dmg = Math.round(r.dmg / 1.8); }
+    if (m.dmgK != null && m.dmgK !== 1) r.dmg = Math.max(1, Math.round(r.dmg * m.dmgK)); // tapınak patronu: mühür kalkanı / son öfke
     m.hp -= r.dmg;
     m.hitT = 0; m.lastHit = 0;
     if (!o.dot) { m.flash(); FX.burst(m.x, 1, m.z, r.crit ? 0xffd84a : 0xfff0d0, r.crit ? 10 : 5, 4, 0.1, 0.35); }
@@ -14250,6 +15091,7 @@ const Combat = {
     FX.num(m.x, (m.barH || 2) + 0.4, m.z, '+' + exp + ' EXP', 'exp');
     FX.burst(m.x, 0.8, m.z, m.static ? m.t.eye : 0xc8b8a0, m.static ? 50 : 14, m.static ? 9 : 5);
     this.rollLoot(m);
+    if (L.temple) Temple.onKill(L, m);
     if (m.sp) {
       m.sp.mob = null;
       m.sp.timer = m.sp.respawn ? (m.sp.respawnTime || rand(28, 40)) : -1;
@@ -14309,8 +15151,8 @@ const Combat = {
   rollLoot(m) {
     const L = G.level;
     const rank = m.rank;
-    const dTier = L.dIdx + 1, tier = Math.min(6, dTier); // eşya kademesi en çok 6; 7. zindan kademe 6 + daha iyi paylar
-    const endgame = L.dg.id === 'd7' || !!(m.static && m.t.big); // son oyun kaynağı: Kemik Taht ve Kadim Metin
+    const dTier = Math.min(7, L.dIdx + 1), tier = Math.min(6, dTier); // eşya kademesi en çok 6; 7. zindan (ve tapınak) kademe 6 + daha iyi paylar
+    const endgame = L.dg.id === 'd7' || !!L.dg.temple || !!(m.static && m.t.big); // son oyun kaynağı: Kemik Taht, Bronz Taş Tapınağı ve Kadim Metin
     const n = (k) => (Array.isArray(k) ? randi(k[0], k[1]) : k);
     if (Math.random() < DROP.gold[rank]) {
       const g = Math.round(m.gold * rand(0.7, 1.3));
@@ -15071,6 +15913,10 @@ const UI = {
       if (!it.active) { toast('Portal mühürlü: önce kat muhafızını (elit) yen'); SFX.play('deny'); return; }
       goDungeon(G.level.dIdx, G.level.floorIdx + 1);
     }
+    else if (it.kind === 'tup') { // tapınak: üst kat portalı → seçim paneli
+      if (!it.active) { toast('Portal mühürlü: önce bu katın tüm düşmanlarını yen'); SFX.play('deny'); return; }
+      this.open('tapinak');
+    }
   },
 
   // ---------- HUD ----------
@@ -15139,9 +15985,10 @@ const UI = {
       const cb = $('#btn-ctx');
       if (it && !this.panel) {
         cb.hidden = false;
-        const txt = it.kind === 'down' && !it.active ? it.lockLabel : it.label;
+        const lockable = it.kind === 'down' || it.kind === 'tup';
+        const txt = lockable && !it.active ? it.lockLabel : it.label;
         if (cb.textContent !== txt) cb.textContent = txt;
-        cb.classList.toggle('gold', it.kind !== 'down' || it.active);
+        cb.classList.toggle('gold', !lockable || it.active);
       } else cb.hidden = true;
       const L = G.level;
       $('#zone').innerHTML = L.type === 'village' ? 'Fener Köyü' : `${L.dg.name} · ${L.floorIdx + 1}. kat` + (L.diff ? ` · <b style="color:${DIFFS[L.diff].color}">${DIFFS[L.diff].name}</b>` : '') + (Coop.count() > 1 ? ` · <b style="color:#7ee0ff">${Coop.count()} kişi</b>` : '');
@@ -15533,6 +16380,7 @@ const UI = {
     b.appendChild(el('div', 'muted diffinfo', DIFFS.slice(1).map((d) => `<b style="color:${d.color}">${d.name}</b>: canavar canı ×${d.hp}, saldırısı ×${d.atk} · EXP ve altın ×${d.exp}, daha sık ve daha iyi eşya`).join('<br>') + '<br>Zor, zindanı Normal\'de; Kabus, Zor\'da bitirince açılır.'));
     const list = el('div', 'list'); list.style.marginTop = '8px';
     DUNGEONS.forEach((d, i) => {
+      if (d.temple) { list.appendChild(this.templeRow(d, i)); return; } // Bronz Taş Tapınağı: tek giriş (1. kat), rekor
       const sealLock = d.needSeal && !P.sealed, lock = P.lv < d.req || sealLock;
       const r = el('div', 'dg' + (lock ? ' lock' : ''));
       const boss = MOBS[d.boss].name;
@@ -15552,6 +16400,35 @@ const UI = {
       list.appendChild(r);
     });
     b.appendChild(list);
+  },
+  // Bekçi listesinde Bronz Taş Tapınağı satırı: her deneme 1. kattan; rekor yalnız gösterilir
+  templeRow(d, i) {
+    const PT = Temple.save(), lock = P.lv < d.req;
+    const r = el('div', 'dg' + (lock ? ' lock' : ''));
+    r.innerHTML = `<div class="num">${i + 1}</div><div class="t"><b>${d.name}</b> <span style="display:inline;color:${lock ? 'var(--bad)' : 'var(--exp)'}">Sv ${d.req}+</span><span>${d.desc}</span><span>${d.floors} kat · Canavar Sv ${templeFloorLv(0)}–${templeFloorLv(d.floors - 1) + 3} · Rekor: <b>${PT.best || 0}. kat</b>${PT.bestClear ? ' · en yüksek temizlenen ' + PT.bestClear + '. kat' : ''}${PT.seals ? ' · Bronz Mühür ×' + PT.seals : ''}</span></div>`;
+    const bb = el('div', 'libtns dbtns');
+    const bt = this.btn(lock ? 'Kilitli' : '1. kattan gir', lock ? '' : 'gold', () => { this.close(); goDungeon(i, 0, 0); }, lock);
+    bt.dataset.diff = 0;
+    bb.appendChild(bt);
+    r.appendChild(bb);
+    return r;
+  },
+  // Bronz Taş Tapınağı: kat temizlenince (ya da üst kat portalına dokununca) — kaydedilen ödüller + Üst Kata Çık / Köye Dön
+  p_tapinak(b, S) {
+    const L = G.level, TS = L && L.temple;
+    if (!TS) { this.title('Bronz Taş Tapınağı'); b.appendChild(el('div', 'muted', 'Tapınakta değilsin.')); return; }
+    const f = TS.floor, last = f >= TEMPLE_FLOORS.length - 1, PT = Temple.save();
+    this.title(last ? 'Tapınak mühürlendi' : `${f + 1}. Kat temizlendi`, TEMPLE_FLOORS[f].name);
+    b.appendChild(el('div', 'muted', TS.got ? '<b style="color:var(--parch)">Kazanılanlar (kaydedildi)</b><br>' + TS.got.map(esc).join('<br>') : 'Bu katın ödülü kaydedildi (ya da bu katın savaşına katılmadın).'));
+    b.appendChild(el('div', 'muted', `Rekor: <b style="color:var(--exp)">${PT.best || 0}. kat</b> · en yüksek temizlenen ${PT.bestClear || 0}. kat${PT.seals ? ' · Bronz Mühür ×' + PT.seals : ''}<br>Köye dönersen kazandıkların kalır; yeni deneme yine 1. kattan başlar.`));
+    if (!last && Coop.inst) {
+      const key = 'd' + L.dIdx + '-' + (f + 1), up = [];
+      for (const id in Net.peers) { const q = Net.peers[id]; if (q.st && q.st.l === key) up.push(q.name || 'Oyuncu'); }
+      if (up.length) b.appendChild(el('div', 'muted', '<b style="color:#9fe0ff">Üst katta: ' + up.map(esc).join(', ') + '</b> — çıkarsan aynı kata katılırsın.'));
+    }
+    const acts = el('div', 'facts'); S.foot.appendChild(acts);
+    if (!last) acts.appendChild(this.btn('Üst Kata Çık · ' + (f + 2) + '. kat', 'gold big', () => { this.close(); goDungeon(L.dIdx, f + 1, 0); }));
+    acts.appendChild(this.btn('Köye Dön', 'blue big', () => { this.close(); goVillage(true); }));
   },
   dailyPanel(b) {
     const dl = Daily.ensure(), R = Daily.reward();
@@ -15668,6 +16545,13 @@ const UI = {
       addStack(id, 1);
       SFX.play('success'); toast('+1 ' + st.name); saveGame(); this.render();
     }, !can));
+    // Bronz Taş Tapınağı: 2 Bronz Mühür Parçası → seçili yuvanın Kadim Öz'ü
+    const bp = countStack('bronzparca');
+    if (bp > 0) F.acts.appendChild(this.btn('2 Mühür Parçasıyla', 'blue', () => {
+      if (countStack('bronzparca') < 2 || !canStackFit(id)) return;
+      removeStack('bronzparca', 2); addStack(id, 1);
+      SFX.play('success'); toast('+1 ' + st.name + ' (Bronz Mühür Parçası)'); saveGame(); this.render();
+    }, bp < 2 || !canStackFit(id)));
   },
   // malzeme satırları: elde/gereken (eksik kırmızı)
   matRows(mats) {
@@ -16125,6 +17009,8 @@ function goVillage(fromPortal) {
 // join: ortak zindan örneği {sid, seed, diff, host} — verilmezse odada aynı kat + zorlukta biri varsa ona katılır
 function goDungeon(dIdx, floor, diff, join) {
   if (G.transitioning) return false;
+  // Bronz Taş Tapınağı: katın GLB düşmanları önce yüklenir (bir kez; hata olursa prosedürel yedek modeller)
+  if (DUNGEONS[dIdx] && DUNGEONS[dIdx].temple && !Temple.assetsReady(floor | 0)) return Temple.preload(floor | 0, () => goDungeon(dIdx, floor, diff, join));
   if (!floor) G.diff = clamp(diff | 0, 0, DIFFS.length - 1);
   if (join) G.diff = clamp(join.diff | 0, 0, DIFFS.length - 1);
   else join = Coop.findFor(dIdx, floor, G.diff | 0);
@@ -16140,6 +17026,7 @@ function goDungeon(dIdx, floor, diff, join) {
     Coop.enter(L, seed, join);
     if (join) feed((Net.peers[join.host] && Net.peers[join.host].name || 'Arkadaşın') + ' ile aynı zindandasın', '#9fe0ff');
     const d = DUNGEONS[dIdx];
+    if (L.temple) { banner(d.name, Temple.title(L), 2.4); Temple.enter(L); } else
     banner(d.name + (L.diff ? ' · ' + DIFFS[L.diff].name : ''), `${floor + 1}. kat / ${d.floors}` + (L.lastFloor ? (d.final ? ' · Kadim Metin burada' : ' · Son odada ' + MOBS[d.boss].name) : ''), 2.2);
   });
 }
@@ -16158,6 +17045,7 @@ function update(dt) {
     const ti = Math.floor(pl.z / T) * L.W + Math.floor(pl.x / T);
     if (ti !== L.flowTile) computeFlow(L, pl.x, pl.z);
     for (const m of L.mobs) m.update(dt);
+    if (L.temple) Temple.update(L, dt); // tapınak: dalga / temizleme / mühür noktaları
     // ayrışma
     const ms = L.mobs;
     for (let i = 0; i < ms.length; i++) {
@@ -16484,7 +17372,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad };
+window.__tm = { Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad };
 try {
   const hot = window.claude && window.claude.hot;
   if (hot && hot.ready) hot.ready(boot); else boot(hot && hot.data ? hot.data : {});
