@@ -9333,6 +9333,10 @@ const BALTACI_SKILL_T = {
   b1: { dur: 1.5, release: 0.34, catchT: 1.18 }, // Balta Fırlatma: bırakma / yakalama
   b3: { dur: 1.25, jump: 0.14, land: 0.6 }, // Yer Sarsan: sıçrama / iniş
 };
+// Yetenek kararlılık penceresi (sn): bu süre boyunca joystick, oto saldırı kovalaması ve otomatik yürüme klibi kesmez;
+// sonrasındaki toparlanma hareketle yumuşakça (0.2 sn geçiş) kesilebilir. Bu arada basılan yetenek sıraya alınır.
+const SKILL_LOCK = { b1: 0.44, b2: 0.7, b3: 0.75, b4: 0.5 };
+const skillLockOf = (id) => (SAVASCI_SKILL_T[id] && SAVASCI_SKILL_T[id].lock) || SKILL_LOCK[id] || 0;
 function baltaciExtraClips(key) {
   if (BALTACI_EXTRA[key]) return BALTACI_EXTRA[key];
   const body = BALTACI_BODIES[key];
@@ -9580,10 +9584,10 @@ function buildBaltaciModel(key) {
 const SAVASCI_SCALE = 2.12; // Tripo gövdeleri 1 birim boyunda → ~2.12 (Baltacı ~2.16)
 // Yetenek kliplerinin süreleri ve olay anları (useSkill bunlarla eşzamanlı; klipler tools/anim_warrior2.mjs'de, hareket yakalama)
 const SAVASCI_SKILL_T = {
-  w1: { dur: 1.0, dash0: 0.14, dashT: 0.32, hit: 0.5, leap: 1.15 }, // Hamle: çömel → sıçrayıp atıl (0.14–0.46) → inişte yere iniş
-  w2: { dur: 1.48, hits: [0.28, 0.66, 1.06] }, // Üç Yönlü Kesme: aşağı – yukarı – aşağı (her biri hızlı, arada kısa duraksama)
-  w3: { dur: 1.12, hits: [0.26, 0.75] }, // Kılıç Çevirme: hızlanan iki tur
-  w4: { dur: 1.82, plant: 0.38, rise: 1.12 }, // Mühür Yemini: kılıcı yere sapla → kalk, kılıç göğe
+  w1: { dur: 1.0, dash0: 0.14, dashT: 0.32, hit: 0.5, leap: 1.15, lock: 0.66 }, // Hamle: çömel → sıçrayıp atıl (0.14–0.46) → inişte yere iniş
+  w2: { dur: 1.48, hits: [0.28, 0.66, 1.06], lock: 1.18 }, // Üç Yönlü Kesme: aşağı – yukarı – aşağı (her biri hızlı, arada kısa duraksama)
+  w3: { dur: 1.12, hits: [0.26, 0.75], lock: 0.88 }, // Kılıç Çevirme: hızlanan iki tur
+  w4: { dur: 1.82, plant: 0.38, rise: 1.12, lock: 1.24 }, // Mühür Yemini: kılıcı yere sapla → kalk, kılıç göğe
 };
 function buildSavasciModel(key) {
   const gl = SAVASCI_BODIES[key], info = gl.scene.userData.savasci || {};
@@ -13760,7 +13764,10 @@ class PlayerEnt {
     for (const k in this.cds) if (this.cds[k] > 0) this.cds[k] -= dt;
     if (this.atkT > 0) this.atkT -= dt;
     if (this.potT > 0) this.potT -= dt;
-    if (this.dead) { this.leap = null; this.leapY = 0; this.animate(dt); return; }
+    if (this.skillLock > 0) this.skillLock -= dt;
+    if (this.skillBuf) { this.skillBufT -= dt; if (this.skillBufT <= 0) this.skillBuf = null; else if (!(this.skillLock > 0) && !this.dead) { const q = this.skillBuf; this.skillBuf = null; Combat.useSkill(q); } }
+    if (this.dead) { this.leap = null; this.leapY = 0; this.skillLock = 0; this.skillBuf = null; this.animate(dt); return; }
+    if (!this.leap && !this.dash && this.leapY) this.leapY = 0; // atılma dışarıdan kesildiyse havada kalmasın
     // durum etkileri
     if (this.slowT > 0) this.slowT -= dt;
     if (this.poisonT > 0) {
@@ -13812,6 +13819,8 @@ class PlayerEnt {
       if (!d.quiet) FX.spark(this.x, 0.6, this.z, 0xffd060, 0.3, 0.14);
       if (d.step) d.step(dt);
       if (d.t <= 0) { this.dash = null; if (d.done) d.done(); }
+    } else if (this.skillLock > 0) {
+      // yetenek kararlılık penceresi: yürüme / koşu / oto saldırı kovalaması yok (klip bozulmasın)
     } else if (inp.m > 0.12 && !this.casting) {
       this.autoMove = null; this.queued = null; this.engage = false;
       const sp = this.speed * Math.min(1, inp.m * 1.4) * (this.swing > 0 ? 0.55 : 1);
@@ -13904,7 +13913,7 @@ class PlayerEnt {
       this.skillCast = null;
       if (sc && H.actions[sc[0]]) { H.skillClip = sc[0]; H.skillLeft = sc[1]; H.skillNew = true; }
     }
-    if (H.skillClip && (H.skillLeft <= 0 || (this.moving && !this.dash && !this.leap))) H.skillClip = null;
+    if (H.skillClip && (H.skillLeft <= 0 || (this.moving && !this.dash && !this.leap && !(this.skillLock > 0)))) { if (H.skillLeft > 0) H.skillCut = true; H.skillClip = null; }
     // ağır silah: saldırı klibi oyunun savuruşundan uzun sürer (C.atkDur); bitene dek oynamaya devam
     const atkHold = C.atkDur && C.attack.includes(H.curAnim) && H.actions[H.curAnim].isRunning() && !this.moving;
     if (H.skillClip) {
@@ -13947,11 +13956,14 @@ class PlayerEnt {
         }
         // aynı klip baştan başlıyorsa ağırlığı sıfırdan açma (bir kare bağlama pozuna düşmesin)
         // saldırıda çok kısa geçiş: 0.2-0.3 sn'lik savuruşun hazırlık (kılıcı kaldırma) karesi görünsün
-        if (next !== prev) next.fadeIn(isAtk ? 0.05 : fast ? 0.1 : 0.3);
+        // yetenek: koşudan/yürümeden gelirken 0.1 sn (poz atlamasın); yetenek toparlanması hareketle kesildiyse 0.2 sn
+        const fin = H.skillCut ? 0.2 : isSk ? 0.1 : isAtk ? 0.05 : fast ? 0.1 : 0.3;
+        if (next !== prev) next.fadeIn(fin);
         next.play();
       }
       // koşu/saldırıya hızlı geçiş (büyücüde bekleme duruşundaki uzatılmış asa da çabuk kısalır)
-      if (prev && prev !== next) prev.fadeOut(fast ? 0.1 : 0.25);
+      if (prev && prev !== next) prev.fadeOut(H.skillCut ? 0.2 : isSk ? 0.1 : fast ? 0.1 : 0.25);
+      H.skillCut = false;
       H.curAnim = want;
     }
     // koşu adımı gerçek hıza uysun (ayak kaymasın)
@@ -14246,6 +14258,7 @@ const Combat = {
   useSkill(id, fromQueue) {
     const pl = G.player;
     if (!pl || pl.dead || G.paused) return;
+    if (pl.skillLock > 0) { if ((pl.cds[id] || 0) <= 0) { pl.skillBuf = id; pl.skillBufT = 0.9; } return; } // önceki yetenek bitmeden: sıraya al
     const sk = SKILLS[id];
     const lvl = P.skills[id] || 0;
     if (!lvl) { toast(sk.name + ': Usta\'dan öğren (Sv ' + sk.unlock + ')'); SFX.play('deny'); return; }
@@ -14272,6 +14285,7 @@ const Combat = {
     P.mp -= sk.mp;
     pl.cds[id] = sk.cd;
     pl.skillCast = id; // yalnız animasyon: modelin yetenek klibi varsa oynar
+    if (pl.H && pl.H.clips && pl.H.clips.skills && pl.H.clips.skills[id]) { pl.skillLock = skillLockOf(id); pl.autoMove = null; }
     Net.onSkill(id); // ortak oyun: diğerleri de klibi görsün
     pl.combatT = 0;
     const cls = P.cls;
