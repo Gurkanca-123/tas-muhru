@@ -671,12 +671,12 @@ const STAT_HINT = {
 };
 
 // type: single | aoe_self | aoe_target | dash | buff | heal | projectile | axe_throw | leap (Baltacı) |
-//       seal_dash | whirl | wave (Savaşçı; zamanlamalar SAVASCI_SKILL_T, klipler savasci_*.js içinde)
+//       charge | triple_cut | spin_advance (Savaşçı; zamanlamalar SAVASCI_SKILL_T, klipler savasci_*.js içinde)
 const SKILLS = {
-  w1: { name: 'Mühür Kıran', icon: 'dash', type: 'seal_dash', mult: 2.0, radius: 2.6, stun: 0.6, dashLen: 3.5, mp: 10, cd: 5, range: 8, unlock: 1, desc: 'Çömelip ileri atılır, varışta önündekilere geniş bir kılıç darbesi indirip hafifçe sersemletir.' },
-  w2: { name: 'Girdap Muhafızı', icon: 'spin', type: 'whirl', mult: 0.95, hits: 2, radius: 3.8, mp: 16, cd: 7, unlock: 1, desc: 'Kılıcı yana açıp kendi etrafında iki kez döner; çevresindeki tüm düşmanlara iki kez vurur.' },
-  w3: { name: 'Yarım Mühür', icon: 'slash3', type: 'wave', mult: 2.2, length: 7.5, width: 0.8, spread: 0.35, mp: 16, cd: 8, unlock: 10, desc: 'Kılıcı omzunun üstüne çekip çapraz savurur; önünde genişleyen hilal bir enerji dalgası salar.' },
-  w4: { name: 'Taşın Nefesi', icon: 'aura', type: 'buff', buff: { atkPct: 0.3, defPct: 0.2 }, dur: 18, mp: 28, cd: 30, unlock: 20, swordGlow: true, desc: 'Kılıcı selamlayıp göğe kaldırır: 18 sn saldırı +%30, savunma +%20; kılıç ışır.' },
+  w1: { name: 'Hamle', icon: 'dash', type: 'charge', mult: 2.3, pathMult: 0.7, radius: 2.4, stun: 0.9, dashLen: 4, mp: 10, cd: 6, range: 9, unlock: 1, desc: 'Kılıcı iki elle başının üstüne kaldırıp hedefe atılır; yolundakileri yana savurur, varışta kılıcı yere indirip çevresini sersemletir.' },
+  w2: { name: 'Üç Yönlü Kesme', icon: 'slash3', type: 'triple_cut', mult: 0.95, lastMult: 1.3, radius: 3.3, arc: 1.05, push: 1.4, mp: 14, cd: 7, unlock: 1, desc: 'İleri adımlayarak önündeki yarım daireye üç ağır kesiş indirir (aşağı, yukarı, aşağı); son darbe düşmanları geri iter.' },
+  w3: { name: 'Kılıç Çevirme', icon: 'spin', type: 'spin_advance', mult: 1.15, hits: 2, radius: 3.4, advance: 3, pull: 0.8, mp: 18, cd: 9, range: 7, unlock: 10, desc: 'Kılıcı iki elle tutup alçak duruşla iki tur dönerek ilerler; her turda çevresindekilere vurur ve onları içeri çeker.' },
+  w4: { name: 'Mühür Yemini', icon: 'seal', type: 'buff', buff: { atkPct: 0.3, defPct: 0.2 }, dur: 18, mp: 28, cd: 30, unlock: 20, swordGlow: true, sealPlant: true, radius: 3.2, push: 1.8, stun: 0.6, desc: 'Kılıcını yere saplayıp mühür yemini eder: yerde mühür açılır, çevresindekiler geri savrulur; 18 sn saldırı +%30, savunma +%20, kılıç ışır.' },
   b1: { name: 'Balta Fırlatma', icon: 'axethrow', type: 'axe_throw', mult: 1.6, back: 1.0, mp: 10, cd: 5, range: 8, unlock: 1, desc: 'Baltayı döndürerek fırlatır: gidişte ve dönüşte yolundaki tüm düşmanları biçer, sonra eline döner.' },
   b2: { name: 'Kasırga', icon: 'whirl', type: 'aoe_self', mult: 0.8, hits: 3, radius: 4.0, mp: 18, cd: 7, unlock: 1, desc: 'Baltayla üç tur döner, etrafındaki tüm düşmanları biçer.' },
   b3: { name: 'Yer Sarsan', icon: 'quake', type: 'leap', mult: 2.2, radius: 3.2, stun: 1.5, mp: 16, cd: 9, range: 9, unlock: 10, desc: 'Baltayı başının üstüne kaldırıp hedefe sıçrar; inişte yeri yarar, çevresindekileri sersemletir.' },
@@ -1160,6 +1160,7 @@ const SKILL_ICONS = {
   slash3: ({ L }) => { for (let i = 0; i < 3; i++) { L(3 + i * 4, 13, 8 + i * 4, 2, '#1a1014'); L(2 + i * 4, 13, 7 + i * 4, 2, '#fff4d8'); } },
   spin: ({ C, L, P }) => { C(8, 8, 6, '#fff4d8', 0, 5); C(8, 8, 4, '#ffd060', 2, 6.5); L(8, 8, 14, 5, '#c8d0dc'); P(8, 8, '#fff'); },
   dash: ({ L, R }) => { for (let i = 0; i < 3; i++) L(2, 5 + i * 3, 9, 5 + i * 3, '#ffd060'); L(9, 3, 14, 8, '#fff4d8'); L(9, 13, 14, 8, '#fff4d8'); L(9, 3, 9, 13, '#fff4d8'); R(10, 6, 2, 4, '#fff4d8'); },
+  seal: ({ L, C }) => { C(8, 12, 5, '#ffcf70'); L(8, 1, 8, 11, '#fff4d8'); L(5, 4, 11, 4, '#ffd060'); L(8, 1, 8, 3, '#8a5a2a'); },
   aura: ({ L, C }) => { C(8, 8, 6, '#ff7040'); C(8, 8, 7, '#ffb060'); L(8, 2, 8, 12, '#fff4d8'); L(7, 3, 7, 11, '#c8d0dc'); L(5, 10, 11, 10, '#ffd060'); L(8, 12, 8, 14, '#8a5a2a'); },
   stab: ({ L, P }) => { L(3, 13, 12, 4, '#fff4d8'); L(4, 13, 13, 4, '#c8d0dc'); L(2, 10, 6, 14, '#ffd060'); P(13, 3, '#ff5050'); P(14, 2, '#ff5050'); P(12, 2, '#ff9090'); P(14, 4, '#ff9090'); },
   storm: ({ L }) => { const c = ['#fff4d8', '#c8d0dc', '#ffd060', '#fff4d8']; for (let i = 0; i < 4; i++) { const a = i * 1.57 + 0.4; L(8 + Math.cos(a) * 2, 8 + Math.sin(a) * 2, 8 + Math.cos(a + 0.5) * 7, 8 + Math.sin(a + 0.5) * 7, c[i]); } },
@@ -1309,6 +1310,15 @@ const SMOOTH_ICONS = {
     stickerParts(g, [{ p: fl, f: _lg(g, 0, 110, 0, 6, [[0, '#d8401a'], [0.55, '#ff8a30'], [1, '#ffd060']]) }], 9);
     g.fillStyle = _rg(g, 64, 84, 4, 40, [[0, '#fffbe8'], [1, '#ffd060']]); g.fill(inner);
     stickerParts(g, swordParts(g, 64, 86, 0, 72, 8), 8);
+  },
+  // Mühür Yemini: parlayan mühür halkasına saplanmış kılıç
+  seal: (g) => {
+    const ring = new Path2D(); ring.ellipse(64, 98, 50, 18, 0, 0, TAU); ring.ellipse(64, 98, 34, 11, 0, 0, TAU);
+    g.fillStyle = _rg(g, 64, 98, 6, 52, [[0, 'rgba(255,240,180,.95)'], [0.6, 'rgba(255,207,112,.75)'], [1, 'rgba(255,138,48,0)']]);
+    g.beginPath(); g.ellipse(64, 98, 56, 22, 0, 0, TAU); g.fill();
+    stickerParts(g, [{ p: ring, f: _lg(g, 0, 80, 0, 118, [[0, '#ffd060'], [1, '#ff8a30']]) }], 6);
+    stickerParts(g, swordParts(g, 64, 30, Math.PI, 70, 8), 8);
+    sparkle(g, 26, 40, 9, '#ffe07a'); sparkle(g, 102, 30, 12);
   },
   // Savaşçı saldırı düğmesi: çapraz büyük kılıç
   atk_sword: (g) => { stickerParts(g, swordParts(g, 50, 82, 0.72, 84, 9), 9); sparkle(g, 104, 22, 10); },
@@ -7938,7 +7948,7 @@ const BALTACI_BODIES = {};
 // Gövde, göğüs eşyasının setine göre: boş → fantazi, Bez → bez, Kurt Dişi → kurt, Nihai / Bronz Taş → nihai, Efsanevi → efsane.
 // Büyük oldukları için ihtiyaç anında yüklenir (savasci_<ad>.js → window.TM_ASSETS → GLTFLoader); yüklenene dek
 // yüklenmiş en yakın gövde, o da yoksa prosedürel savaşçı görünür.
-const SAVASCI_FILES = { fantazi: 'savasci_fantazi.js?v=edc75c3f6c', bez: 'savasci_bez.js?v=0480f159a0', kurt: 'savasci_kurt.js?v=32aa8a49ae', nihai: 'savasci_nihai.js?v=689fd60a84', efsane: 'savasci_efsane.js?v=4fe47cd009' };
+const SAVASCI_FILES = { fantazi: 'savasci_fantazi.js?v=da3a019c9d', bez: 'savasci_bez.js?v=26ec8781f5', kurt: 'savasci_kurt.js?v=1caeac14ca', nihai: 'savasci_nihai.js?v=f37b0d1ad8', efsane: 'savasci_efsane.js?v=311c80e9bf' };
 const SAVASCI_ORDER = ['fantazi', 'bez', 'kurt', 'nihai', 'efsane'];
 const SAVASCI_BODY_OF = { bez: 'bez', kurt: 'kurt', nihai: 'nihai', bronzz: 'nihai', efsane: 'efsane' };
 const SAVASCI_BODIES = {}, SAVASCI_LOAD = {};
@@ -9570,10 +9580,10 @@ function buildBaltaciModel(key) {
 const SAVASCI_SCALE = 2.12; // Tripo gövdeleri 1 birim boyunda → ~2.12 (Baltacı ~2.16)
 // Yetenek kliplerinin süreleri ve olay anları (useSkill bunlarla eşzamanlı; klipler tools/anim_warrior2.mjs'de, hareket yakalama)
 const SAVASCI_SKILL_T = {
-  w1: { dur: 1.2, windup: 0.42, dash: 0.16 }, // Mühür Kıran: çömel, kılıcı geri çek → atıl → varışta yükselen kesiş
-  w2: { dur: 1.38, hits: [0.32, 1.05] }, // Girdap Muhafızı: kılıç açık, iki dönüş; her dönüşte vuruş
-  w3: { dur: 1.05, windup: 0.4 }, // Yarım Mühür: iki elle dönerek büyük savuruş, kesiş anında dalga
-  w4: { dur: 1.1 }, // Taşın Nefesi: güç topla → kılıç göğe → savaş duruşu
+  w1: { dur: 1.0, dash0: 0.1, dashT: 0.3, hit: 0.55 }, // Hamle: kılıcı kaldırırken atıl (0.10–0.40) → tepeden yere iniş
+  w2: { dur: 1.43, hits: [0.3, 0.76, 1.24] }, // Üç Yönlü Kesme: aşağı – yukarı – aşağı
+  w3: { dur: 1.27, hits: [0.23, 0.93] }, // Kılıç Çevirme: iki tam tur, her turda vuruş
+  w4: { dur: 1.85, plant: 0.4, rise: 1.35 }, // Mühür Yemini: kılıcı yere sapla → kalk, kılıç göğe
 };
 function buildSavasciModel(key) {
   const gl = SAVASCI_BODIES[key], info = gl.scene.userData.savasci || {};
@@ -12650,8 +12660,8 @@ const FX = {
   },
   // Baltacı "Yer Sarsan": baltanın yere indiği nokta — iki şok halkası, ışıklı uçlarla dışa doğru açılan zemin
   // çatlakları (koyu yarık + sönen turuncu iç ışık), havaya fırlayıp düşen taş parçaları, toz bulutu, çukur izi.
-  quake(x, z, r) {
-    this.ring(x, z, r, 0xfff0c0, 0.32);
+  quake(x, z, r, glowCol) {
+    this.ring(x, z, r, glowCol ? 0xeaf4ff : 0xfff0c0, 0.32);
     this.ring(x, z, r * 1.3, 0xd8c09a, 0.6);
     this.pillar(x, z, 0xffe0a0, 2.4, 0.22, r * 0.3);
     this.burst(x, 0.25, z, 0xa89878, 20, 6, 0.18, 0.7, 5);
@@ -12660,7 +12670,7 @@ const FX = {
     // çatlaklar: her biri 3 parçalı kırık çizgi, merkezden dışa doğru sırayla uzar
     const g = new THREE.Group(); g.position.set(x, 0.06, z);
     const dark = new THREE.MeshBasicMaterial({ color: 0x1e140c, transparent: true, opacity: 0.85, depthWrite: false });
-    const glow = basicMat(0xff9a40, 0.95, true);
+    const glow = basicMat(glowCol || 0xff9a40, 0.95, true);
     const seg = GEO.crackSeg || (GEO.crackSeg = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).translate(0.5, 0, 0));
     const segs = [], N = 9;
     for (let i = 0; i < N; i++) {
@@ -12707,6 +12717,84 @@ const FX = {
     pit.rotation.x = -Math.PI / 2; pit.position.set(x, 0.05, z); pit.scale.setScalar(r * 0.42);
     W3.scene.add(pit);
     this.list.push({ mesh: pit, t: 0, dur: 2.4, fn: (o, k) => { pit.material.opacity = 0.45 * (1 - k); } });
+  },
+  // Savaşçı kesiş izi: dikey düzlemde (ileri + yukarı) süpürülen hilal; roll düzlemi yatırır (çapraz kesiş),
+  // dir 1 = yukarıdan aşağı, -1 = aşağıdan yukarı. Dış renkli yay + içte beyaz parlak çekirdek.
+  cut(x, y, z, rot, roll, color, radius, dir) {
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot;
+    const tilt = new THREE.Group(); tilt.rotation.z = roll || 0; g.add(tilt);
+    const sweep = new THREE.Group(); tilt.add(sweep);
+    const geo = GEO.cutArc || (GEO.cutArc = new THREE.RingGeometry(0.5, 1, 24, 1, -1.2, 2.4).rotateY(-Math.PI / 2));
+    const geo2 = GEO.cutArc2 || (GEO.cutArc2 = new THREE.RingGeometry(0.8, 0.96, 24, 1, -1.05, 2.1).rotateY(-Math.PI / 2));
+    const m1 = new THREE.Mesh(geo, basicMat(color || 0xeaf4ff, 0.85, true)), m2 = new THREE.Mesh(geo2, basicMat(0xffffff, 0.95, true));
+    m1.material.side = m2.material.side = THREE.DoubleSide;
+    sweep.add(m1, m2);
+    W3.scene.add(g);
+    const r = radius || 2, s0 = dir === -1 ? 0.9 : -1.0, s1 = dir === -1 ? -0.9 : 0.75;
+    this.list.push({ mesh: g, t: 0, dur: 0.26, fn: (o, k) => {
+      const e = 1 - (1 - k) * (1 - k);
+      sweep.rotation.x = s0 + (s1 - s0) * e;
+      g.scale.setScalar(r * (0.85 + 0.25 * k));
+      m1.material.opacity = 0.85 * (1 - k); m2.material.opacity = 0.95 * (1 - k * k);
+    } });
+  },
+  // Hamle izi: atılma yolu boyunca dikey ışık şeridi + yerde toz çizgisi
+  trail(x0, z0, x1, z1, color) {
+    const L = Math.hypot(x1 - x0, z1 - z0); if (L < 0.3) return;
+    const g = new THREE.Group(); g.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2); g.rotation.y = Math.atan2(x1 - x0, z1 - z0);
+    const rib = new THREE.Mesh(GEO.fxplane || (GEO.fxplane = new THREE.PlaneGeometry(1, 1)), basicMat(color || 0xcfe4ff, 0.55, true));
+    rib.material.side = THREE.DoubleSide; rib.rotation.y = Math.PI / 2; rib.position.y = 1.0; rib.scale.set(L, 1.3, 1);
+    const gr = new THREE.Mesh(GEO.fxplane, new THREE.MeshBasicMaterial({ color: 0x2a2018, transparent: true, opacity: 0.35, depthWrite: false }));
+    gr.rotation.x = -Math.PI / 2; gr.rotation.z = Math.PI / 2; gr.position.y = 0.05; gr.scale.set(L, 0.6, 1);
+    g.add(rib, gr); W3.scene.add(g);
+    this.list.push({ mesh: g, t: 0, dur: 0.6, fn: (o, k) => { rib.material.opacity = 0.55 * Math.max(0, 1 - k * 2); rib.scale.y = 1.3 * (1 - k * 0.6); gr.material.opacity = 0.35 * (1 - k); } });
+  },
+  // Kılıç Çevirme girdabı: oyuncuyu izleyen, farklı yükseklikte hızla dönen üç yay + teğet rüzgâr parçacıkları
+  vortex(pl, r, dur, color) {
+    const g = new THREE.Group(); W3.scene.add(g);
+    const arcs = [];
+    for (let i = 0; i < 3; i++) {
+      const m = new THREE.Mesh(GEO.vortArc || (GEO.vortArc = new THREE.RingGeometry(0.86, 1, 16, 1, -1.1, 2.2)), basicMat(i === 1 ? 0xffe2a8 : color || 0xdcecff, 0.55, true));
+      m.material.side = THREE.DoubleSide; m.rotation.x = -Math.PI / 2;
+      const h = new THREE.Group(); h.position.y = 0.55 + i * 0.4; h.add(m); g.add(h); arcs.push(h);
+    }
+    this.list.push({ mesh: g, t: 0, dur, fn: (o, k) => {
+      g.position.set(pl.x, 0, pl.z);
+      const fade = Math.min(1, k * 6, (1 - k) * 4);
+      arcs.forEach((h, i) => { h.rotation.y = -o.t * (9.5 + i * 1.3) - i * 2.1; h.scale.setScalar(r * (0.85 + 0.15 * i)); h.children[0].material.opacity = 0.55 * fade; });
+      if (Math.random() < 0.8) { const a = rand(0, TAU), rr = r * rand(0.6, 1.05); this.spawn(pl.x + Math.cos(a) * rr, rand(0.3, 1.6), pl.z + Math.sin(a) * rr, Math.sin(a) * 5, rand(0.2, 0.8), -Math.cos(a) * 5, 0xeaf4ff, 0.28, rand(0.06, 0.1), 0); }
+    } });
+  },
+  // Mühür Yemini: yerde açılıp dönen mühür (rün halkası dokusu, bir kez çizilip önbelleğe alınır)
+  seal(x, z, r, dur, color) {
+    if (!GEO.sealTex) {
+      const c = document.createElement('canvas'); c.width = c.height = 256;
+      const g = c.getContext('2d'), C = 128;
+      g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineCap = 'round';
+      g.lineWidth = 7; g.beginPath(); g.arc(C, C, 120, 0, TAU); g.stroke();
+      g.lineWidth = 3; g.beginPath(); g.arc(C, C, 100, 0, TAU); g.stroke();
+      g.lineWidth = 4; g.beginPath(); g.arc(C, C, 52, 0, TAU); g.stroke();
+      for (let i = 0; i < 16; i++) { // rünler: halkalar arasında kısa çentikli işaretler
+        const a = (i / 16) * TAU; g.save(); g.translate(C + Math.cos(a) * 110, C + Math.sin(a) * 110); g.rotate(a + Math.PI / 2);
+        g.lineWidth = 3; g.beginPath(); g.moveTo(-5, -6); g.lineTo(0, 6); g.lineTo(5, -6); if (i % 2) { g.moveTo(-6, 0); g.lineTo(6, 0); } g.stroke(); g.restore();
+      }
+      g.lineWidth = 4; g.beginPath(); // iç yıldız (mühür)
+      for (let i = 0; i <= 6; i++) { const a = (i * 2 / 6) * TAU * 1.25 - Math.PI / 2, rr = 92; const px = C + Math.cos(a) * rr, py = C + Math.sin(a) * rr; if (i) g.lineTo(px, py); else g.moveTo(px, py); }
+      g.stroke();
+      for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; g.beginPath(); g.moveTo(C + Math.cos(a) * 52, C + Math.sin(a) * 52); g.lineTo(C + Math.cos(a) * 100, C + Math.sin(a) * 100); g.stroke(); }
+      g.beginPath(); g.arc(C, C, 14, 0, TAU); g.fill();
+      GEO.sealTex = new THREE.CanvasTexture(c);
+    }
+    const mat = new THREE.MeshBasicMaterial({ map: GEO.sealTex, color: color || 0xffcf70, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const m = new THREE.Mesh(GEO.fxplane || (GEO.fxplane = new THREE.PlaneGeometry(1, 1)), mat);
+    m.rotation.x = -Math.PI / 2; m.position.set(x, 0.07, z);
+    W3.scene.add(m);
+    this.list.push({ mesh: m, t: 0, dur: dur || 1.6, fn: (o, k) => {
+      const grow = Math.min(1, o.t / 0.22), e = 1 - (1 - grow) * (1 - grow);
+      m.scale.setScalar(2 * r * (0.35 + 0.65 * e)); m.rotation.z = o.t * 0.8;
+      mat.opacity = 0.95 * Math.min(1, grow * 2) * (k < 0.6 ? 1 : (1 - k) / 0.4);
+      if (Math.random() < 0.6) { const a = rand(0, TAU), rr = r * rand(0.3, 0.95); this.spawn(x + Math.cos(a) * rr, 0.1, z + Math.sin(a) * rr, 0, rand(1, 2.2), 0, 0xffd890, rand(0.4, 0.8), rand(0.05, 0.09), 0); }
+    } });
   },
   levelUp(x, z) {
     this.pillar(x, z, 0xffd84a, 8, 1.2, 1.6);
@@ -12980,6 +13068,7 @@ class Mob {
     const pl = Coop.target(this); // ortak zindan (host): en yakın oyuncu; tek başına G.player
     this.tgt = pl;
     const d = pl && !pl.dead ? dist(this.x, this.z, pl.x, pl.z) : 999;
+    if (this.kb) { const k = this.kb, s = Math.min(dt, k.t); moveEntity(G.level, this, k.vx * s, k.vz * s, this.r); k.t -= dt; if (k.t <= 0) this.kb = null; } // Savaşçı yetenekleri: itme / çekme
     if (this.stun > 0) { this.stun -= dt; this.animate(dt); return; }
     if (this.pending) {
       this.pending.t -= dt;
@@ -13628,8 +13717,9 @@ class PlayerEnt {
       const nx = lerp(this.x, d.x, k), nz = lerp(this.z, d.z, k);
       moveEntity(L, this, nx - this.x, nz - this.z, this.r);
       this.moving = true;
-      FX.spark(this.x, 0.6, this.z, 0xffd060, 0.3, 0.14);
-      if (d.t <= 0) { this.dash = null; d.done(); }
+      if (!d.quiet) FX.spark(this.x, 0.6, this.z, 0xffd060, 0.3, 0.14);
+      if (d.step) d.step(dt);
+      if (d.t <= 0) { this.dash = null; if (d.done) d.done(); }
     } else if (inp.m > 0.12 && !this.casting) {
       this.autoMove = null; this.queued = null; this.engage = false;
       const sp = this.speed * Math.min(1, inp.m * 1.4) * (this.swing > 0 ? 0.55 : 1);
@@ -14054,6 +14144,12 @@ const Combat = {
     }
   },
   skillMult(id) { return skillPower(P.skills[id] || 1); },
+  // canavarı (dx, dz) yönünde d birim kaydır (0.18 sn); metin taşları, ortak oyun kopyaları ve boss etkilenmez
+  shove(m, dx, dz, d) {
+    if (!m || m.dead || m.static || m.puppet || m.rank === 'boss' || !(d > 0)) return;
+    const s = d * (m.rank === 'elite' ? 0.5 : 1) / 0.18;
+    m.kb = { vx: dx * s, vz: dz * s, t: 0.18 };
+  },
   useSkill(id, fromQueue) {
     const pl = G.player;
     if (!pl || pl.dead || G.paused) return;
@@ -14156,70 +14252,106 @@ const Combat = {
         } };
         break;
       }
-      case 'seal_dash': {
-        // Mühür Kıran: hazırlık (çömelme) → ileri atılma → varışta önündeki yarım alana kesiş + kısa sersemletme
+      case 'charge': {
+        // Hamle: kılıç iki elle başın üstüne kalkarken hedefe atılır; yoldakiler hasar alıp yana savrulur.
+        // Varışta kılıç önüne yere iner: çelik mavisi çatlaklar, şok halkası, alan hasarı + sersemletme.
         const T1 = SAVASCI_SKILL_T.w1, L = G.level;
-        const t0 = t && !t.dead ? t : this.findTarget(sk.range || 8);
-        const tt = t0 && dist(pl.x, pl.z, t0.x, t0.z) <= (sk.range || 8) ? t0 : null;
-        if (tt) pl.target = tt;
-        if (tt) pl.face(Math.atan2(tt.x - pl.x, tt.z - pl.z), 1, 1);
-        pl.atkT = Math.max(pl.atkT, T1.windup + T1.dash + 0.2);
-        later(T1.windup, () => {
+        const t0 = t && !t.dead ? t : this.findTarget(sk.range || 9);
+        const tt = t0 && dist(pl.x, pl.z, t0.x, t0.z) <= (sk.range || 9) + 1 ? t0 : null;
+        if (tt) { pl.target = tt; pl.face(Math.atan2(tt.x - pl.x, tt.z - pl.z), 1, 1); }
+        pl.atkT = Math.max(pl.atkT, T1.dur);
+        FX.burst(pl.x, 0.2, pl.z, 0xcbb89a, 8, 2, 0.14, 0.4, 4);
+        later(T1.dash0, () => {
           if (pl.dead || G.player !== pl || G.level !== L) return;
-          let dx = Math.sin(pl.rot), dz = Math.cos(pl.rot), go = sk.dashLen || 3.5;
-          if (tt && !tt.dead) { const ex = tt.x - pl.x, ez = tt.z - pl.z, d = Math.hypot(ex, ez) || 1; dx = ex / d; dz = ez / d; go = Math.max(0, d - 1.1 - tt.r); }
-          FX.burst(pl.x, 0.2, pl.z, 0xcbb89a, 10, 3, 0.16, 0.45, 4);
-          pl.dash = { x: pl.x + dx * go, z: pl.z + dz * go, t: T1.dash, done: () => {
-            FX.slash(pl.x + dx * 1.2, 1.1, pl.z + dz * 1.2, pl.rot, 0xffe2a8, 2.4);
-            FX.burst(pl.x + dx, 0.5, pl.z + dz, 0xd8c8a0, 14, 4);
-            SFX.play('swing'); camPunch(0.8);
-            for (const m of G.level.mobs) {
-              if (m.dead) continue;
-              const rx = m.x - pl.x, rz = m.z - pl.z, d = Math.hypot(rx, rz);
-              if (d > sk.radius + m.r || (d > 0.6 && (rx * dx + rz * dz) / d < -0.2)) continue; // yalnız ön yarım alan
-              this.hitMob(m, sk.mult * pw);
-              if (!m.static && !m.dead) Coop.stun(m, sk.stun);
+          let dx = Math.sin(pl.rot), dz = Math.cos(pl.rot), go = sk.dashLen || 4;
+          if (tt && !tt.dead) { const ex = tt.x - pl.x, ez = tt.z - pl.z, d = Math.hypot(ex, ez) || 1; dx = ex / d; dz = ez / d; go = Math.max(0, d - 1.35 - tt.r); pl.face(Math.atan2(dx, dz), 1, 1); }
+          const x0 = pl.x, z0 = pl.z, hit = new Set(tt ? [tt] : []);
+          FX.burst(x0, 0.2, z0, 0xcbb89a, 14, 4, 0.18, 0.5, 4);
+          SFX.play('swing');
+          pl.dash = { x: x0 + dx * go, z: z0 + dz * go, t: T1.dashT, quiet: true, step: () => {
+            FX.spawn(pl.x + rand(-0.3, 0.3), rand(0.3, 1.8), pl.z + rand(-0.3, 0.3), -dx * 2, rand(-0.2, 0.4), -dz * 2, Math.random() < 0.5 ? 0xcfe4ff : 0xffe2a8, 0.32, rand(0.08, 0.15), 0);
+            FX.spawn(pl.x + rand(-0.3, 0.3), 0.12, pl.z + rand(-0.3, 0.3), -dx, rand(0.4, 1), -dz, 0xb0a084, 0.5, 0.16, 2);
+            for (const m of L.mobs) {
+              if (m.dead || hit.has(m) || dist(pl.x, pl.z, m.x, m.z) > 1.1 + m.r) continue;
+              hit.add(m);
+              this.hitMob(m, (sk.pathMult || 0.7) * pw);
+              const side = (m.x - pl.x) * -dz + (m.z - pl.z) * dx >= 0 ? 1 : -1; // yolun hangi yanında
+              this.shove(m, -dz * side, dx * side, 1.6);
+              FX.burst(m.x, 1, m.z, 0xcfe4ff, 8, 4, 0.12, 0.35, 6);
             }
-          } };
+          }, done: () => FX.trail(x0, z0, pl.x, pl.z, 0xcfe4ff) };
+        });
+        later(T1.hit, () => {
+          if (pl.dead || G.player !== pl || G.level !== L) return;
+          const fx = Math.sin(pl.rot), fz = Math.cos(pl.rot);
+          const ix = pl.x + fx * 1.5 - fz * 0.25, iz = pl.z + fz * 1.5 + fx * 0.25; // kılıç sağ önde iner
+          FX.quake(ix, iz, sk.radius, 0x8cc8ff);
+          FX.ring(ix, iz, sk.radius * 1.15, 0xcfe4ff, 0.3);
+          SFX.play('boom'); camPunch(1.3);
+          for (const m of L.mobs) {
+            if (m.dead || dist(ix, iz, m.x, m.z) > sk.radius + m.r) continue;
+            this.hitMob(m, sk.mult * pw);
+            if (!m.static && !m.dead) Coop.stun(m, sk.stun);
+          }
         });
         break;
       }
-      case 'whirl': {
-        // Girdap Muhafızı: iki tur dönüş (klip gövdeyi döndürür), her turda çevresel alan hasarı
+      case 'triple_cut': {
+        // Üç Yönlü Kesme: klipteki üç kesişle eş anlı; önündeki yarım daireye (koni) vurur, adım adım ilerler.
+        // Kesiş izleri dikey yaylar: aşağı (sağ üstten), yukarı, aşağı (ağır, geri iter).
         const T2 = SAVASCI_SKILL_T.w2, L = G.level;
-        pl.spin = 0.4 * (sk.hits || 2);
-        T2.hits.slice(0, sk.hits || 2).forEach((ht, h) => later(ht, () => {
+        const tt = t && !t.dead && dist(pl.x, pl.z, t.x, t.z) < 7 ? t : this.findTarget(6);
+        if (tt) { pl.target = tt; pl.face(Math.atan2(tt.x - pl.x, tt.z - pl.z), 1, 1); }
+        pl.atkT = Math.max(pl.atkT, T2.dur);
+        const fx0 = Math.sin(pl.rot), fz0 = Math.cos(pl.rot);
+        const room = tt && !tt.dead ? Math.max(0, dist(pl.x, pl.z, tt.x, tt.z) - 1.6 - tt.r) : 1.2;
+        const step = Math.min(1.2, room);
+        if (step > 0.05) later(0.16, () => { if (!pl.dead && G.player === pl && G.level === L && !pl.dash) pl.dash = { x: pl.x + fx0 * step, z: pl.z + fz0 * step, t: 1.0, quiet: true }; });
+        const cuts = [{ roll: -0.85, dir: 1, col: 0xeaf4ff }, { roll: 0.8, dir: -1, col: 0xcfe4ff }, { roll: -0.4, dir: 1, col: 0xffe2a8 }];
+        T2.hits.forEach((ht, h) => later(ht, () => {
           if (pl.dead || G.player !== pl || G.level !== L) return;
-          FX.ring(pl.x, pl.z, sk.radius, 0xffd890, 0.35);
-          for (let a = 0; a < 4; a++) FX.slash(pl.x, 1, pl.z, a * 1.57 + h * 0.8, 0xfff0c8, sk.radius * 0.7);
-          SFX.play('swing');
-          for (const m of L.mobs) if (!m.dead && dist(pl.x, pl.z, m.x, m.z) <= sk.radius + m.r) this.hitMob(m, sk.mult * pw);
+          const fx = Math.sin(pl.rot), fz = Math.cos(pl.rot), last = h === T2.hits.length - 1, c = cuts[h % 3];
+          FX.cut(pl.x + fx * 0.6, 1.25, pl.z + fz * 0.6, pl.rot, c.roll, c.col, last ? 2.3 : 2.0, c.dir);
+          FX.slash(pl.x + fx * 1.1, 0.8, pl.z + fz * 1.1, pl.rot + c.roll * 0.7, c.col, last ? 2.4 : 2.0); // üstten de okunsun: yerde hilal
+          SFX.play('swing'); camPunch(last ? 0.9 : 0.4);
+          if (last) { FX.burst(pl.x + fx * 1.8, 0.2, pl.z + fz * 1.8, 0xd8c8a0, 16, 4, 0.16, 0.5, 6); FX.ring(pl.x + fx * 1.6, pl.z + fz * 1.6, 1.6, 0xffe2a8, 0.25); }
+          const cosA = Math.cos(sk.arc || 1.05);
+          for (const m of L.mobs) {
+            if (m.dead) continue;
+            const rx = m.x - pl.x, rz = m.z - pl.z, d = Math.hypot(rx, rz);
+            if (d > sk.radius + m.r || (d > 0.8 && (rx * fx + rz * fz) / d < cosA)) continue;
+            this.hitMob(m, (last ? sk.lastMult : sk.mult) * pw);
+            FX.burst(m.x, 1.1, m.z, c.col, 6, 3, 0.1, 0.3, 6);
+            if (last && !m.dead) this.shove(m, rx / (d || 1), rz / (d || 1), sk.push || 1.4);
+          }
         }));
         break;
       }
-      case 'wave': {
-        // Yarım Mühür: kılıcı omzun üstüne çek → çapraz savuruşla hilal dalga ileri gider; önündeki huniye (koni) vurur
+      case 'spin_advance': {
+        // Kılıç Çevirme: iki tur dönerek hedefe doğru ilerler (atılma 1 sn), etrafında rüzgâr girdabı; her turda
+        // çevresine vurur ve düşmanları içeri çeker.
         const T3 = SAVASCI_SKILL_T.w3, L = G.level;
-        const tt = t && !t.dead && dist(pl.x, pl.z, t.x, t.z) <= (sk.length || 7.5) + 2 ? t : this.findTarget(sk.length || 7.5);
+        const tt = t && !t.dead && dist(pl.x, pl.z, t.x, t.z) <= (sk.range || 7) ? t : this.findTarget(sk.range || 7);
         if (tt) { pl.target = tt; pl.face(Math.atan2(tt.x - pl.x, tt.z - pl.z), 1, 1); }
-        pl.atkT = Math.max(pl.atkT, T3.windup + 0.15);
-        later(T3.windup, () => {
+        pl.atkT = Math.max(pl.atkT, T3.dur);
+        const fx = Math.sin(pl.rot), fz = Math.cos(pl.rot);
+        const go = tt && !tt.dead ? Math.min(sk.advance || 3, Math.max(0, dist(pl.x, pl.z, tt.x, tt.z) - 0.6)) : sk.advance || 3;
+        later(0.05, () => { if (!pl.dead && G.player === pl && G.level === L) pl.dash = { x: pl.x + fx * go, z: pl.z + fz * go, t: T3.dur - 0.3, quiet: true, step: () => { if (Math.random() < 0.5) FX.spawn(pl.x + rand(-0.4, 0.4), 0.12, pl.z + rand(-0.4, 0.4), rand(-1, 1), rand(0.3, 0.8), rand(-1, 1), 0xb0a084, 0.45, 0.14, 2); } }; });
+        FX.vortex(pl, sk.radius * 0.8, T3.dur - 0.12, 0xdcecff);
+        T3.hits.slice(0, sk.hits || 2).forEach((ht) => later(ht, () => {
           if (pl.dead || G.player !== pl || G.level !== L) return;
-          const dx = Math.sin(pl.rot), dz = Math.cos(pl.rot), Lmax = sk.length || 7.5, x0 = pl.x, z0 = pl.z;
-          // dalga duvarda biter: görüntü ve hasar aynı boyda, duvar arkasındakilere vurmaz
-          let Lw = 0.6;
-          while (Lw < Lmax && walkable(L, x0 + dx * (Lw + 0.3), z0 + dz * (Lw + 0.3))) Lw += 0.3;
-          Lw = Math.min(Lw, Lmax);
-          const dur = 0.35 * Math.max(0.35, Lw / Lmax);
-          FX.wave(x0 + dx * 0.6, z0 + dz * 0.6, pl.rot, 0xffd890, Math.max(0.4, Lw - 0.6), dur);
+          FX.ring(pl.x, pl.z, sk.radius, 0xcfe4ff, 0.3);
+          FX.ring(pl.x, pl.z, sk.radius * 0.6, 0xffe2a8, 0.22, 0.9);
           SFX.play('swing'); camPunch(0.5);
           for (const m of L.mobs) {
             if (m.dead) continue;
-            const rx = m.x - x0, rz = m.z - z0, f = rx * dx + rz * dz, s = Math.abs(rx * dz - rz * dx);
-            if (f < -m.r || f > Lw + m.r || s > (sk.width || 0.8) + Math.max(0, f) * (sk.spread || 0.35) + m.r || !losClear(L, x0, z0, m.x, m.z)) continue;
-            later((Math.max(0, f) / Lw) * dur, () => { if (!m.dead) this.hitMob(m, sk.mult * pw); });
+            const rx = m.x - pl.x, rz = m.z - pl.z, d = Math.hypot(rx, rz);
+            if (d > sk.radius + m.r) continue;
+            this.hitMob(m, sk.mult * pw);
+            FX.burst(m.x, 1, m.z, 0xeaf4ff, 6, 3, 0.1, 0.3, 6);
+            if (!m.dead && d > 1.4) this.shove(m, -rx / d, -rz / d, Math.min(sk.pull || 0.8, d - 1.2));
           }
-        });
+        }));
         break;
       }
       case 'axe_throw': {
@@ -14262,6 +14394,41 @@ const Combat = {
         break;
       }
       case 'buff': {
+        if (sk.sealPlant && pl.H && pl.H.clips && pl.H.clips.skills && pl.H.clips.skills[id]) {
+          // Mühür Yemini: kılıç yere saplanınca güçlendirme başlar, yerde mühür açılır, yakındakiler geri savrulur;
+          // kalkıp kılıcı göğe kaldırınca ışık sütunu
+          const T4 = SAVASCI_SKILL_T.w4, L = G.level;
+          pl.atkT = Math.max(pl.atkT, T4.dur);
+          later(T4.plant, () => {
+            if (pl.dead || G.player !== pl || G.level !== L) return;
+            const b = { id, icon: sk.icon, until: G.time + sk.dur };
+            for (const k in sk.buff) b[k] = sk.buff[k] * (1 + 0.15 * (lvl - 1));
+            const ex = buffs.findIndex((x) => x.id === id);
+            if (ex >= 0) buffs.splice(ex, 1);
+            buffs.push(b); recalc();
+            const fx = Math.sin(pl.rot), fz = Math.cos(pl.rot), sx = pl.x + fx * 0.55, sz = pl.z + fz * 0.55;
+            FX.seal(pl.x, pl.z, sk.radius, 1.6, 0xffcf70);
+            FX.ring(sx, sz, sk.radius * 1.2, 0xffe2a8, 0.35);
+            FX.burst(sx, 0.2, sz, 0xd8c8a0, 18, 4, 0.16, 0.6, 6);
+            FX.burst(sx, 0.4, sz, 0xffd890, 14, 5, 0.1, 0.45, 8);
+            SFX.play('boom'); camPunch(0.9);
+            if (L.type !== 'village') for (const m of L.mobs) {
+              if (m.dead || m.static) continue;
+              const rx = m.x - pl.x, rz = m.z - pl.z, d = Math.hypot(rx, rz) || 1;
+              if (d > sk.radius + m.r) continue;
+              this.shove(m, rx / d, rz / d, sk.push || 1.8);
+              Coop.stun(m, sk.stun || 0.6);
+            }
+          });
+          later(T4.rise, () => {
+            if (pl.dead || G.player !== pl || G.level !== L) return;
+            FX.pillar(pl.x, pl.z, 0xffcf70, 6, 0.7, 1.1);
+            FX.ring(pl.x, pl.z, 2.6, 0xfff0c0, 0.5);
+            for (let k = 0; k < 30; k++) FX.spawn(pl.x + rand(-0.6, 0.6), rand(0.4, 2.8), pl.z + rand(-0.6, 0.6), 0, rand(1.4, 3), 0, k % 2 ? 0xffd890 : 0xfff4d8, rand(0.5, 0.9), rand(0.06, 0.11), 0);
+            SFX.play('buff');
+          });
+          break;
+        }
         const b = { id, icon: sk.icon, until: G.time + sk.dur };
         for (const k in sk.buff) b[k] = sk.buff[k] * (1 + 0.15 * (lvl - 1));
         const ex = buffs.findIndex((x) => x.id === id);
