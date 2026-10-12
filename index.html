@@ -11181,24 +11181,48 @@ const GILD_FRAG = `
     float mk = clamp(0.12 + metalnessFactor * 0.8 + sat * 0.9, 0.0, 1.0) * bright; // plaka/metal/deri: parlar
     float plate = smoothstep(0.3, 0.65, mk);                                      // asıl metal plakalar
     {
-      // zırh: +1…+3 gümüş siluet ışığı, +4…+6 turkuaz kenar + akan kontur / şerit, +7…+9 altın kenar + parlama darbeleri.
-      // Zırh koyu ve metalik: emissive küçük tutulur, yalnız siluet / kontur / ince şeritte (yüzeyi yıkamaz).
+      // zırh (referans görsellere göre SICAK altın→kehribar→alev turuncusu): +1…+3 ince metalik kenar ışığı + seyrek
+      // göz kırpan parıltılar, +4…+6 plaka desenini izleyen ince RÜNİK çizgiler (kaba ızgara), +7 enerji akışı, +8/+9 alev gibi titreyen
+      // siluet + kısa parlama darbeleri. Zırh koyu ve metalik kalır: emissive yalnız kenar / çizgi / noktada, yüzeyi yıkamaz.
       float S = clamp(lv / 0.15, 0.0, 1.0);
-      float E = clamp((lv - 0.12) / 0.24, 0.0, 1.0);
+      float E = clamp((lv - 0.17) / 0.19, 0.0, 1.0);
       float Hh = smoothstep(0.37, 0.4, lv);
-      float t3 = Hh * (0.34 + 0.66 * clamp((lv - 0.4) / 0.6, 0.0, 1.0));
+      float L9 = clamp((lv - 0.4) / 0.6, 0.0, 1.0);
       float ndv = abs(dot(normal, normalize(vViewPosition)));
-      float rimA = pow(1.0 - ndv, 2.0);                                                   // siluet
-      float cn = abs(fract(ndv * 4.0 + h * 2.0 - uT * (0.3 + 0.12 * E)) - 0.5);
-      float line = smoothstep(0.06, 0.0, cn) * smoothstep(0.1, 0.5, 1.0 - ndv);          // eğri yüzeyde akan kontur
-      float sw = smoothstep(0.05, 0.0, abs(fract(h * 1.2 - uT * 0.45) - 0.5)) * (0.3 + 0.7 * rimA); // yukarı süzülen ince şerit
-      vec3 colA = mix(vec3(0.80, 0.88, 1.0), vec3(0.30, 0.86, 1.0), smoothstep(0.2, 0.34, lv));
-      colA = mix(colA, vec3(1.0, 0.74, 0.30), Hh);
-      float amt = (0.3 * S * rimA + E * (0.5 * rimA + 0.4 * line * plate + 0.4 * sw)) * (1.0 - 0.6 * Hh) + t3 * 0.4 * rimA;
-      vec3 add2 = colA * mk * amt;
-      float fl = pow(0.5 + 0.5 * sin(uT * 1.8), 14.0);                                    // kısa parlama darbesi (~3.5 sn'de bir)
-      add2 += vec3(1.0, 0.82, 0.45) * mk * fl * t3 * (0.6 * rimA + 0.1 * plate);
-      totalEmissiveRadiance += min(add2, vec3(0.6));
+      float rimA = pow(1.0 - ndv, 2.0);
+      vec3 colW = mix(vec3(1.0, 0.86, 0.52), vec3(1.0, 0.68, 0.24), smoothstep(0.08, 0.3, lv));
+      colW = mix(colW, vec3(1.0, 0.5, 0.14), smoothstep(0.45, 1.0, lv));
+      float flk = 1.0 - Hh * 0.28 * (0.5 + 0.5 * sin(uT * 6.0 + h * 17.0 + dot(lp, uA) * 9.0)); // alev titreşimi
+      // 1) siluet kenar ışığı (+1'de belli belirsiz, her kademede biraz güçlenir)
+      float amt = rimA * (0.34 * S + 0.3 * E + 0.45 * Hh + 0.2 * L9 + 0.5 * smoothstep(0.85, 1.0, lv)) * flk;
+      // 2) seyrek göz kırpan parıltılar (metalik ışık / kenar ışıltısı)
+      vec3 q2 = lp * 20.0;
+      float rn2 = gildHash(floor(q2));
+      float tw2 = pow(0.5 + 0.5 * sin(uT * (2.0 + rn2 * 4.0) + rn2 * 50.0), 6.0);
+      float bl2 = smoothstep(0.5, 0.1, length(fract(q2) - 0.5));
+      amt += step(0.93 - 0.12 * S, rn2) * bl2 * tw2 * (0.5 + 0.6 * S) * (0.4 + 0.6 * plate);
+      // 3) rünik çizgiler: nesne uzayında kaba elmas ızgara, yalnız plakalarda; kalınlık ekran türevinden (uzakta yıkamaz)
+      {
+        vec3 pp = vObj - uCen;
+        float uu = atan(dot(pp, uA), dot(pp, uB)) * 0.13;
+        float g1 = (uu + h) * uLatA, g2 = (uu - h) * uLatA;
+        float e1 = abs(fract(g1 + 0.5) - 0.5), e2 = abs(fract(g2 + 0.5) - 0.5);
+        float v1 = fwidth(g1) + 1e-4, v2 = fwidth(g2) + 1e-4;
+        float R1 = 1.0 - smoothstep(0.2 * v1, 0.65 * v1, e1);
+        float R2 = 1.0 - smoothstep(0.2 * v2, 0.65 * v2, e2);
+        float brk = step(0.35, gildHash(vec3(floor(g1), floor(g2), 3.0)));       // çizgiler kırık kırık (rün hissi)
+        float far = 1.0 - smoothstep(0.22, 0.45, max(v1, v2));
+        float rune = max(R1, R2) * brk * far * plate;
+        float flow = 0.6 + 0.4 * sin(g1 * 1.7 - uT * (1.6 + 2.0 * lv));                        // çizgide akan enerji
+        amt += rune * flow * (1.0 * E + 0.5 * Hh) * (0.85 + 0.5 * L9);
+      }
+      // 4) +7 ve üstü: yukarı akan enerji şeridi
+      float sw = smoothstep(0.06, 0.0, abs(fract(h * 1.3 - uT * (0.5 + 0.4 * L9)) - 0.5)) * (0.3 + 0.7 * rimA);
+      amt += sw * Hh * (0.35 + 0.35 * L9);
+      vec3 add2 = colW * mk * amt;
+      float fl = pow(0.5 + 0.5 * sin(uT * 1.8), 14.0);                                      // kısa parlama darbesi (~3.5 sn'de bir)
+      add2 += vec3(1.0, 0.7, 0.3) * mk * fl * Hh * (0.5 * rimA + 0.025 * plate);
+      totalEmissiveRadiance += min(add2, vec3(0.7));
     }
   }
   #endif
@@ -11216,7 +11240,11 @@ const GILD_FRAG = `
     float ph = h * 0.9 + dot(lp, uA) * 0.5 - uT * (0.32 + 0.3 * lv);
     float band = smoothstep(0.1, 0.0, abs(fract(ph) - 0.5));
     band *= band;
+    #ifdef GILD_ARM
+    vec3 add = vec3(1.0, 0.7, 0.3) * band * mk * (0.12 + 0.3 * lv);
+    #else
     vec3 add = vec3(1.0, 0.8, 0.42) * band * mk * (0.28 + 0.6 * lv);
+    #endif
     // 2) göz kırpan parıltılar
     vec3 q = lp * uDens;
     float rn = gildHash(floor(q));
@@ -11244,12 +11272,20 @@ const GILD_FRAG = `
       float wv1 = max(r1 * fade, 0.2), wv2 = max(r2 * fade, 0.2);
       float lat = max(L1 * wv1, L2 * wv2);
       lat = max(lat, dm * max(r2 * fade, 0.35));
+      #ifdef GILD_ARM
+      lat = lat * aa;                                    // zırhta uzakta düz altın yıkama yok: koyu zırh görünür kalır, yalnız çizgiler parlar
+      #else
       lat = mix(0.25, lat, aa);
+      #endif
       float shim = 0.78 + 0.22 * sin(f1 * 3.0 - uT * 4.0);
       vec3 gold = vec3(1.0, 0.66, 0.2);
       float cover = 0.18 + 0.82 * plate;               // iplikler en çok plakalarda; deri/kumaşta ince
       add += gold * (lat * shim * 0.8 * cover + edge * (L1 + L2) * 1.3 * cover * aa + edge * 0.18 * plate) * g9;
+      #ifdef GILD_ARM
+      diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.2, 1.0, 0.7), g9 * 0.3 * plate);
+      #else
       diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.45, 1.08, 0.5), g9 * 0.5 * plate); // yaldızlı plaka
+      #endif
     }
     // 4) +8/+9: kenar ışığı (uzaktan da okunur): siluet altın bir hare ile çevrilir
     float rim = pow(1.0 - abs(dot(normal, normalize(vViewPosition))), 2.4);
@@ -11272,7 +11308,7 @@ function gildMaterial(src, geo, o) {
     uBB: { value: bb.min.clone() }, uExt: { value: Math.max(sz.x, sz.y, sz.z, 1e-3) }, uCen: { value: ctr },
     uUp: { value: up ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0, 1, 0) },
     uA: { value: new THREE.Vector3(1, 0, 0) }, uB: { value: up ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1) },
-    uDens: { value: o.dens || 24 }, uLat: { value: o.lat || 24 },
+    uDens: { value: o.dens || 24 }, uLat: { value: o.lat || 24 }, uLatA: { value: o.latA || 5 },
   };
   m.userData.gearClone = true; m.userData.gild = U;
   m.defines = Object.assign({}, m.defines, { GILD: '' }, o.reg ? { GILD_REG: '' } : null, o.armor ? { GILD_ARM: '' } : null);
@@ -11285,7 +11321,7 @@ function gildMaterial(src, geo, o) {
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
 #ifdef GILD
-uniform float uT; uniform float uLv[6]; uniform vec3 uBB; uniform float uExt; uniform vec3 uCen; uniform vec3 uUp; uniform vec3 uA; uniform vec3 uB; uniform float uDens; uniform float uLat;
+uniform float uT; uniform float uLv[6]; uniform vec3 uBB; uniform float uExt; uniform vec3 uCen; uniform vec3 uUp; uniform vec3 uA; uniform vec3 uB; uniform float uDens; uniform float uLat; uniform float uLatA;
 varying vec3 vObj;
 #ifdef GILD_REG
 varying float vReg;
@@ -11341,14 +11377,31 @@ function gildSparks(pl, dt) {
   pl.gildAura.visible = want > 0.001;
   const flash = Math.pow(0.5 + 0.5 * Math.sin(GILD_T.value * 1.8), 14);
   GILD_FX.mat.opacity = Math.min(0.85, want * (0.8 + 0.2 * Math.sin(GILD_T.value * 2.2)) + want * 0.7 * flash);
-  const rate = Math.min(7, n9 * 1.3 + n8 * 0.6 + n7 * 0.25) * (1 + 1.5 * flash); // sn'de kıvılcım (seyrek; darbede kısa artış)
-  if (rate <= 0) return;
+  // aura rengi: +7'de altın, +9'da alev turuncusu (referans görseller)
+  const hot = Math.min(1, (n9 + n8 * 0.5) / 4);
+  GILD_FX.mat.color.setRGB(1, 0.78 - 0.36 * hot, 0.38 - 0.26 * hot);
+  const total = n9 + n8 + n7;
+  if (total <= 0) return;
+  const px = pl.x, pz = pl.z;
+  // sarmal enerji şeritleri (+7: ince, +8/+9: daha sık): iki kol, saat yönünde yükselen izli parçacıklar
+  const hrate = Math.min(14, n9 * 3 + n8 * 1.8 + n7 * 1.0) * (1 + flash);
+  GILD_FX.hx = (GILD_FX.hx || 0) + hrate * dt;
+  while (GILD_FX.hx >= 1) {
+    GILD_FX.hx -= 1;
+    GILD_FX.hs = !GILD_FX.hs;
+    const a = GILD_T.value * 2.6 + (GILD_FX.hs ? Math.PI : 0), r = 0.5 + 0.06 * Math.sin(GILD_T.value * 1.3);
+    const y = 0.15 + ((GILD_T.value * 0.55 + (GILD_FX.hs ? 0.5 : 0)) % 1) * 1.5;
+    FX.spawn(px + Math.cos(a) * r, y, pz + Math.sin(a) * r, -Math.sin(a) * 1.3, 0.55, Math.cos(a) * 1.3, GILD_FX.hs ? 0xffd070 : 0xff9a38, 0.45 + Math.random() * 0.2, 0.05 + Math.random() * 0.03, 0);
+  }
+  // kıvılcım / köz: +7 altın, +8/+9 turuncu alev közleri (seyrek; darbede kısa artış)
+  const rate = Math.min(10, n9 * 1.8 + n8 * 1.0 + n7 * 0.25) * (1 + 1.5 * flash);
   GILD_FX.acc += rate * dt;
   while (GILD_FX.acc >= 1) {
     GILD_FX.acc -= 1;
     const a = Math.random() * TAU, r = 0.25 + Math.random() * 0.35;
-    const x = pl.x + Math.cos(a) * r, z = pl.z + Math.sin(a) * r;
-    FX.spawn(x, 0.2 + Math.random() * 1.6, z, (Math.random() - 0.5) * 0.2, 0.5 + Math.random() * 0.7, (Math.random() - 0.5) * 0.2, Math.random() < 0.35 ? 0xfff2b8 : 0xffc24a, 0.9 + Math.random() * 0.8, 0.045 + Math.random() * 0.04, 0);
+    const x = px + Math.cos(a) * r, z = pz + Math.sin(a) * r;
+    const ember = Math.random() < hot * 0.7;
+    FX.spawn(x, 0.2 + Math.random() * 1.6, z, (Math.random() - 0.5) * 0.2, (ember ? 0.9 : 0.5) + Math.random() * 0.7, (Math.random() - 0.5) * 0.2, ember ? (Math.random() < 0.5 ? 0xff7a28 : 0xff5a1a) : (Math.random() < 0.35 ? 0xfff2b8 : 0xffc24a), 0.9 + Math.random() * 0.8, 0.045 + Math.random() * 0.04, 0);
   }
 }
 

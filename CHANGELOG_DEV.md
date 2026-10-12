@@ -10,6 +10,16 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 — Zırh +1…+9 efekti referans görsellere göre yeniden yazıldı · dal `ozellik/zirh-efekt-referans`
+- Dosya: `index.html` (+ bu kayıt, `PROJECT_STATE.md`). Tapınak paleti, zorluk, EXP, ödül, Taş Mühür, deneme karakteri ve +0…+9 oranlarına dokunulmadı; `ARMOR_LV` değerleri aynı.
+- Neden: kullanıcının verdiği iki referans görselde ilerleme baştan sona SICAK altın→turuncu; önceki gümüş→turkuaz→altın düzeni ona uymuyordu.
+- Gölgelendirici (`GILD_ARM` bloğu): renk soluk altın → kehribar → alev turuncusu. +1…+3 ince metalik kenar ışığı + seyrek göz kırpan parıltılar; +4…+6 plaka yönünü izleyen ince, kırık RÜNİK çizgiler (yeni `uLatA`, kaba elmas ızgara, kalınlık `fwidth` ile; uzakta yıkama yok); +7 enerji akışı + yukarı süzülen şerit; +8/+9 alev gibi titreyen siluet, parlama darbesi, +9'da belirgin güçlü kenar ışığı (pelerin / püskül de `mk` maskesiyle parlar).
+- Eski +7…+9 altın bloğu zırhta (`GILD_ARM`) yumuşatıldı: uzak düz yıkama, şerit yoğunluğu ve plaka renklendirmesi azaltıldı (silahlar etkilenmez).
+- `gildSparks`: +7+ için iki kollu SARMAL enerji şeridi parçacıkları (tek `FX.spawn` havuzu, üst sınır 14/sn), +8/+9 turuncu köz, aura rengi +9'da altından alev turuncusuna; toplam köz üst sınırı 10/sn.
+- Denemeler: ilk rünik ızgara (frekans 12, kalın) zırhı kamuflaj gibi doldurdu → frekans 5, ince çizgi, kırık hücreler. Parlama darbesinin plaka payı krem yıkama yaptığından 0.1 → 0.025.
+- Testler: `node --check` tamam; `t_armorfx` 7/7, `t_logic` 21/21, `t_temple` 34/34, `t_reg` temiz; başsız Chromium + SwiftShader ekran görüntüleri (+0…+9). Gerçek mobil cihazda denenmedi (parlaklık, parçacık yoğunluğu, kare hızı).
+- Açık: referanstaki tam gövde alev konturu ve parlayan pelerin ayrıntısı model tabanlı değil, gölgelendirici/parçacık yaklaşımıdır; arka plana göre okunabilirlik cihazda kontrol edilmeli.
+
 ## 2026-10-12 — Görsel: zırh +1…+9 efekti ve Bronz Taş Tapınağı renk paleti · dal `ozellik/gorsel-zirh-tapinak`
 - Dosyalar: `index.html`, `CHANGELOG_DEV.md`, `PROJECT_STATE.md`. Zorluk, EXP, ödül, Taş Mühür ve deneme karakteri kodlarına dokunulmadı (yalnız `__tm` test kancasına semboller eklendi).
 - **A. Zırh efekti** (`GILD_FRAG` içinde `#ifdef GILD_ARM`, `ARMOR_LV`/`armorLevel`, `gildSparks`): mevcut +7…+9 yaldız gölgelendiricisi korundu, `gildLevel` (silahlar) değişmedi.
