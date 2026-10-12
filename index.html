@@ -17451,8 +17451,28 @@ function showCharSelect() {
     const nw = el('button', 'card px ccard cnew', `+ Yeni karakter<br><span>${chars.length}/${MAX_CHARS} yuva dolu</span>`);
     nw.onclick = () => { SFX.play('click'); showClassSelect(); };
     box.appendChild(nw);
+    testCharButton(box); // DENEME-DUGMESI
   }
 }
+// ===== GEÇİCİ DENEME KARAKTERİ (kaldırılacak: bu blok + "DENEME-DUGMESI" çağrıları) =====
+// Sv 50 Savaşçı, +9 Nihai Zırh Seti (kask, zırh, ayakkabı, kalkan), +9 Obsidyen Keski. Yeni bir karakter yuvasına yazılır; mevcut karakterlere dokunmaz.
+function newTestWarrior() {
+  newCharacter('warrior', 'Deneme Sv50');
+  P.lv = 50; P.exp = 0; P.pts = 0; P.gold = 200000;
+  P.stats.str += 98; P.stats.vit += 49; // 49 seviye × 3 puan: Güç 2 : Can 1 (sınıf önerisi)
+  for (const id of CLASSES.warrior.skills) P.skills[id] = SKILL_MAX;
+  for (const sl of SET_SLOTS) { if (sl === 'weapon') continue; const g = makeGear(sl, 0, 3, 'warrior', 'nihai'); g.plus = 9; P.equip[sl] = g; }
+  const w = makeGear('weapon', 0, 3, 'warrior', 'okilic'); w.plus = 9; P.equip.weapon = w;
+  addItem(makeStack('hp2', 30)); addItem(makeStack('mp2', 15));
+  recalc(); P.hp = D.maxHp; P.mp = D.maxMp;
+}
+function testCharButton(parent) { // DENEME-DUGMESI
+  if (listChars().length >= MAX_CHARS) return;
+  const b = el('button', 'card px ccard cnew', 'Deneme: Sv 50 Savaşçı<br><span>+9 Nihai Zırh · +9 Obsidyen Keski (geçici)</span>');
+  b.onclick = () => { SFX.init(); newTestWarrior(); saveGame(); startPlay(); };
+  parent.appendChild(b);
+}
+// ===== /GEÇİCİ DENEME KARAKTERİ =====
 function showClassSelect() {
   if (listChars().length >= MAX_CHARS) { toast(`Karakter yuvaları dolu (${MAX_CHARS}/${MAX_CHARS}). Önce birini sil.`); SFX.play('deny'); showCharSelect(); return; }
   $('#title').hidden = true; $('#charSel').hidden = true; $('#classSel').hidden = false;
@@ -17547,7 +17567,7 @@ function boot(data) {
   } catch (e) { showError(e); }
 }
 window.__tm = { Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
-  TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML };
+  TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior };
 try {
   const hot = window.claude && window.claude.hot;
   if (hot && hot.ready) hot.ready(boot); else boot(hot && hot.data ? hot.data : {});

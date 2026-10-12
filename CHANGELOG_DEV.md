@@ -10,6 +10,11 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-12 — GEÇİCİ deneme karakteri (kaldırılacak)
+- `index.html`: karakter seçim ekranında "Deneme: Sv 50 Savaşçı" düğmesi → yeni yuvada Sv 50 Savaşçı, +9 Nihai Zırh Seti (kask, zırh, çizme, kalkan, Efsane nadirlik), +9 Obsidyen Keski, Güç 108 / Can 58, yetenekler 5/5, 200.000 altın.
+- Kaldırma: `// ===== GEÇİCİ DENEME KARAKTERİ` bloğunu sil, `testCharButton(box); // DENEME-DUGMESI` satırını sil, `__tm` kancasındaki `newTestWarrior`'ı çıkar (ya da bu işin commit'ini `git revert` et). Oyuncunun kayıtlarına dokunmaz.
+- Test: `node --check` temiz; başsız Chromium'da düğme görünüyor, karakter doğru ekipmanla açılıyor (ATK 755, DEF 555, Can 2333), sayfa hatası yok.
+
 ## 2026-10-12 — Oyun sonu ilerleme ve zindan dengesi · dal `ozellik/oyun-sonu-denge`
 - Dosyalar: `index.html`, `CHANGELOG_DEV.md`, `PROJECT_STATE.md`. Bağımlılık eklenmedi; V12 klasörüne dokunulmadı.
 - **A. Tapınak zorluğu** (`TEMPLE_POW`, `TEMPLE_FLOORS`, `Mob`): kat seviyesi 42+2·kat → 46+2·kat (Sv 48–64). Canavar canı ×1.7…4.2,
