@@ -8649,7 +8649,7 @@ class RemotePlayer {
     else this.H = BALTACI_GLTF ? buildBaltaciModel(st.b) : buildPlayerModel('baltaci');
     L.group.add(this.H.root);
     if (this.H.gearSlots) { try { applyOutfit(this.H, () => 0); } catch (e) { /* kıyafet yoksa çıplak */ } }
-    if (this.H.gild) { const u = this.H.gild.uLv.value; u[0] = u[1] = u[2] = u[3] = st.gc; u[4] = st.gf; }
+    if (this.H.gild) { const u = this.H.gild.uLv.value; u[0] = u[1] = u[2] = u[3] = st.gc; u[4] = st.gf; gildShellVis(this.H); }
     this.mountWeapon(st, L.type !== 'dungeon' && !Duel.armedWith(id));
     this.label = addLabel(L, esc(q.name || 'Oyuncu'), 'Sv ' + (q.lv || 1), st.x, 2.6, st.z, '#7ee0ff', 'ally');
   }
@@ -9672,7 +9672,7 @@ function buildBaltaciModel(key) {
   const scene = THREE.SkeletonUtils.clone(gl.scene);
   scene.scale.setScalar(BALTACI_SCALE);
   body.add(scene);
-  let gild = null;
+  let gild = null, shell = null;
   scene.traverse((o) => {
     if (!o.isMesh) return;
     o.castShadow = true; o.frustumCulled = false;
@@ -9680,6 +9680,7 @@ function buildBaltaciModel(key) {
       ensureGildRegions(o);
       o.material = gildMaterial(o.material, o.geometry, { up: 'y', reg: true, armor: true, dens: 38, lat: 44 });
       gild = o.material.userData.gild;
+      shell = makeFlameShell(o, gild);
     }
   });
   const mixer = new THREE.AnimationMixer(scene);
@@ -9700,7 +9701,7 @@ function buildBaltaciModel(key) {
     hand: mount('mixamorigRightHand', extra.info.handMount), handL: ghost(), back: mount('mixamorigSpine2', extra.info.backMount), chest: ghost(), height: 2.1,
     gltf: true, mixer, actions, curAnim: null, skel: scene, gearSlots: true, gearMeshes: [],
     // tam gövde kostümü (bez, kurt): kıyafet parçaları takılmaz; çıplak gövdede pantolon vb. (outfits.json classes.baltaci)
-    bodyKey: key, costume: key !== 'ciplak', gild,
+    bodyKey: key, costume: key !== 'ciplak', gild, shell,
     // atkDur: saldırı klibinin en kısa oynama süresi (oyunun 0.32 sn'lik savuruşundan uzun: ağır balta)
     clips: ok ? { idle: 'idleA', idleCombat: 'idleReady', look: 'idleLook', run: 'Running', attack: ['atkA', 'atkB'], atkDur: 0.48,
       skills: { b1: ['skB1', S.b1.dur], b2: ['skB2', 0.95], b3: ['skB3', S.b3.dur], b4: ['skB4', 0.7] } } : { idle: 'Walking', run: 'Running', attack: [] },
@@ -9725,7 +9726,7 @@ function buildSavasciModel(key) {
   const scene = THREE.SkeletonUtils.clone(gl.scene);
   scene.scale.setScalar(SAVASCI_SCALE);
   body.add(scene);
-  let gild = null;
+  let gild = null, shell = null;
   scene.traverse((o) => {
     if (!o.isMesh) return;
     o.castShadow = true; o.frustumCulled = false;
@@ -9733,6 +9734,7 @@ function buildSavasciModel(key) {
       ensureGildRegions(o);
       o.material = gildMaterial(o.material, o.geometry, { up: 'y', reg: true, armor: true, dens: 38, lat: 44 });
       gild = o.material.userData.gild;
+      shell = makeFlameShell(o, gild);
     }
   });
   const mixer = new THREE.AnimationMixer(scene);
@@ -9754,7 +9756,7 @@ function buildSavasciModel(key) {
     root, body, torso: ghost(), head: ghost(), legL: ghost(), legR: ghost(), armL: ghost(), armR: ghost(),
     hand: mount('mixamorigRightHand', info.handMount), handL: ghost(), back: mount('mixamorigSpine2', info.backMount), chest: ghost(), height: 2.1,
     gltf: true, mixer, actions, curAnim: null, skel: scene, gearSlots: true, gearMeshes: [],
-    bodyKey: key, costume: true, gild, cls: 'warrior',
+    bodyKey: key, costume: true, gild, shell, cls: 'warrior',
     // üçlü kombo (atkA yükselen çapraz kesiş, atkB iki elle tepeden çapraz iniş, atkC dönerek ters savuruş); atkDur: klip süresi, kesiş ~0.24 sn (CLASSES.warrior.hitDelay)
     clips: ok ? { idle: 'idleA', idleCombat: 'idleReady', look: 'idleLook', run: 'run', walk: actions.walk ? 'walk' : null, attack: ['atkA', 'atkB', 'atkC'], atkDur: info.atkDur || 0.7,
       skills: { w1: ['skW1', S.w1.dur], w2: ['skW2', S.w2.dur], w3: ['skW3', S.w3.dur], w4: ['skW4', S.w4.dur] } } : { idle: actions.idleA ? 'idleA' : 'run', run: 'run', attack: [] },
@@ -11214,6 +11216,7 @@ const GILD_FRAG = `
       float tongue = smoothstep(0.35, 1.0, sin(h * 24.0 - uT * 5.0 + dot(lp, uB) * 13.0) * 0.5 + 0.5 + 0.35 * sin(uT * 3.0 + h * 7.0));
       amt += rimA * tongue * (0.35 * F8 + 0.35 * F9) * (1.0 - 0.6 * h);
       vec3 add2 = colW * mk * amt;
+      add2 += diffuseColor.rgb * colW * mk * 1.5 * (0.3 * Hh + 0.35 * F8 + 0.45 * F9) * flk;   // ısınmış metal: plakanın kendi dokusu altın yanar (detay korunur)
       float fl = pow(0.5 + 0.5 * sin(uT * 1.8), 14.0);                                      // kısa parlama darbesi (~3.5 sn'de bir)
       add2 += vec3(1.0, 0.7, 0.3) * mk * fl * Hh * (0.35 * rimA + 0.5 * seam * Cr);
       totalEmissiveRadiance += min(add2, vec3(0.75));
@@ -11331,6 +11334,68 @@ float gildHash(vec3 p) { p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3)); p *= 17
   return m;
 }
 // Baltacı gövdesi: köşelere bölge numarası (paylaşılan geometride bir kez)
+// ---- Alev kabuğu (+7…+9): gövde kemikli mesh'inin aynı geometri / iskeletle hafif şişirilmiş, toplamalı (additive) kopyası ----
+// Köşeler normal + yukarı yönde gürültüyle uzar (dalgalanan alev dilleri); parçacık YOK. Yalnız silüete yakın (kenar) pikseller parlar,
+// böylece zırhın üstü yıkanmaz. Seviye gövde ışıltısıyla aynı `uLv` dizisinden gelir (setBodyGild güncelledikçe kendiliğinden değişir).
+const FLAME_NOISE = `
+float fsHash(vec3 p) { p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3)); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float fsNoise(vec3 x) {
+  vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(fsHash(i), fsHash(i + vec3(1, 0, 0)), f.x), mix(fsHash(i + vec3(0, 1, 0)), fsHash(i + vec3(1, 1, 0)), f.x), f.y),
+             mix(mix(fsHash(i + vec3(0, 0, 1)), fsHash(i + vec3(1, 0, 1)), f.x), mix(fsHash(i + vec3(0, 1, 1)), fsHash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+}`;
+function makeFlameShell(sm, gildU) {
+  const geo = sm.geometry;
+  if (!geo.attributes.aReg || !sm.skeleton) return null;
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox, sz = bb.getSize(new THREE.Vector3());
+  const U = { uT: GILD_T, uLv: gildU.uLv, uBBy: { value: bb.min.y }, uExt: { value: Math.max(sz.x, sz.y, sz.z, 1e-3) } };
+  const m = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  m.userData.gearClone = true;
+  m.customProgramCacheKey = () => 'flameShell';
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, U);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', `#include <common>
+attribute float aReg;
+uniform float uT; uniform float uLv[6]; uniform float uBBy; uniform float uExt;
+varying float vH; varying float vS; varying vec3 vN; varying vec3 vV; varying vec3 vP; varying float vNz;
+${FLAME_NOISE}`)
+      .replace('#include <skinning_vertex>', `#include <skinning_vertex>
+float lvR = uLv[int(aReg + 0.5)];
+float sI = smoothstep(0.37, 0.4, lvR) * (0.45 + 0.55 * clamp((lvR - 0.4) / 0.6, 0.0, 1.0));
+float hh = (transformed.y - uBBy) / uExt;
+float fn = fsNoise(vec3(transformed.x / uExt * 9.0, hh * 7.0 - uT * 2.4, transformed.z / uExt * 9.0));
+vec3 fdir = normalize(normalize(objectNormal) + vec3(0.0, 0.9, 0.0));
+transformed += fdir * uExt * 0.0085 * sI * (0.25 + 3.6 * fn * fn * fn);`)
+      .replace('#include <project_vertex>', `#include <project_vertex>
+vH = hh; vS = sI; vNz = fn; vP = transformed; vN = normalize(normalMatrix * objectNormal); vV = -mvPosition.xyz;`);
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+uniform float uT; uniform float uExt;
+varying float vH; varying float vS; varying vec3 vN; varying vec3 vV; varying vec3 vP; varying float vNz;
+${FLAME_NOISE}`)
+      .replace('#include <opaque_fragment>', `
+if (vS < 0.01) discard;
+float ndv = abs(dot(normalize(vN), normalize(vV)));
+float rim = pow(1.0 - ndv, 1.9);
+vec3 q = vec3(vP.x / uExt * 15.0, vH * 10.0 - uT * 3.4, vP.z / uExt * 15.0);
+float f1 = fsNoise(q), f2 = fsNoise(q * 2.1 + 7.0);
+float flame = pow(1.0 - ndv, 1.5) * smoothstep(0.32, 0.8, f1 * 0.7 + f2 * 0.5);
+float halo = pow(1.0 - ndv, 3.0);
+float tip = smoothstep(0.3, 0.95, vNz);
+vec3 gold = vec3(1.0, 0.68, 0.22), orng = vec3(1.0, 0.3, 0.04);
+vec3 col = mix(gold, orng, clamp(tip * 1.1 + (vS - 0.45) * 1.1, 0.0, 1.0));
+float a = vS * (1.2 * flame * (0.45 + 0.9 * tip) + 0.2 * halo) * (0.9 + 0.1 * sin(uT * 7.0 + vH * 20.0));
+gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));`);
+  };
+  const shell = new THREE.SkinnedMesh(geo, m);
+  shell.bind(sm.skeleton, sm.bindMatrix);
+  shell.frustumCulled = false; shell.castShadow = false; shell.receiveShadow = false; shell.renderOrder = 3; shell.visible = false;
+  shell.name = 'alevKabugu';
+  sm.parent.add(shell);
+  return shell;
+}
 function ensureGildRegions(sm) {
   const geo = sm.geometry;
   if (geo.attributes.aReg || !geo.attributes.skinIndex) return;
@@ -11351,7 +11416,12 @@ function setBodyGild(H) {
   if (!u) return 0;
   const E = P.equip, c = armorLevel(E.chest), lv = [c, c, c, c, armorLevel(E.feet), 0];
   for (let i = 0; i < 6; i++) u[i] = H.costume ? lv[i] : 0;
+  gildShellVis(H);
   return Math.max(...u);
+}
+// alev kabuğu yalnız bir bölgede seviye ≥ +7 ise çizilir (aksi hâlde sıfır maliyet)
+function gildShellVis(H) {
+  if (H.shell && H.gild) H.shell.visible = Math.max(...H.gild.uLv.value) > 0.39;
 }
 // malzeme (dizi olabilir) temizliği
 function disposeGild(root) {

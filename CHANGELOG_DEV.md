@@ -10,6 +10,14 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (3) — Zırh +7…+9 alev kabuğu ve ısınmış metal · dal `ozellik/zirh-alev-kabugu` (main'e alınmadı)
+- Dosya: `index.html` (+ bu kayıt). Neden: kullanıcı +7/+8/+9'da referanstaki "yanıyormuş gibi" hare ve alev dillerini istedi (sarmal şerit gerekmiyor, kare parçacık yok).
+- `makeFlameShell`: gövde kemikli mesh'inin aynı geometri / iskeletle `SkinnedMesh` kopyası (toplamalı, depthWrite kapalı). Köşeler normal + yukarı yönde 3B gürültüyle uzar (dalgalanan alev dilleri), yalnız silüete yakın pikseller parlar; renk altın → turuncu (uçlarda ve +9'da daha turuncu). Parçacık yok.
+- Seviye gövde ışıltısıyla aynı `uLv` dizisinden gelir; `gildShellVis` en yüksek bölge < +7 iken kabuğu gizler (maliyet sıfır). `H.shell` iki model kurulumunda (Baltacı, Savaşçı) üretilir; malzeme `disposeGild` ile temizlenir.
+- `GILD_ARM`: ısınmış metal terimi (+7…+9): plakanın kendi dokusu altın yanar, detay korunur.
+- Testler: `node --check` tamam; `t_armorfx` 7/7, `t_logic` 21/21, `t_temple` 34/34, `t_reg` temiz; yakın ve uzak başsız ekran görüntüleri. Gerçek cihazda denenmedi.
+- Açık: kask / kalkan / ayrı modüler parçalar alev kabuğuna dahil değil; açık zeminde toplamalı alev düşük kontrastlı, koyu zeminde daha iyi okunur.
+
 ## 2026-10-13 (2) — Zırh parlaması düzeltmesi: dokudan gelen derz çizgileri, kare parçacıklar kaldırıldı · dal `ozellik/zirh-parlama-duzeltme`
 - Dosya: `index.html` (+ bu kayıt, `PROJECT_STATE.md`). Neden: cihazda zırh düz altın sis gibi yıkanıyordu, etrafta beyaz/sarı kare parçacıklar çıkıyordu, referansa benzemiyordu.
 - Gölgelendirici (`GILD_ARM`): matematiksel elmas ızgara (rünik çizgiler) bırakıldı; yerine DOKU tabanlı derz çizgileri: albedo'nun bulanık (`texture2D(map, vMapUv, 2.5)`) haline göre daha koyu pikseller (plaka derzleri / oyuklar) parlar → çizgiler plaka desenini birebir izler, ekran ölçeğinden bağımsızdır. Eşik kademeyle düşer: +4 yalnız en derin derzler, +9 zırh boyunca yoğun çizgiler; aralarda koyu zırh görünür.
