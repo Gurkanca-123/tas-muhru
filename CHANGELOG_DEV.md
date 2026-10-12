@@ -10,6 +10,14 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (2) — Zırh parlaması düzeltmesi: dokudan gelen derz çizgileri, kare parçacıklar kaldırıldı · dal `ozellik/zirh-parlama-duzeltme`
+- Dosya: `index.html` (+ bu kayıt, `PROJECT_STATE.md`). Neden: cihazda zırh düz altın sis gibi yıkanıyordu, etrafta beyaz/sarı kare parçacıklar çıkıyordu, referansa benzemiyordu.
+- Gölgelendirici (`GILD_ARM`): matematiksel elmas ızgara (rünik çizgiler) bırakıldı; yerine DOKU tabanlı derz çizgileri: albedo'nun bulanık (`texture2D(map, vMapUv, 2.5)`) haline göre daha koyu pikseller (plaka derzleri / oyuklar) parlar → çizgiler plaka desenini birebir izler, ekran ölçeğinden bağımsızdır. Eşik kademeyle düşer: +4 yalnız en derin derzler, +9 zırh boyunca yoğun çizgiler; aralarda koyu zırh görünür.
+- Siluet kenar ışığı inceltildi (`pow 3`), +8/+9'da alev gibi titreyen kenar + ayaktan başa yükselen alev dilimleri. Eski +7…+9 yaldız bloğu (iplik dokuma / yıkama) zırhta tamamen kapatıldı (`if (false)`); silahlarda aynen çalışır.
+- `gildSparks`: tüm kare parçacıklar (sarmal şerit, köz, kıvılcım) kaldırıldı; yalnız aura sprite'ı kaldı, opaklığı ~3 kat azaltıldı (gövdeyi yıkamasın).
+- Dokunulmadı: kılıcın kendi köz / alev parçacıkları (`upgEmbers`, obsidyen kılıçta mor-beyaz kareler görünür) — istenirse ayrıca kaldırılır.
+- Testler: `node --check` tamam; `t_armorfx` 7/7, `t_logic` 21/21, `t_temple` 34/34, `t_reg` temiz; yakın (3. şahıs) ve uzak başsız ekran görüntüleri. Gerçek cihazda denenmedi.
+
 ## 2026-10-13 — Zırh +1…+9 efekti referans görsellere göre yeniden yazıldı · dal `ozellik/zirh-efekt-referans`
 - Dosya: `index.html` (+ bu kayıt, `PROJECT_STATE.md`). Tapınak paleti, zorluk, EXP, ödül, Taş Mühür, deneme karakteri ve +0…+9 oranlarına dokunulmadı; `ARMOR_LV` değerleri aynı.
 - Neden: kullanıcının verdiği iki referans görselde ilerleme baştan sona SICAK altın→turuncu; önceki gümüş→turkuaz→altın düzeni ona uymuyordu.

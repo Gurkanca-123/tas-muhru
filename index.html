@@ -11181,52 +11181,50 @@ const GILD_FRAG = `
     float mk = clamp(0.12 + metalnessFactor * 0.8 + sat * 0.9, 0.0, 1.0) * bright; // plaka/metal/deri: parlar
     float plate = smoothstep(0.3, 0.65, mk);                                      // asıl metal plakalar
     {
-      // zırh (referans görsellere göre SICAK altın→kehribar→alev turuncusu): +1…+3 ince metalik kenar ışığı + seyrek
-      // göz kırpan parıltılar, +4…+6 plaka desenini izleyen ince RÜNİK çizgiler (kaba ızgara), +7 enerji akışı, +8/+9 alev gibi titreyen
-      // siluet + kısa parlama darbeleri. Zırh koyu ve metalik kalır: emissive yalnız kenar / çizgi / noktada, yüzeyi yıkamaz.
+      // zırh (referans görsellere göre SICAK altın→kehribar→alev turuncusu). Zırh koyu kalır; ışık yalnız
+      //  (1) siluette ince kenar ışığı, (2) plaka derzlerinde / koyu oyuklarda "çatlak" gibi parlayan çizgiler (dokudan gelir:
+      //  plaka desenini birebir izler, ekran ölçeğinden bağımsız), (3) +8/+9'da alev gibi titreyen kenar + yukarı yükselen alev dilimleri.
+      // Kademe: +1…+3 kenar ışığı · +4…+6 çatlak çizgileri belirir ve yayılır · +7 enerji akışı · +8 alev · +9 tüm zırh boyunca çizgiler + güçlü alev konturu.
       float S = clamp(lv / 0.15, 0.0, 1.0);
-      float E = clamp((lv - 0.17) / 0.19, 0.0, 1.0);
-      float Hh = smoothstep(0.37, 0.4, lv);
-      float L9 = clamp((lv - 0.4) / 0.6, 0.0, 1.0);
+      float Cr = smoothstep(0.17, 0.23, lv);                        // çatlak çizgileri: +4'ten itibaren
+      float Pg = clamp((lv - 0.2) / 0.8, 0.0, 1.0);                   // ilerleme (+4 → 0, +9 → 1)
+      float Hh = smoothstep(0.37, 0.4, lv);                           // +7 ve üstü
+      float F8 = smoothstep(0.55, 0.7, lv);                           // +8 ve üstü
+      float F9 = smoothstep(0.9, 1.0, lv);                            // +9
       float ndv = abs(dot(normal, normalize(vViewPosition)));
-      float rimA = pow(1.0 - ndv, 2.0);
-      vec3 colW = mix(vec3(1.0, 0.86, 0.52), vec3(1.0, 0.68, 0.24), smoothstep(0.08, 0.3, lv));
-      colW = mix(colW, vec3(1.0, 0.5, 0.14), smoothstep(0.45, 1.0, lv));
-      float flk = 1.0 - Hh * 0.28 * (0.5 + 0.5 * sin(uT * 6.0 + h * 17.0 + dot(lp, uA) * 9.0)); // alev titreşimi
-      // 1) siluet kenar ışığı (+1'de belli belirsiz, her kademede biraz güçlenir)
-      float amt = rimA * (0.34 * S + 0.3 * E + 0.45 * Hh + 0.2 * L9 + 0.5 * smoothstep(0.85, 1.0, lv)) * flk;
-      // 2) seyrek göz kırpan parıltılar (metalik ışık / kenar ışıltısı)
-      vec3 q2 = lp * 20.0;
-      float rn2 = gildHash(floor(q2));
-      float tw2 = pow(0.5 + 0.5 * sin(uT * (2.0 + rn2 * 4.0) + rn2 * 50.0), 6.0);
-      float bl2 = smoothstep(0.5, 0.1, length(fract(q2) - 0.5));
-      amt += step(0.93 - 0.12 * S, rn2) * bl2 * tw2 * (0.5 + 0.6 * S) * (0.4 + 0.6 * plate);
-      // 3) rünik çizgiler: nesne uzayında kaba elmas ızgara, yalnız plakalarda; kalınlık ekran türevinden (uzakta yıkamaz)
-      {
-        vec3 pp = vObj - uCen;
-        float uu = atan(dot(pp, uA), dot(pp, uB)) * 0.13;
-        float g1 = (uu + h) * uLatA, g2 = (uu - h) * uLatA;
-        float e1 = abs(fract(g1 + 0.5) - 0.5), e2 = abs(fract(g2 + 0.5) - 0.5);
-        float v1 = fwidth(g1) + 1e-4, v2 = fwidth(g2) + 1e-4;
-        float R1 = 1.0 - smoothstep(0.2 * v1, 0.65 * v1, e1);
-        float R2 = 1.0 - smoothstep(0.2 * v2, 0.65 * v2, e2);
-        float brk = step(0.35, gildHash(vec3(floor(g1), floor(g2), 3.0)));       // çizgiler kırık kırık (rün hissi)
-        float far = 1.0 - smoothstep(0.22, 0.45, max(v1, v2));
-        float rune = max(R1, R2) * brk * far * plate;
-        float flow = 0.6 + 0.4 * sin(g1 * 1.7 - uT * (1.6 + 2.0 * lv));                        // çizgide akan enerji
-        amt += rune * flow * (1.0 * E + 0.5 * Hh) * (0.85 + 0.5 * L9);
-      }
-      // 4) +7 ve üstü: yukarı akan enerji şeridi
-      float sw = smoothstep(0.06, 0.0, abs(fract(h * 1.3 - uT * (0.5 + 0.4 * L9)) - 0.5)) * (0.3 + 0.7 * rimA);
-      amt += sw * Hh * (0.35 + 0.35 * L9);
+      float rimA = pow(1.0 - ndv, 3.0);
+      vec3 colW = mix(vec3(1.0, 0.84, 0.5), vec3(1.0, 0.64, 0.2), smoothstep(0.08, 0.3, lv));
+      colW = mix(colW, vec3(1.0, 0.46, 0.12), smoothstep(0.5, 1.0, lv));
+      float flk = 1.0 - 0.3 * F8 * (0.5 + 0.5 * sin(uT * 6.5 + h * 21.0 + dot(lp, uA) * 11.0)); // alev titreşimi
+      // 1) siluet kenar ışığı
+      float amt = rimA * (0.45 * S + 0.25 * Cr + 0.4 * Hh + 0.45 * F8 + 0.6 * F9) * flk;
+      // 2) çatlak / derz çizgileri: dokudaki en koyu pikseller parlar; eşik kademeyle yükselir → çizgiler kalınlaşıp yayılır
+      float lb = lum;
+      #ifdef USE_MAP
+      lb = dot(texture2D(map, vMapUv, 2.5).rgb, vec3(0.299, 0.587, 0.114));                  // bulanık doku parlaklığı
+      #endif
+      float rel = clamp((lb - lum) / (lb + 0.012), 0.0, 1.0);                                // çevresinden ne kadar koyu (derz / oyuk)
+      float thr = mix(0.55, 0.14, Pg);
+      float seam = smoothstep(thr, thr + 0.16, rel) * plate;
+      float flow = 0.72 + 0.28 * sin(h * 9.0 - uT * (1.2 + 2.4 * Pg) + dot(lp, uA) * 5.0);      // çizgide akan enerji
+      amt += seam * Cr * flow * (0.7 + 1.0 * Pg + 0.3 * Hh);
+      // 3) yukarı akan ince enerji şeridi (+7 ve üstü) ve alev dilimleri (+8/+9): ayaktan başa yükselen titrek kenar parlaması
+      float sw = smoothstep(0.06, 0.0, abs(fract(h * 1.3 - uT * (0.5 + 0.3 * F9)) - 0.5)) * (0.25 + 0.75 * rimA);
+      amt += sw * Hh * 0.35;
+      float tongue = smoothstep(0.35, 1.0, sin(h * 24.0 - uT * 5.0 + dot(lp, uB) * 13.0) * 0.5 + 0.5 + 0.35 * sin(uT * 3.0 + h * 7.0));
+      amt += rimA * tongue * (0.35 * F8 + 0.35 * F9) * (1.0 - 0.6 * h);
       vec3 add2 = colW * mk * amt;
       float fl = pow(0.5 + 0.5 * sin(uT * 1.8), 14.0);                                      // kısa parlama darbesi (~3.5 sn'de bir)
-      add2 += vec3(1.0, 0.7, 0.3) * mk * fl * Hh * (0.5 * rimA + 0.025 * plate);
-      totalEmissiveRadiance += min(add2, vec3(0.7));
+      add2 += vec3(1.0, 0.7, 0.3) * mk * fl * Hh * (0.35 * rimA + 0.5 * seam * Cr);
+      totalEmissiveRadiance += min(add2, vec3(0.75));
     }
   }
   #endif
+  #ifdef GILD_ARM
+  if (false) {
+  #else
   if (lv > 0.39) {
+  #endif
     vec3 lp = (vObj - uBB) / uExt;
     float h = dot(lp, uUp);
     float lum = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
@@ -11376,33 +11374,11 @@ function gildSparks(pl, dt) {
   if (pl.gildAura.parent !== pl.H.root) pl.H.root.add(pl.gildAura);
   pl.gildAura.visible = want > 0.001;
   const flash = Math.pow(0.5 + 0.5 * Math.sin(GILD_T.value * 1.8), 14);
-  GILD_FX.mat.opacity = Math.min(0.85, want * (0.8 + 0.2 * Math.sin(GILD_T.value * 2.2)) + want * 0.7 * flash);
+  GILD_FX.mat.opacity = Math.min(0.32, 0.4 * (want * (0.8 + 0.2 * Math.sin(GILD_T.value * 2.2)) + want * 0.5 * flash)); // aura yalnız hafif hare: gövdeyi yıkamasın
   // aura rengi: +7'de altın, +9'da alev turuncusu (referans görseller)
   const hot = Math.min(1, (n9 + n8 * 0.5) / 4);
   GILD_FX.mat.color.setRGB(1, 0.78 - 0.36 * hot, 0.38 - 0.26 * hot);
-  const total = n9 + n8 + n7;
-  if (total <= 0) return;
-  const px = pl.x, pz = pl.z;
-  // sarmal enerji şeritleri (+7: ince, +8/+9: daha sık): iki kol, saat yönünde yükselen izli parçacıklar
-  const hrate = Math.min(14, n9 * 3 + n8 * 1.8 + n7 * 1.0) * (1 + flash);
-  GILD_FX.hx = (GILD_FX.hx || 0) + hrate * dt;
-  while (GILD_FX.hx >= 1) {
-    GILD_FX.hx -= 1;
-    GILD_FX.hs = !GILD_FX.hs;
-    const a = GILD_T.value * 2.6 + (GILD_FX.hs ? Math.PI : 0), r = 0.5 + 0.06 * Math.sin(GILD_T.value * 1.3);
-    const y = 0.15 + ((GILD_T.value * 0.55 + (GILD_FX.hs ? 0.5 : 0)) % 1) * 1.5;
-    FX.spawn(px + Math.cos(a) * r, y, pz + Math.sin(a) * r, -Math.sin(a) * 1.3, 0.55, Math.cos(a) * 1.3, GILD_FX.hs ? 0xffd070 : 0xff9a38, 0.45 + Math.random() * 0.2, 0.05 + Math.random() * 0.03, 0);
-  }
-  // kıvılcım / köz: +7 altın, +8/+9 turuncu alev közleri (seyrek; darbede kısa artış)
-  const rate = Math.min(10, n9 * 1.8 + n8 * 1.0 + n7 * 0.25) * (1 + 1.5 * flash);
-  GILD_FX.acc += rate * dt;
-  while (GILD_FX.acc >= 1) {
-    GILD_FX.acc -= 1;
-    const a = Math.random() * TAU, r = 0.25 + Math.random() * 0.35;
-    const x = px + Math.cos(a) * r, z = pz + Math.sin(a) * r;
-    const ember = Math.random() < hot * 0.7;
-    FX.spawn(x, 0.2 + Math.random() * 1.6, z, (Math.random() - 0.5) * 0.2, (ember ? 0.9 : 0.5) + Math.random() * 0.7, (Math.random() - 0.5) * 0.2, ember ? (Math.random() < 0.5 ? 0xff7a28 : 0xff5a1a) : (Math.random() < 0.35 ? 0xfff2b8 : 0xffc24a), 0.9 + Math.random() * 0.8, 0.045 + Math.random() * 0.04, 0);
-  }
+  // kare / dörtgen kıvılcım ve sarmal parçacıklar kaldırıldı (kullanıcı isteği): efekt yalnız gölgelendirici + aura ışımasıdır.
 }
 
 // ---- Kemik Kral: kullanıcının kemikli 3D modeli + kılıcı, animasyonlar kodla sürülür ----

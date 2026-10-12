@@ -77,6 +77,7 @@ her zaman `grep -n` ile doğrula.
 - Yerel `src/` projesi bu depoyla eşitli değil.
 
 ## Son tamamlanan büyük özellikler
+- 2026-10-13 Zırh parlaması: doku tabanlı derz çizgileri (`GILD_ARM`, albedo bulanık karşılaştırması), kare parçacıklar kaldırıldı (`gildSparks` yalnız aura) — dal `ozellik/zirh-parlama-duzeltme`.
 - 2026-10-13 Zırh +1…+9 efekti referans görsellere göre sıcak altın→alev paletiyle yeniden yazıldı (rünik çizgiler `uLatA`, sarmal şerit parçacıkları) — dal `ozellik/zirh-efekt-referans` (main'e alınmadı).
 - 2026-10-12 Görsel: zırh +1…+9 kademeli efekt (`ARMOR_LV`, `GILD_ARM`) ve tapınak renk paleti — dal `ozellik/gorsel-zirh-tapinak` (main'e alınmadı).
 - 2026-10-12 Oyun sonu dengesi: tapınak zorluğu, Efsanevi + Taş Mühür ödülleri, Sv 51–70 EXP eğrisi (dal `ozellik/oyun-sonu-denge`).
