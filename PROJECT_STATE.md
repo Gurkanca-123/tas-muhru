@@ -58,6 +58,8 @@ her zaman `grep -n` ile doğrula.
   → aynı örnek). Host canavarları yönetir, misafir kukla tutar. Olaylar: `n` doğum, `k` ölüm, `a` saldırı, `t` yer uyarısı,
   `v` yaylım, `c` eylem, `x` mesaj, `d` hasar, `T` tapınak (`w` / `c` / `ph` / `so` / `sb`), `tr` halka şok.
   `fullState` / `applyFull` ile yeniden eşitlenir; host düşerse `promote` devralır.
+- **Zırh güçlendirme görseli:** gövde kostümünde tek skinned mesh + `gildMaterial` (`GILD_FRAG`); kademe `armorLevel(it)` → `uLv[bölge]`
+  (`setBodyGild`), silah `gildLevel` ayrı. Yeni katmanlar `#ifdef GILD_ARM`; aura/kıvılcım `gildSparks`. Tapınak renkleri `THEMES.bronze` + `templeAccent` + `buildTempleFloor`.
 - **Model / animasyon:** GLB'ler base64 betiklerden `GLTFLoader.parse`, `SkeletonUtils.clone`; klipler GLB'ye gömülü (araçlarla
   üretildi). Kemik Kral klipsiz, kodla poz (`animateBoneKing`). Tapınak düşmanları: idle / walk / run / death + atk / slam /
   spin / roar / plant / cast / seal / shoot; sahne extras `enemy.{handMount, handMountL, shieldMount, ev}`.
@@ -75,6 +77,7 @@ her zaman `grep -n` ile doğrula.
 - Yerel `src/` projesi bu depoyla eşitli değil.
 
 ## Son tamamlanan büyük özellikler
+- 2026-10-12 Görsel: zırh +1…+9 kademeli efekt (`ARMOR_LV`, `GILD_ARM`) ve tapınak renk paleti — dal `ozellik/gorsel-zirh-tapinak` (main'e alınmadı).
 - 2026-10-12 Oyun sonu dengesi: tapınak zorluğu, Efsanevi + Taş Mühür ödülleri, Sv 51–70 EXP eğrisi (dal `ozellik/oyun-sonu-denge`).
 - 2026-10-12 Bronz Taş Tapınağı (10 katlı dairesel arena grup zindanı) — `ca42025`.
 - Kılıç yükseltme görünümü +0…+9 (`3990959`) · yetenek kararlılık penceresi (`0c38673`) · Savaşçı yetenekleri ve animasyonları

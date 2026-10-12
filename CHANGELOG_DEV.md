@@ -10,6 +10,24 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-12 — Görsel: zırh +1…+9 efekti ve Bronz Taş Tapınağı renk paleti · dal `ozellik/gorsel-zirh-tapinak`
+- Dosyalar: `index.html`, `CHANGELOG_DEV.md`, `PROJECT_STATE.md`. Zorluk, EXP, ödül, Taş Mühür ve deneme karakteri kodlarına dokunulmadı (yalnız `__tm` test kancasına semboller eklendi).
+- **A. Zırh efekti** (`GILD_FRAG` içinde `#ifdef GILD_ARM`, `ARMOR_LV`/`armorLevel`, `gildSparks`): mevcut +7…+9 yaldız gölgelendiricisi korundu, `gildLevel` (silahlar) değişmedi.
+  Zırh için aynı `uLv` alanına +1…+9 kademesi yazılır (0.05 … 0.15 · 0.22 … 0.36 · 0.4 / 0.7 / 1); yeni katmanlar yalnız zırh malzemesinde (`armor: true`) çalışır.
+  - +1…+3: gümüş siluet (rim) ışığı. +4…+6: turkuaz kenar + eğri yüzeyde akan kontur + yukarı süzülen ince şerit.
+  - +7…+9: eski altın şerit / parıltı / (+9) iplik dokuma + altın kenar ışığı + ~3.5 sn'de bir kısa parlama darbesi; aura sprite'ı darbeyle nabızlanır; kıvılcım seyreltildi (+9 parça başına 1.3/sn, üst sınır 7/sn; +7 de artık kıvılcım verir).
+  - Emissive küçük ve yalnız siluet / kontur / şeritte (zırh yüzeyi yıkanmıyor). Gövde kostümü bölgeleri: göğüs → gövde/kol/bacak, ayakkabı → ayak (kask / kalkan eskisi gibi görselsiz).
+  - Temizlik: efekt malzeme uniform'udur (eşya değişince `setBodyGild` yazar, birikmez); gövde yeniden kurulunca `disposeGild`; tek aura sprite'ı.
+  - Modüler parça yolu (`gearMat`, negatif değer = zırh) eklendi ama mevcut oyunda zırh yuvasına bağlı modüler kıyafet yok → denenemedi.
+  - Kenar için normal türevi (`fwidth(normal)`) denendi, ekran ölçeğine bağlı olduğundan her yeri beyaza boyadı → bırakıldı; siluet + kontur kullanılıyor.
+- **B. Tapınak paleti** (`THEMES.bronze`, `templeAccent`, `templeSealTex`, `buildTempleFloor`): zemin/duvar nötr bazalt grisi (`floor 0x5a5652`, `wall 0x3a3733`, `wallTop 0x4e4843`), sis nötr-koyu (`0x15121a`), ortam ışığı nötr-sıcak beyaz, güneş soluk krem, oyuncu ışığı yumuşak sıcak (`0xffb878`);
+  ateşler / mangallar sıcak turuncu (`torch 0xffa040`) kaldı. Mühür taşı koyu bazalt, altın-bronz kakma çizgileri korundu, parıltı haritası soluk mavi-mor ve yoğunluğu yarıya indi.
+  Büyülü vurgu (sütun rün şeritleri, kuşak rün taşları, mühür parıltısı, portal): kat 1–5 turkuaz `0x44ccd8`, 6 mavi, 7–9 mavi-mor, 10 mor. Bronz parçalar biraz koyulaştı (`0x9a7438`/`0x5e4a30`, emissive azaltıldı).
+  Mimari, sütunlar, dört ateş, zemin geometrisi, mühür deseni, yer uyarıları ve boss mühür noktaları değişmedi.
+- Testler: `node --check` temiz; `t_armorfx.mjs` 7/7 (kademe tablosu, çıkarma/takma, 6 kez gövde yeniden kurma → tek aura, GPU kaynağı birikmiyor, sayfa hatası yok); `t_logic.mjs` 21/21; `t_temple.mjs` 34/34; `t_reg.mjs` temiz.
+  Görsel doğrulama başsız Chromium (SwiftShader) ekran görüntüleriyle; gerçek mobil cihazda denenmedi (parlaklık, başarım, küçük ekranda okunurluk).
+- Yedek: `yedek/gorsel-iyilestirme-oncesi` (main = `2e19020`). `main`'e ve Pages'e geçilmedi.
+
 ## 2026-10-12 — GEÇİCİ deneme karakteri (kaldırılacak)
 - `index.html`: karakter seçim ekranında "Deneme: Sv 50 Savaşçı" düğmesi → yeni yuvada Sv 50 Savaşçı, +9 Nihai Zırh Seti (kask, zırh, çizme, kalkan, Efsane nadirlik), +9 Obsidyen Keski, Güç 108 / Can 58, yetenekler 5/5, 200.000 altın.
 - Kaldırma: `// ===== GEÇİCİ DENEME KARAKTERİ` bloğunu sil, `testCharButton(box); // DENEME-DUGMESI` satırını sil, `__tm` kancasındaki `newTestWarrior`'ı çıkar (ya da bu işin commit'ini `git revert` et). Oyuncunun kayıtlarına dokunmaz.

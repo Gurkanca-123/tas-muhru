@@ -1062,7 +1062,7 @@ const THEMES = {
   fire: { floor: 0x604840, wall: 0x4a302a, wallTop: 0x5e3a2e, fog: 0x3a1a0e, fogNear: 12, fogFar: 46, hemiSky: 0xffd0b0, hemiGround: 0x6a3e28, hemiI: 1.0, sun: 0xffc090, sunI: 0.55, exposure: 1.15, light: 0xff8a40, lightI: 1.7, torch: 0xff6a20, deco: 'fire', vignette: 0.28, ambient: 'ember', ambientN: 36 },
   ice: { floor: 0x8aa8bc, wall: 0x56788f, wallTop: 0xcfe8f5, fog: 0x0e1c2b, fogNear: 10, fogFar: 38, hemiSky: 0xcfe8ff, hemiGround: 0x4e6071, hemiI: 0.72, sun: 0xdff0ff, sunI: 0.4, light: 0xbfe6ff, torch: 0x7fd8ff, deco: 'ice', vignette: 0.3, ambient: 'snow', ambientN: 42 },
   bone: { floor: 0x5e5850, wall: 0x46403a, wallTop: 0x8a8070, fog: 0x14140f, fogNear: 10, fogFar: 40, hemiSky: 0xd4d8cc, hemiGround: 0x46423a, hemiI: 0.92, sun: 0xe8f0e0, sunI: 0.45, exposure: 1.08, light: 0x9affb0, lightI: 1.6, torch: 0x6aff8a, deco: 'bone', vignette: 0.34, ambient: 'spore', ambientN: 26 },
-  bronze: { floor: 0x6e5c4a, wall: 0x4a3e34, wallTop: 0x6a5642, fog: 0x1c120a, fogNear: 16, fogFar: 54, hemiSky: 0xf2dcbc, hemiGround: 0x5a4030, hemiI: 1.0, sun: 0xffd8a8, sunI: 0.55, exposure: 1.15, light: 0xffa050, lightI: 1.7, torch: 0xffa040, deco: 'temple', vignette: 0.3, ambient: 'ember', ambientN: 24 },
+  bronze: { floor: 0x5a5652, wall: 0x3a3733, wallTop: 0x4e4843, fog: 0x15121a, fogNear: 16, fogFar: 54, hemiSky: 0xe6dfd4, hemiGround: 0x4c443e, hemiI: 1.0, sun: 0xf2e6d2, sunI: 0.55, exposure: 1.15, light: 0xffb878, lightI: 1.7, torch: 0xffa040, deco: 'temple', vignette: 0.3, ambient: 'ember', ambientN: 24 },
   temple: { floor: 0x5a5264, wall: 0x40384a, wallTop: 0x5a4a66, fog: 0x22162a, fogNear: 12, fogFar: 46, hemiSky: 0xe0c8ec, hemiGround: 0x5a4062, hemiI: 1.05, sun: 0xffc0e0, sunI: 0.5, exposure: 1.2, light: 0xff6aa8, lightI: 1.7, torch: 0xff3a8a, deco: 'temple', vignette: 0.28, ambient: 'dust', ambientN: 30 },
 };
 
@@ -8390,7 +8390,7 @@ const Net = {
   myState() {
     const pl = G.player, E = P.equip;
     return Object.assign({ i: this.id, l: this.levelKey(), x: +pl.x.toFixed(2), z: +pl.z.toFixed(2), r: +pl.rot.toFixed(2), m: pl.moving ? 1 : 0, a: this.atk, k: this.sk, kn: this.skId,
-      c: P.cls, b: P.cls === 'warrior' ? savasciBodyKey() : pl.H.bodyKey || 'bez', w: (E.weapon && E.weapon.set) || CLASSES[P.cls].weapons.base, gc: gildLevel(E.chest), gf: gildLevel(E.feet), gw: gildLevel(E.weapon), wp: (E.weapon && E.weapon.plus) | 0, n: P.name, lv: P.lv }, Coop.stateFields());
+      c: P.cls, b: P.cls === 'warrior' ? savasciBodyKey() : pl.H.bodyKey || 'bez', w: (E.weapon && E.weapon.set) || CLASSES[P.cls].weapons.base, gc: armorLevel(E.chest), gf: armorLevel(E.feet), gw: gildLevel(E.weapon), wp: (E.weapon && E.weapon.plus) | 0, n: P.name, lv: P.lv }, Coop.stateFields());
   },
   // her kare (frame): kalp atışı, yeniden bağlanma, durum gönderme, diğer oyuncuları çizme
   tick(dt) {
@@ -9678,7 +9678,7 @@ function buildBaltaciModel(key) {
     o.castShadow = true; o.frustumCulled = false;
     if (o.isSkinnedMesh && !gild && key !== 'ciplak') { // +7…+9 ışıltı: bu modele özel malzeme kopyası (05d_gild.js)
       ensureGildRegions(o);
-      o.material = gildMaterial(o.material, o.geometry, { up: 'y', reg: true, dens: 38, lat: 44 });
+      o.material = gildMaterial(o.material, o.geometry, { up: 'y', reg: true, armor: true, dens: 38, lat: 44 });
       gild = o.material.userData.gild;
     }
   });
@@ -9731,7 +9731,7 @@ function buildSavasciModel(key) {
     o.castShadow = true; o.frustumCulled = false;
     if (o.isSkinnedMesh && !gild) { // +7…+9 ışıltı: bu modele özel malzeme kopyası
       ensureGildRegions(o);
-      o.material = gildMaterial(o.material, o.geometry, { up: 'y', reg: true, dens: 38, lat: 44 });
+      o.material = gildMaterial(o.material, o.geometry, { up: 'y', reg: true, armor: true, dens: 38, lat: 44 });
       gild = o.material.userData.gild;
     }
   });
@@ -9927,10 +9927,12 @@ function gearParts(key, fit) {
   return out;
 }
 // +7 ve üstü yükseltmede ışıltı / yaldız (05d_gild.js): malzeme kopyası + gölgelendirici; paylaşılanı bozma.
-// glow: gildLevel (0.4 / 0.7 / 1); geo: eşyanın geometrisi; o: { up, dens, lat }
+// glow: gildLevel (0.4 / 0.7 / 1) ya da zırh için -armorLevel; geo: eşyanın geometrisi; o: { up, dens, lat }
 function gearMat(mat, glow, geo, o) {
   if (!glow || !geo) return mat;
-  const m = gildMaterial(mat, geo, o);
+  const arm = glow < 0; // zırh parçası: -armorLevel (+1…+9 kademeli kenar ışığı)
+  if (arm) glow = -glow;
+  const m = gildMaterial(mat, geo, arm ? Object.assign({ armor: true }, o) : o);
   m.userData.gild.uLv.value[0] = glow;
   return m;
 }
@@ -11155,6 +11157,11 @@ const Equipment = {
 const GILD_T = { value: 0 }; // tüm malzemelerin paylaştığı saat (frame() günceller)
 const GILD_LV = [0, 0, 0, 0, 0, 0, 0, 0.4, 0.7, 1];
 const gildLevel = (it) => (it && it.type === 'gear' && it.plus >= 7 ? GILD_LV[Math.min(9, it.plus | 0)] : 0);
+// Zırh (gövde kostümü / zırh parçaları) için +1…+9 kademesi: aynı ışıltı seviyesi alanı, +7…+9 değerleri değişmedi.
+//   +1…+3 (0.05…0.15): metalik kenar parlaması · +4…+6 (0.22…0.36): kenarlarda akan enerji vurgusu (yalnız gölgelendirici)
+//   +7…+9: yaldız (eski) + güçlü kenar ışığı, kısa parlama darbeleri, aura ve seyrek kıvılcım. Silahlar gildLevel kullanmaya devam eder.
+const ARMOR_LV = [0, 0.05, 0.10, 0.15, 0.22, 0.29, 0.36, 0.4, 0.7, 1];
+const armorLevel = (it) => (it && it.type === 'gear' ? ARMOR_LV[Math.min(9, Math.max(0, it.plus | 0))] : 0);
 const GILD_REGION = { torso: 0, upperArms: 0, thighs: 1, shins: 1, hips: 2, foreArms: 3, hands: 3, feet: 4, head: 5 };
 const GILD_FRAG = `
 #ifdef GILD
@@ -11164,6 +11171,7 @@ const GILD_FRAG = `
   #else
     float lv = uLv[0];
   #endif
+  #ifdef GILD_ARM
   if (lv > 0.001) {
     vec3 lp = (vObj - uBB) / uExt;
     float h = dot(lp, uUp);
@@ -11172,6 +11180,36 @@ const GILD_FRAG = `
     float bright = 1.0 - 0.8 * smoothstep(0.55, 0.85, lum); // krem/beyaz kumaş yıkanmasın
     float mk = clamp(0.12 + metalnessFactor * 0.8 + sat * 0.9, 0.0, 1.0) * bright; // plaka/metal/deri: parlar
     float plate = smoothstep(0.3, 0.65, mk);                                      // asıl metal plakalar
+    {
+      // zırh: +1…+3 gümüş siluet ışığı, +4…+6 turkuaz kenar + akan kontur / şerit, +7…+9 altın kenar + parlama darbeleri.
+      // Zırh koyu ve metalik: emissive küçük tutulur, yalnız siluet / kontur / ince şeritte (yüzeyi yıkamaz).
+      float S = clamp(lv / 0.15, 0.0, 1.0);
+      float E = clamp((lv - 0.12) / 0.24, 0.0, 1.0);
+      float Hh = smoothstep(0.37, 0.4, lv);
+      float t3 = Hh * (0.34 + 0.66 * clamp((lv - 0.4) / 0.6, 0.0, 1.0));
+      float ndv = abs(dot(normal, normalize(vViewPosition)));
+      float rimA = pow(1.0 - ndv, 2.0);                                                   // siluet
+      float cn = abs(fract(ndv * 4.0 + h * 2.0 - uT * (0.3 + 0.12 * E)) - 0.5);
+      float line = smoothstep(0.06, 0.0, cn) * smoothstep(0.1, 0.5, 1.0 - ndv);          // eğri yüzeyde akan kontur
+      float sw = smoothstep(0.05, 0.0, abs(fract(h * 1.2 - uT * 0.45) - 0.5)) * (0.3 + 0.7 * rimA); // yukarı süzülen ince şerit
+      vec3 colA = mix(vec3(0.80, 0.88, 1.0), vec3(0.30, 0.86, 1.0), smoothstep(0.2, 0.34, lv));
+      colA = mix(colA, vec3(1.0, 0.74, 0.30), Hh);
+      float amt = (0.3 * S * rimA + E * (0.5 * rimA + 0.4 * line * plate + 0.4 * sw)) * (1.0 - 0.6 * Hh) + t3 * 0.4 * rimA;
+      vec3 add2 = colA * mk * amt;
+      float fl = pow(0.5 + 0.5 * sin(uT * 1.8), 14.0);                                    // kısa parlama darbesi (~3.5 sn'de bir)
+      add2 += vec3(1.0, 0.82, 0.45) * mk * fl * t3 * (0.6 * rimA + 0.1 * plate);
+      totalEmissiveRadiance += min(add2, vec3(0.6));
+    }
+  }
+  #endif
+  if (lv > 0.39) {
+    vec3 lp = (vObj - uBB) / uExt;
+    float h = dot(lp, uUp);
+    float lum = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
+    float sat = max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b)) - min(diffuseColor.r, min(diffuseColor.g, diffuseColor.b));
+    float bright = 1.0 - 0.8 * smoothstep(0.55, 0.85, lum);
+    float mk = clamp(0.12 + metalnessFactor * 0.8 + sat * 0.9, 0.0, 1.0) * bright;
+    float plate = smoothstep(0.3, 0.65, mk);
     float g9 = smoothstep(0.7, 1.0, lv);
     float pulse = 0.9 + 0.1 * sin(uT * 2.6);
     // 1) süzülen parlak şerit
@@ -11237,8 +11275,8 @@ function gildMaterial(src, geo, o) {
     uDens: { value: o.dens || 24 }, uLat: { value: o.lat || 24 },
   };
   m.userData.gearClone = true; m.userData.gild = U;
-  m.defines = Object.assign({}, m.defines, { GILD: '' }, o.reg ? { GILD_REG: '' } : null);
-  m.customProgramCacheKey = () => 'gild' + (o.reg ? 'r' : '');
+  m.defines = Object.assign({}, m.defines, { GILD: '' }, o.reg ? { GILD_REG: '' } : null, o.armor ? { GILD_ARM: '' } : null);
+  m.customProgramCacheKey = () => 'gild' + (o.reg ? 'r' : '') + (o.armor ? 'a' : '');
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader
@@ -11277,7 +11315,7 @@ function ensureGildRegions(sm) {
 function setBodyGild(H) {
   const u = H.gild && H.gild.uLv.value;
   if (!u) return 0;
-  const E = P.equip, c = gildLevel(E.chest), lv = [c, c, c, c, gildLevel(E.feet), 0];
+  const E = P.equip, c = armorLevel(E.chest), lv = [c, c, c, c, armorLevel(E.feet), 0];
   for (let i = 0; i < 6; i++) u[i] = H.costume ? lv[i] : 0;
   return Math.max(...u);
 }
@@ -11288,20 +11326,22 @@ function disposeGild(root) {
     for (const m of new Set(ms)) if (m.userData && m.userData.gearClone) m.dispose();
   });
 }
-// Karakter etrafında yükselen altın kıvılcımlar (FX havuzu): giyili +8/+9 eşya sayısına göre
+// Karakter etrafında yükselen altın kıvılcımlar ve aura (FX havuzu): giyili +7/+8/+9 eşya sayısına göre; +9 açıkça en güçlü.
+// Parlama darbesi gölgelendiriciyle aynı saat ve fazdadır (sin(T·1.8)^14).
 const GILD_FX = { acc: 0, mat: null };
 function gildSparks(pl, dt) {
   const E = P.equip;
-  let n9 = 0, n8 = 0;
-  for (const k of SLOTS) { const it = E[k]; if (!it || (k === 'weapon' && pl.weapon && pl.weapon.userData.upg)) continue; if (it.plus >= 9) n9++; else if (it.plus >= 8) n8++; }
-  // altın hare (uzaktan okunur): +9 parça sayısıyla büyür
-  const want = Math.min(1, n9 / 4) * 0.4 + Math.min(1, (n9 + n8) / 6) * 0.1;
+  let n9 = 0, n8 = 0, n7 = 0;
+  for (const k of SLOTS) { const it = E[k]; if (!it || (k === 'weapon' && pl.weapon && pl.weapon.userData.upg)) continue; if (it.plus >= 9) n9++; else if (it.plus >= 8) n8++; else if (it.plus >= 7) n7++; }
+  // altın hare (uzaktan okunur): +9 parça sayısıyla büyür; +7/+8 hafif
+  const want = Math.min(1, n9 / 4) * 0.4 + Math.min(1, (n9 + n8) / 6) * 0.1 + Math.min(1, (n9 + n8 + n7) / 8) * 0.04;
   if (!GILD_FX.mat) GILD_FX.mat = new THREE.SpriteMaterial({ map: glowTex(), color: 0xffc860, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 });
   if (!pl.gildAura) { pl.gildAura = new THREE.Sprite(GILD_FX.mat); pl.gildAura.scale.set(3.0, 3.4, 1); pl.gildAura.position.y = 1.0; pl.gildAura.renderOrder = 2; }
   if (pl.gildAura.parent !== pl.H.root) pl.H.root.add(pl.gildAura);
   pl.gildAura.visible = want > 0.001;
-  GILD_FX.mat.opacity = want * (0.8 + 0.2 * Math.sin(GILD_T.value * 2.2));
-  const rate = n9 * 2.4 + n8 * 0.7; // sn'de kıvılcım
+  const flash = Math.pow(0.5 + 0.5 * Math.sin(GILD_T.value * 1.8), 14);
+  GILD_FX.mat.opacity = Math.min(0.85, want * (0.8 + 0.2 * Math.sin(GILD_T.value * 2.2)) + want * 0.7 * flash);
+  const rate = Math.min(7, n9 * 1.3 + n8 * 0.6 + n7 * 0.25) * (1 + 1.5 * flash); // sn'de kıvılcım (seyrek; darbede kısa artış)
   if (rate <= 0) return;
   GILD_FX.acc += rate * dt;
   while (GILD_FX.acc >= 1) {
@@ -14101,8 +14141,9 @@ function templeWalk(L, x, z) {
   for (const h of C.holes) { const hx = x - h.x, hz = z - h.z; if (hx * hx + hz * hz < h.r * h.r) return false; }
   return true;
 }
-// kat → renk aksanı (1-5 sıcak bronz, 6 kızıl, 7-9 kor, 10 erimiş altın)
-const templeAccent = (f) => (f === 9 ? 0xffc050 : f >= 6 ? 0xff5a28 : f === 5 ? 0xff7a30 : 0xffa040);
+// kat → büyülü mühür vurgusu (kontrollü soğuk renk; ateşler sıcak turuncu, altın yalnız mühür çizgilerinde kalır):
+// 1-5 turkuaz (kırık mühür), 6 mavi, 7-9 mavi-mor, 10 mor
+const templeAccent = (f) => (f === 9 ? 0x9a72ff : f >= 6 ? 0x7a6cf0 : f === 5 ? 0x5a9cf8 : 0x44ccd8);
 // merkez mühür dokusu (taş zemin + bronz kakma + rünler; kırık katlarda çatlaklar) ve parıltı dokusu
 function templeSealTex(f) {
   const key = 'tseal' + (f >= 5 ? 'b' : 'a');
@@ -14113,7 +14154,7 @@ function templeSealTex(f) {
   const rnd = mulberry32(77 + f);
   // taş taban
   const grd = g.createRadialGradient(C, C, 40, C, C, C);
-  grd.addColorStop(0, '#6a5a4a'); grd.addColorStop(1, '#4a4038');
+  grd.addColorStop(0, '#4c4a48'); grd.addColorStop(1, '#2e2c2b');
   g.fillStyle = grd; g.beginPath(); g.arc(C, C, C - 2, 0, TAU); g.fill();
   for (let i = 0; i < 2600; i++) { const a = rnd() * TAU, r = Math.sqrt(rnd()) * (C - 6); g.fillStyle = `rgba(${rnd() < 0.5 ? '20,16,12' : '140,120,96'},${0.05 + rnd() * 0.08})`; g.fillRect(C + Math.cos(a) * r, C + Math.sin(a) * r, 2 + rnd() * 6, 2 + rnd() * 6); }
   // döşeme halkaları
@@ -14121,7 +14162,7 @@ function templeSealTex(f) {
   for (const r of [C * 0.36, C * 0.62]) { g.beginPath(); g.arc(C, C, r, 0, TAU); g.stroke(); }
   for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; g.beginPath(); g.moveTo(C + Math.cos(a) * C * 0.62, C + Math.sin(a) * C * 0.62); g.lineTo(C + Math.cos(a) * (C - 4), C + Math.sin(a) * (C - 4)); g.stroke(); }
   // bronz kakma: iki halka + 8 köşeli yıldız + iç halka + artı (kalkandaki mühür)
-  const both = (fn) => { fn(g, '#c88a48', '#7a4a20'); fn(e, '#ffb060', '#ff7a20'); };
+  const both = (fn) => { fn(g, '#d09a4c', '#7a5426'); fn(e, '#7a84c0', '#555c98'); };
   both((x, c1, c2) => {
     x.lineCap = 'round'; x.lineJoin = 'round';
     x.strokeStyle = c2; x.lineWidth = 26; x.beginPath(); x.arc(C, C, C * 0.93, 0, TAU); x.stroke();
@@ -14222,22 +14263,22 @@ function buildTempleFloor(dIdx, f, seed) {
     // --- zemin: merkez mühür + iç döşeme + bronz kuşak + dış yürüyüş halkası ---
     const flo = new THREE.Mesh(templeFlagstones(AX, AZ, [[4.55, 5.9, 18, 1], [5.9, 7.25, 22, 0.96], [7.25, 8.5, 26, 1], [8.5, 9.55, 30, 0.95], [9.95, 11.1, 38, 0.88], [11.1, 12.5, 44, 0.84]], th.floor, Math.random), new THREE.MeshLambertMaterial({ vertexColors: true }));
     flo.userData.dyn = true; flo.userData.noCast = true; flo.receiveShadow = true; G_.add(flo); L.disposables.push(flo.geometry, flo.material);
-    const under = new THREE.Mesh(new THREE.CircleGeometry(13.2, 64), mat(0x231a14)); under.rotation.x = -Math.PI / 2; under.position.set(AX, -0.07, AZ); under.userData.dyn = true; under.userData.noCast = true; G_.add(under); L.disposables.push(under.geometry);
+    const under = new THREE.Mesh(new THREE.CircleGeometry(13.2, 64), mat(0x1a1918)); under.rotation.x = -Math.PI / 2; under.position.set(AX, -0.07, AZ); under.userData.dyn = true; under.userData.noCast = true; G_.add(under); L.disposables.push(under.geometry);
     const ST = templeSealTex(f);
-    const sealM = new THREE.MeshLambertMaterial({ map: ST.map, emissiveMap: ST.emi, emissive: new THREE.Color(acc).multiplyScalar(0.85), emissiveIntensity: boss ? 0.5 : 0.32 });
+    const sealM = new THREE.MeshLambertMaterial({ map: ST.map, emissiveMap: ST.emi, emissive: new THREE.Color(acc).multiplyScalar(0.85), emissiveIntensity: boss ? 0.26 : 0.16 });
     const seal = new THREE.Mesh(new THREE.CircleGeometry(4.6, 64), sealM); seal.rotation.x = -Math.PI / 2; seal.position.set(AX, 0.012, AZ); seal.receiveShadow = true; seal.userData.dyn = true; seal.userData.noCast = true; G_.add(seal);
     L.disposables.push(seal.geometry, sealM);
-    const bronze = mat(0x9a6a34, { e: 0x3a1a04, ei: 0.4 }), bronzeD = mat(0x6a4422);
+    const bronze = mat(0x9a7438, { e: 0x2a1c06, ei: 0.3 }), bronzeD = mat(0x5e4a30);
     const band = new THREE.Mesh(new THREE.RingGeometry(9.58, 9.92, 96), bronze); band.rotation.x = -Math.PI / 2; band.position.set(AX, 0.015, AZ); band.userData.dyn = true; band.userData.noCast = true; G_.add(band); L.disposables.push(band.geometry);
     const runeM = new THREE.MeshBasicMaterial({ map: ST.emi, color: acc, transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending, depthWrite: false });
     const glow = new THREE.Mesh(new THREE.CircleGeometry(4.6, 64), runeM); glow.rotation.x = -Math.PI / 2; glow.position.set(AX, 0.03, AZ); glow.userData.dyn = true; G_.add(glow); L.disposables.push(glow.geometry, runeM);
     glowDecal(G_, AX, 0.02, AZ, 6.5, acc, boss ? 0.22 : 0.14).userData.dyn = true;
-    L.anims.push((t) => { const k = 0.5 + 0.5 * Math.sin(t * (boss ? 2.2 : 1.4)); sealM.emissiveIntensity = (boss ? 0.42 : 0.26) + k * 0.24; runeM.opacity = (boss ? 0.14 : 0.06) + k * 0.08; });
+    L.anims.push((t) => { const k = 0.5 + 0.5 * Math.sin(t * (boss ? 2.2 : 1.4)); sealM.emissiveIntensity = (boss ? 0.22 : 0.12) + k * 0.14; runeM.opacity = (boss ? 0.1 : 0.04) + k * 0.06; });
     // kuşaktaki rün taşları (parıltılı)
     const runeDot = mat(acc, { e: acc, ei: 1.2 });
     for (let i = 0; i < 24; i++) { const a = (i / 24) * TAU + 0.13; box(G_, 0.22, 0.05, 0.12, runeDot, AX + Math.cos(a) * 9.75, 0.03, AZ + Math.sin(a) * 9.75).rotation.y = -a; }
     // --- çevre duvarı (kuzey yüksek, güney alçak: kamera) + kapı açıklıkları ---
-    const wallM = mat(th.wall), capM = mat(th.wallTop), darkM = mat(0x2e241c);
+    const wallM = mat(th.wall), capM = mat(th.wallTop), darkM = mat(0x252321);
     const NSEG = 40, WR = 13.7;
     for (let i = 0; i < NSEG; i++) {
       const a = ((i + 0.5) / NSEG) * TAU, sx = Math.cos(a), sz = Math.sin(a);
@@ -14332,7 +14373,7 @@ function buildTempleFloor(dIdx, f, seed) {
       L.sealPads.push({ x, z, pm, pg });
     }
     // dağınık süsler: taş parçaları / kırık rün levhaları (yürünebilir)
-    const rubM = mat(0x3a3028), rubM2 = mat(0x5a4a3a);
+    const rubM = mat(0x35322f), rubM2 = mat(0x4e4945);
     for (let k = 0; k < 22; k++) { const a = rand(0, TAU), r = rand(11.4, 12.6); if (Math.abs(Math.cos(a)) < 0.2) continue; part(G_, icoGeo(rand(0.1, 0.24), 0), k % 3 ? rubM : rubM2, AX + Math.cos(a) * r, 0.06, AZ + Math.sin(a) * r, rand(0, 3), rand(0, 3), 0).scale.y = 0.6; }
     mergeStatic(L);
     markShadows(L);
@@ -14860,7 +14901,7 @@ class PlayerEnt {
   // kıyafet modellerini tak, altında kalan gövde bölgelerini gizle. Tanımlar: assets/outfits/outfits.json
   refreshGear() {
     const H = this.H;
-    applyOutfit(H, (sl) => { const isl = Equipment.itemSlotOf(sl); return gearGlow(isl && P.equip[isl]); });
+    applyOutfit(H, (sl) => { const isl = Equipment.itemSlotOf(sl); return isl && isl !== 'weapon' ? -armorLevel(P.equip[isl]) : gearGlow(isl && P.equip[isl]); });
     setBodyGild(H); // Baltacı tam gövde: bölge başına +7…+9 seviyesi
     this.meshes = [];
     H.root.traverse((c) => { if (c.isMesh && c.material !== MAT.shadow) { c.userData.m0 = c.userData.outfitMats || c.material; c.castShadow = true; this.meshes.push(c); } });
@@ -17567,7 +17608,7 @@ function boot(data) {
   } catch (e) { showError(e); }
 }
 window.__tm = { Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
-  TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior };
+  TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
   if (hot && hot.ready) hot.ready(boot); else boot(hot && hot.data ? hot.data : {});
