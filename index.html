@@ -630,11 +630,25 @@ const SFX = {
 const MAX_LV = 70;
 // seviye EXP'si: Sv 5 ~21, Sv 20 ~40, Sv 40 ~64 normal canavar (eskisinin ~1.6-2.7 katı; odalarda canavar da ~%50
 // fazla, yani zindan süresi olarak seviye ~1.1-1.8 kat yavaş — oyuncu arada altın toplayıp setini geliştirsin)
-// Sv 1–49 değişmedi (mevcut karakterlerin ilerlemesi korunur). Sv 50+ çarpanı giderek büyür:
-// seviye başına "kendi seviyesindeki canavar" sayısı Sv 50 ~50 → Sv 55 ~100 → Sv 60 ~200 → Sv 65 ~360 → Sv 69 ~520.
-// Toplamda 55→70 yolu, 1→50 yolunun yaklaşık iki katı: uzun vadeli son oyun (Kemik Taht / Kara Taş Zor-Kabus).
+// Sv 1–50 değişmedi (mevcut karakterlerin ilerlemesi korunur). Sv 51–70: MERKEZİ EXP PLANI (EXP_PLAN).
+// Her düğüm [seviye, kaç tane]: "o seviyedeki normal bir canavardan (mobBase.exp) kaç tanesi bu seviyeyi geçirir".
+// Düğümler arası üstel (log-lineer) geçiş. Eğriyi değiştirmek için yalnız EXP_PLAN düzenlenir.
+//   Sv 51 ~78 → Sv 55 ~195 → Sv 60 ~450 → Sv 65 ~900 → Sv 69 ~1500 canavar (eski eğri: ~58 → 118 → 242 → 430 → 630).
+// 51–60 arası toplam maliyet eskinin ~1.6 katı, 61–70 arası ~2.1 katı: uzun vadeli son oyun.
 const expBase = (lv) => Math.floor(32 * Math.pow(lv, 1.8) + 30);
-const expNeed = (lv) => (lv < 50 ? expBase(lv) : Math.floor(expBase(lv) * (1 + 0.04 * Math.pow(lv - 49, 1.8))));
+const EXP_PLAN = [[51, 78], [55, 195], [60, 450], [65, 900], [69, 1500], [70, 1600]];
+// Sv 50+: tek bir canavar / patron kill'inin verebileceği en çok EXP = o seviye ihtiyacının bu oranı (tek ödülle çoklu seviye atlanmaz)
+const EXP_KILL_CAP = 0.35;
+const expKills = (lv) => {
+  const A = EXP_PLAN;
+  if (lv <= A[0][0]) return A[0][1];
+  for (let i = 0; i < A.length - 1; i++) {
+    const [a, ka] = A[i], [b, kb] = A[i + 1];
+    if (lv <= b) return Math.exp(Math.log(ka) + ((Math.log(kb) - Math.log(ka)) * (lv - a)) / (b - a));
+  }
+  return A[A.length - 1][1];
+};
+const expNeed = (lv) => (lv < 50 ? expBase(lv) : lv === 50 ? Math.floor(expBase(50) * 1.04) : Math.round(mobBase(lv).exp * expKills(lv)));
 
 // Sınıflar: Baltacı ve Savaşçı (kılıç; kullanıcının 5 Tripo gövdesi: Fantazi → Bez → Kurt Dişi → Nihai → Efsanevi).
 // weapons: adlı silah setleri (GEAR_SETS) — base: başlangıç / setsiz düşüş, drops: kademeli nadir düşüşler,
@@ -701,8 +715,8 @@ const DUNGEONS = [
     pow: { hp: 1.3, atk: 1.25, def: 1.2, exp: 1.3 }, desc: 'Kadim Metin\'in altındaki ölüler diyarı. Kemik ordular, ruh büyücüleri ve tahtında bekleyen Kemik Kral.' },
   // 8. zindan: Bronz Taş Tapınağı — 10 dairesel arena katı (TEMPLE_FLOORS). Her deneme 1. kattan başlar; kat ödülü
   // temizlenince kaydedilir. Kat düzeni / dalgalar / ödüller "BRONZ TAŞ TAPINAĞI" bölümünde (Temple).
-  { id: 'd8', name: 'Bronz Taş Tapınağı', theme: 'bronze', req: 40, lv: [42, 63], floors: 10, mobs: ['tasmuhafiz', 'kiriksavasci'], elite: 'tascanavari', boss: 'bronzmuhur', junk: 'j7', temple: true,
-    desc: 'Bronz mühürlü dairesel arenalarda 10 kat. Kat temizlenince ödül kaydedilir: üst kata çık ya da köye dön. 7-10. katlar ve Bronz Mühür Muhafızı 3-4 kişilik grup içindir.' },
+  { id: 'd8', name: 'Bronz Taş Tapınağı', theme: 'bronze', req: 40, lv: [46, 64], floors: 10, mobs: ['tasmuhafiz', 'kiriksavasci'], elite: 'tascanavari', boss: 'bronzmuhur', junk: 'j7', temple: true,
+    desc: 'Bronz mühürlü dairesel arenalarda 10 kat. Kat temizlenince ödül kaydedilir: üst kata çık ya da köye dön. 7-10. katlar ve Bronz Mühür Muhafızı 3-4 kişilik grup içindir. 6. kattan itibaren Efsanevi parçalar ve Taş Mühürler düşer.' },
 ];
 
 // hp/atk/def/spd çarpanları şablondan; seviyeye göre ölçeklenir
@@ -911,6 +925,43 @@ const STACKS = {
 };
 const STACK_MAX = 200;
 const SHOP_LIST = ['hp1', 'hp2', 'hp3', 'mp1', 'mp2', 'mp3', 'tp', 'ore', 'bless'];
+
+// ---------- Taş Mühürler (Bronz Taş Tapınağı 6-10. kat ödülü) ----------
+// Ekipmana takılan, normal geliştirmeden (+0…+9) bağımsız ilerleme katmanı. Her ekipman parçasında 1 yuva (it.seal = mühür
+// yığın kimliği, ör. 'ts_atk_2'); yalnız giyiliyken bonus verir. 5 tür × 3 kademe (Kırık / Bronz / Kadim). Mühür yok olmaz:
+// altın bedeliyle sökülür, başka eşyaya takılır; aynı türden 3 mühür altınla bir üst kademeye birleşir. Toplam bonus
+// türe göre üst sınırlıdır (SEAL_STATS.cap) — 8 yuvaya aynı mührü doldurmak sınırsız güç vermez.
+const SEAL_GRADES = [
+  { name: 'Kırık', tint: '#b8a888', sell: 350, unsocket: 1500, merge: 3000 },
+  { name: 'Bronz', tint: '#e0a050', sell: 1200, unsocket: 5000, merge: 12000 },
+  { name: 'Kadim', tint: '#ff7a3a', sell: 4000, unsocket: 15000, merge: 0 },
+];
+// key: recalc'ta toplanan alan (atkPct / defPct / hpPct oranları, crit yüzde puanı, skillPct beceri hasar oranı)
+const SEAL_STATS = {
+  atk: { name: 'Saldırı', key: 'atkPct', v: [0.02, 0.035, 0.05], cap: 0.2, pct: true },
+  def: { name: 'Savunma', key: 'defPct', v: [0.025, 0.045, 0.065], cap: 0.25, pct: true },
+  hp: { name: 'Can', key: 'hpPct', v: [0.03, 0.05, 0.08], cap: 0.3, pct: true },
+  crit: { name: 'Kritik vuruş', key: 'crit', v: [1, 2, 3], cap: 10, pct: false },
+  skill: { name: 'Beceri hasarı', key: 'skillPct', v: [0.03, 0.06, 0.09], cap: 0.3, pct: true },
+};
+const SEAL_KEYS = Object.keys(SEAL_STATS);
+const sealId = (stat, g) => 'ts_' + stat + '_' + g;
+const SEAL_RE = /^ts_(atk|def|hp|crit|skill)_([123])$/;
+const sealParse = (id) => { const m = typeof id === 'string' ? SEAL_RE.exec(id) : null; return m ? { stat: m[1], g: +m[2], S: SEAL_STATS[m[1]], G: SEAL_GRADES[+m[2] - 1] } : null; };
+const sealValText = (S, v) => '+' + (S.pct ? Math.round(v * 1000) / 10 : v) + '%';
+for (const k of SEAL_KEYS) for (let g = 1; g <= 3; g++) {
+  const S = SEAL_STATS[k], SG = SEAL_GRADES[g - 1];
+  STACKS[sealId(k, g)] = { name: SG.name + ' ' + S.name.split(' ')[0] + ' Taş Mührü', kind: 'seal', icon: 'soul', tint: SG.tint, sell: SG.sell,
+    desc: `Ekipmanın Taş Mühür yuvasına takılır (giyiliyken etkin): ${S.name} ${sealValText(S, S.v[g - 1])}. Toplam ${S.name.toLowerCase()} mühür bonusu en çok ${sealValText(S, S.cap)}.${g < 3 ? ' Aynı 3 mühür altınla bir üst kademeye birleşir.' : ''} Bronz Taş Tapınağı\'nın 6-10. katlarında düşer.` };
+}
+// giyili mühürlerin toplam bonusu (tür başına üst sınırlı): { sum: {atkPct, defPct, hpPct, crit, skillPct}, raw: {tür: sınırsız toplam} }
+function sealBonusOf(equip) {
+  equip = equip || P.equip;
+  const sum = { atkPct: 0, defPct: 0, hpPct: 0, crit: 0, skillPct: 0 }, raw = {};
+  for (const sl of SLOTS) { const it = equip[sl], q = it && sealParse(it.seal); if (q) raw[q.stat] = (raw[q.stat] || 0) + q.S.v[q.g - 1]; }
+  for (const k in raw) sum[SEAL_STATS[k].key] = Math.min(SEAL_STATS[k].cap, raw[k]);
+  return { sum, raw };
+}
 
 // ---------- Geliştirme (Demirci ocağı) ----------
 const UPG = {
@@ -2108,6 +2159,13 @@ function rollBonus(slot, tier, n) {
   return out;
 }
 function makeStack(id, n) { return { uid: uid(), type: 'stack', id, n: n || 1 }; }
+// eşyanın nadirliğini en az r yap; bonus satırları yeni nadirliğe göre yeniden zarlanır (nadirlik = satır sayısı)
+function rarityAtLeast(it, r) {
+  if (!it || it.type !== 'gear' || !r || it.rarity >= r) return it;
+  it.rarity = Math.min(r, RARITY.length - 1);
+  it.bonus = rollBonus(it.slot, it.tier, RARITY[it.rarity].lines);
+  return it;
+}
 
 function itemName(it) {
   if (it.type === 'stack') return STACKS[it.id].name;
@@ -2233,6 +2291,7 @@ function itemDetailHTML(it, opts) {
     <div class="sub">${R.name} · ${SLOT_NAMES[it.slot]}${it.slot === 'weapon' ? ' (' + CLASSES[it.cls].name + ')' : ''}</div>
     <ul>${lines}</ul>
     ${setInfoOf(it) ? setBonusHTML(setInfoOf(it)) : ''}
+    ${(() => { const q = sealParse(it.seal); return q ? `<div class="setb"><b style="color:${q.G.tint}">Taş Mühür:</b> ${STACKS[it.seal].name} · ${q.S.name} ${sealValText(q.S, q.S.v[q.g - 1])}</div>` : '<div class="sub">Taş Mühür yuvası: boş</div>'; })()}
     <div class="sub" style="color:${reqOk ? 'var(--parch-dim)' : 'var(--bad)'}">Gereken seviye: ${req}${clsOk ? '' : ' · <span style="color:var(--bad)">Sınıfın kullanamaz</span>'}</div>
     <div class="sub" style="color:${durCol}">Dayanıklılık: ${it.dur}/100${it.dur <= 0 ? ' — kırık, değerler yarıya indi' : ''}</div>
     <div class="price"><img class="pix" src="${spriteIcon('coin')}" alt="">Satış: ${fmtFull(sellPrice(it))}</div>`;
@@ -2250,13 +2309,19 @@ function rollRarity(tier, rank) {
 }
 // tier: eşya kademesi (0-6), dTier: zindan kademesi (1-7; set düşme payları buna göre). endgame: Kadim Metin /
 // Kemik Taht kaynağı — yalnız oradan düşen setler (GEAR_SETS[*].endgame) devreye girer.
-function rollGear(tier, rank, dTier, endgame) {
+function rollGear(tier, rank, dTier, endgame, efs) {
   dTier = dTier || tier;
   const sets = CLASSES[P.cls].armorSets;
   const SW = { weapon: 22, head: 13, chest: 13, feet: 13, shield: 13, ring: 11, neck: 11, charm: 11 };
   const slots = SLOTS.filter((s) => SW[s] > 0), slot = slots[weighted(slots.map((s) => SW[s]))];
   let cls = P.cls;
   if (slot === 'weapon' && !sets && Math.random() < 0.3) cls = pick(Object.keys(CLASSES)); // set sınıfına başka sınıf silahı düşmez
+  // Bronz Taş Tapınağı 6-10. kat ödülü (efs): Efsanevi set parçası / silah / Efsane takı — Zor/Kabus şartı bu kaynakta aranmaz
+  if (efs) {
+    if (sets && SET_SLOTS.includes(slot)) return makeGear(slot, 0, rollRarity(tier, rank), cls, 'efsane');
+    if (sets && slot === 'weapon' && CLASSES[P.cls].weapons.endgame) return makeGear(slot, 0, rollRarity(tier, rank), cls, CLASSES[P.cls].weapons.endgame);
+    if (JEWEL_SLOTS.includes(slot)) return makeGear(slot, 7, rollRarity(tier, rank), cls);
+  }
   // set sınıfı: zırh yuvalarında yalnız set parçası (Kurt Dişi nadir), silahta yalnız adlı baltalar (Bronz nadir)
   const roll = (opts, base) => { for (const k of opts) if (Math.random() < (GEAR_SETS[k].drop[dTier] || 0)) return k; return base; };
   if (sets && SET_SLOTS.includes(slot)) {
@@ -2421,6 +2486,7 @@ function validItem(it) {
     if (typeof it.look === 'string' && OUTFITS[it.look]) g.look = it.look; // isteğe bağlı görünüm (kıyafet id'si)
     if (typeof it.set === 'string' && GEAR_SETS[it.set] && GEAR_SETS[it.set].names[it.slot]) { g.set = it.set; g.tier = GEAR_SETS[it.set].tier; }
     if (Array.isArray(it.bonus)) for (const x of it.bonus) if (x && BONUS_POOL[x.k] && typeof x.v === 'number' && isFinite(x.v)) g.bonus.push({ k: x.k, v: x.v });
+    if (sealParse(it.seal)) g.seal = it.seal; // takılı Taş Mühür (yığın kimliği)
     return g;
   }
   return null;
@@ -2541,12 +2607,17 @@ function recalc() {
   const sets = activeSets(P.equip), sb = sets.sum;
   D.sets = sets.list;
   atkPct += sb.atkPct; defPct += sb.defPct; critAdd += sb.crit; add.mob += sb.mob;
+  // Taş Mühürler (yuvaya takılı, giyili eşyalardan; tür başına üst sınırlı): geliştirmeden ayrı ilerleme katmanı
+  const sealB = sealBonusOf(P.equip), ss = sealB.sum;
+  D.seals = sealB;
+  atkPct += ss.atkPct; defPct += ss.defPct; critAdd += ss.crit;
+  D.skillPct = ss.skillPct;
   for (const b of buffs) {
     atkPct += b.atkPct || 0; defPct += b.defPct || 0; spdPct += b.speedPct || 0;
     critAdd += b.critAdd || 0; regenPct += b.regenPct || 0;
   }
   const main = s[c.main];
-  D.maxHp = Math.round((70 + P.lv * 14 + s.vit * 9 + add.hp) * (1 + sb.hpPct));
+  D.maxHp = Math.round((70 + P.lv * 14 + s.vit * 9 + add.hp) * (1 + sb.hpPct + ss.hpPct));
   D.maxMp = Math.round(30 + P.lv * 5 + s.int * 5 + add.mp);
   D.atk = Math.round((add.atk + main * 2.5 + P.lv * 2) * (1 + atkPct));
   D.def = Math.round((add.def + s.vit * 0.6 + P.lv * 0.5) * (1 + defPct));
@@ -2594,6 +2665,7 @@ const invFree = () => P.inv.filter((x) => !x).length;
 function dismantle(i) {
   const it = P.inv[i];
   if (!it || it.type !== 'gear') return false;
+  if (it.seal) { toast('Önce takılı Taş Mührü sök'); SFX.play('deny'); return false; }
   const y = dismantleYield(it), ids = Object.keys(y);
   const need = ids.filter((id) => !P.inv.some((s) => s && s.type === 'stack' && s.id === id && s.n + y[id] <= STACK_MAX)).length;
   if (need > invFree() + 1) { toast('Çantada yer yok'); SFX.play('deny'); return false; }
@@ -2601,6 +2673,37 @@ function dismantle(i) {
   for (const id of ids) addStack(id, y[id]);
   feed('Parçalandı: ' + ids.map((id) => y[id] + ' ' + STACKS[id].name).join(', '), '#c8b89a');
   SFX.play('anvil');
+  return true;
+}
+// ---- Taş Mühür işlemleri ----
+// mührü eşyanın yuvasına tak (çantadan 1 adet düşer); yuvada mühür varsa önce sökülmelidir
+function socketSeal(it, id) {
+  if (!it || it.type !== 'gear' || it.seal || !sealParse(id) || !removeStack(id, 1)) return false;
+  it.seal = id;
+  recalc();
+  return true;
+}
+// mührü sök: altın bedeli (kademeye göre) ödenir, mühür çantaya döner (yok olmaz); yer yoksa hiçbir şey olmaz
+function unsocketSeal(it) {
+  const q = it && it.type === 'gear' ? sealParse(it.seal) : null;
+  if (!q) return false;
+  if (P.gold < q.G.unsocket) { toast('Mührü sökmek için ' + fmtFull(q.G.unsocket) + ' altın gerekli'); SFX.play('deny'); return false; }
+  if (!canStackFit(it.seal)) { toast('Çantada yer yok'); SFX.play('deny'); return false; }
+  P.gold -= q.G.unsocket;
+  addStack(it.seal, 1);
+  it.seal = null;
+  delete it.seal;
+  recalc();
+  return true;
+}
+// aynı türden 3 mührü bir üst kademeye birleştir (altın bedeli); yer yoksa değişmez
+function mergeSeal(id) {
+  const q = sealParse(id);
+  if (!q || q.g >= 3 || countStack(id) < 3) return false;
+  if (P.gold < q.G.merge) { toast('Birleştirmek için ' + fmtFull(q.G.merge) + ' altın gerekli'); SFX.play('deny'); return false; }
+  removeStack(id, 3);
+  if (!addStack(sealId(q.stat, q.g + 1), 1)) { addStack(id, 3); toast('Çantada yer yok'); SFX.play('deny'); return false; }
+  P.gold -= q.G.merge;
   return true;
 }
 function canStackFit(id) {
@@ -13251,6 +13354,8 @@ class Mob {
     this.spd = (t.spd || 3.8) * (this.rank === 'boss' ? 0.85 : 1);
     this.range = t.ranged ? t.range : 1.25 + 0.55 * this.size;
     this.atkCd = t.atkCd || (t.ranged ? 2.2 : 1.7);
+    if (pw && pw.cd) this.atkCd *= pw.cd; // kat gücü: saldırı aralığı (<1 = daha sık)
+    this.skK = (pw && pw.sk) || 1; // kat gücü: yetenek aralığı (<1 = daha sık)
     this.aggroR = this.rank === 'boss' ? 11 : this.rank === 'elite' ? 9 : 8;
     this.r = this.static ? 1.2 : Math.min(0.75, 0.38 * this.size);
     this.x = x; this.z = z; this.hx = x; this.hz = z;
@@ -13459,7 +13564,7 @@ class Mob {
     const opts = sk.filter((s) => s !== 'summon');
     if (!opts.length) { this.skT = 99; return false; }
     let s = pick(opts);
-    this.skT = this.rank === 'boss' ? (this.enraged ? rand(3, 4.5) : rand(4.5, 6.5)) : rand(6, 9);
+    this.skT = (this.rank === 'boss' ? (this.enraged ? rand(3, 4.5) : rand(4.5, 6.5)) : rand(6, 9)) * (this.skK || 1);
     if (this.t.phases) s = Temple.bossPick(this, d); // aşamaya göre yetenek ve sıklık
     const big = this.rank === 'boss';
     switch (s) {
@@ -13778,44 +13883,69 @@ function spawnMob(L, key, lv, x, z, sp, nid) {
 // Ortak oyun: mevcut Coop örneği aynen kullanılır (anahtar 'd7-<kat>'). Dalga / temizleme / aşama kararlarını yalnız
 // örneğin sahibi (host) verir ve 'T' olaylarıyla misafirlere yollar; her oyuncu kendi ödülünü kendi kaydına bir kez yazar
 // (örnek kimliği + kat → P.temple.claims).
+const SEAL_HOLD = 2.4; // patron 2. aşama: bir mühür noktasını söndürmek için üzerinde durulacak süre (sn)
 const TEMPLE_MOB_H = 2.3; // GLB düşman boyu (dünya birimi, boyut 1): modeller ~1 birim boyunda
 const TEMPLE_FILES = { tas: 'tapinak_tas.js?v=258632ec66', canavar: 'tapinak_canavar.js?v=1e86a41f16', okcu: 'tapinak_okcu.js?v=c7bb7584a6', buyucu: 'tapinak_buyucu.js?v=454c2e0b9e', minib: 'tapinak_minib.js?v=0331bafdd1', boss: 'tapinak_boss.js?v=c385f9a666', silah: 'tapinak_silah.js?v=383afc10d6' };
 const TEMPLE_WEAPONS = ['mace', 'axe', 'warhammer', 'lavahammer', 'bow', 'shield', 'crystal'];
 // Kat içerikleri: waves = [[ [canavar, adet], ... ], ...] — sonraki dalga öncekinin tamamı ölünce gelir
 const TEMPLE_FLOORS = [
   { name: 'Kırık Mühür Kapısı', waves: [[['tasmuhafiz', 3]], [['kiriksavasci', 2]]] },
-  { name: 'Kırık Savaşçılar', waves: [[['kiriksavasci', 4]], [['tasmuhafiz', 2]]] },
-  { name: 'Okçu Avlusu', waves: [[['tasmuhafiz', 3], ['tasokcu', 3]]] },
-  { name: 'Mühür Büyüsünün Yankısı', waves: [[['tasmuhafiz', 3], ['muhurbuyucu', 2]]] },
-  { name: 'Taş Canavarı\'nın Eşiği', waves: [[['tascanavari', 1], ['kiriksavasci', 2], ['tasokcu', 2]]] },
+  { name: 'Kırık Savaşçılar', waves: [[['kiriksavasci', 4]], [['tasmuhafiz', 2], ['kiriksavasci', 2]]] },
+  { name: 'Okçu Avlusu', waves: [[['tasmuhafiz', 3], ['tasokcu', 3]], [['kiriksavasci', 2], ['tasokcu', 2]]] },
+  { name: 'Mühür Büyüsünün Yankısı', waves: [[['tasmuhafiz', 3], ['muhurbuyucu', 2]], [['kiriksavasci', 3], ['muhurbuyucu', 1]]] },
+  { name: 'Taş Canavarı\'nın Eşiği', waves: [[['tascanavari', 1], ['kiriksavasci', 2], ['tasokcu', 2]], [['tasmuhafiz', 2], ['tasokcu', 2], ['kiriksavasci', 1]]] },
   { name: 'Kırık Mühür Muhafızı', boss: true, waves: [[['kirikmuhur', 1], ['tasmuhafiz', 2]]] },
-  { name: 'Mührün Öfkesi', group: true, waves: [[['tascanavari', 2], ['kiriksavasci', 3], ['muhurbuyucu', 2]]] },
-  { name: 'Muhafızların Son Hattı', group: true, waves: [[['tascanavari', 3], ['tasokcu', 3], ['muhurbuyucu', 2]]] },
-  { name: 'Son Mühür', group: true, waves: [[['tascanavari', 2], ['tasmuhafiz', 3], ['muhurbuyucu', 2]]] },
+  { name: 'Mührün Öfkesi', group: true, waves: [[['tascanavari', 2], ['kiriksavasci', 3], ['muhurbuyucu', 2]], [['tasmuhafiz', 3], ['kiriksavasci', 2], ['muhurbuyucu', 1]]] },
+  { name: 'Muhafızların Son Hattı', group: true, waves: [[['tascanavari', 3], ['tasokcu', 3], ['muhurbuyucu', 2]], [['tascanavari', 1], ['tasokcu', 3], ['muhurbuyucu', 2]]] },
+  { name: 'Son Mühür', group: true, waves: [[['tascanavari', 2], ['tasmuhafiz', 3], ['muhurbuyucu', 2]], [['tascanavari', 2], ['tasmuhafiz', 2], ['muhurbuyucu', 2]]] },
   { name: 'Bronz Mühür Muhafızı', boss: true, group: true, waves: [[['bronzmuhur', 1]]] },
 ];
-// canavar seviyesi ve kat gücü (7-10: grup için)
-const templeFloorLv = (f) => 42 + 2 * f;
-const TEMPLE_POW = [null, null, null, { hp: 1.1, atk: 1.05, def: 1.05, exp: 1.1 }, { hp: 1.15, atk: 1.1, def: 1.1, exp: 1.15 }, { hp: 1.2, atk: 1.1, def: 1.1, exp: 1.2 },
-  { hp: 1.45, atk: 1.3, def: 1.25, exp: 1.35 }, { hp: 1.5, atk: 1.32, def: 1.25, exp: 1.4 }, { hp: 1.55, atk: 1.35, def: 1.3, exp: 1.45 }, { hp: 1.6, atk: 1.35, def: 1.3, exp: 1.5 }];
-// ---- Ödül tablosu (kat temizleme; canavarların kendi EXP / altın / eşya düşüşü buna ek olarak normal işler) ----
-// Mevcut ekonomiye göre: normal canavar altını ≈ 3 + 1.6·Sv (Sv 42-62 → 70-100), boss ×20; günlük görev ≈ seviye EXP'inin
-// %6.5-10'u; ilk zindan temizleme 150·n² altın. exp: o anki seviyenin EXP ihtiyacına oran. mats: [yığın, en az, en çok, şans].
-// gear: { chance, rank, n } — rollGear (kademe 6, son oyun setleri dahil). ess: Kadim Öz (yuvası rastgele) şansı.
-// seal: Bronz Mühür Parçası [en az, en çok, şans]. first: kat ilk kez temizlenince bir kerelik ek ödül.
-const TEMPLE_REWARDS = [
-  { gold: 450, exp: 0.02, mats: [['ore', 2, 3, 1]] },
-  { gold: 550, exp: 0.025, mats: [['ore', 2, 4, 1], ['soul', 1, 1, 0.3]] },
-  { gold: 750, exp: 0.03, mats: [['ore', 3, 4, 1], ['soul', 1, 1, 0.5], ['j7', 1, 2, 0.5]], gear: { chance: 0.12, rank: 'elite', n: 1 } },
-  { gold: 850, exp: 0.035, mats: [['ore', 3, 5, 1], ['soul', 1, 2, 0.6], ['j7', 1, 2, 0.6]], gear: { chance: 0.16, rank: 'elite', n: 1 } },
-  { gold: 1000, exp: 0.04, mats: [['ore', 4, 5, 1], ['soul', 1, 2, 0.8], ['j7', 1, 3, 0.8]], gear: { chance: 0.2, rank: 'elite', n: 1 } },
-  { gold: 1600, exp: 0.06, chest: true, mats: [['soul', 2, 3, 1], ['j7', 2, 3, 1], ['bless', 1, 1, 0.25]], gear: { chance: 1, rank: 'boss', n: 1 }, ess: 0.25, seal: [1, 1, 0.45] },
-  { gold: 1900, exp: 0.05, mats: [['soul', 2, 3, 1], ['j7', 2, 4, 1], ['bless', 1, 1, 0.1]], gear: { chance: 0.25, rank: 'elite', n: 1 }, ess: 0.3, seal: [1, 1, 0.1] },
-  { gold: 2200, exp: 0.055, mats: [['soul', 2, 4, 1], ['j7', 3, 4, 1], ['bless', 1, 1, 0.15]], gear: { chance: 0.3, rank: 'elite', n: 1 }, ess: 0.35, seal: [1, 1, 0.15] },
-  { gold: 2500, exp: 0.06, mats: [['soul', 3, 4, 1], ['j7', 3, 5, 1], ['bless', 1, 1, 0.2]], gear: { chance: 0.35, rank: 'elite', n: 1 }, ess: 0.4, seal: [1, 1, 0.2] },
-  { gold: 5000, exp: 0.12, chest: true, mats: [['soul', 3, 5, 1], ['j7', 4, 6, 1], ['bless', 1, 2, 0.6]], gear: { chance: 1, rank: 'boss', n: 2 }, rare: 0.35, ess: 1, ess2: 0.4, seal: [2, 3, 1] },
+// Canavar seviyesi ve kat gücü. hp / atk / def: kat çarpanları · cd: saldırı aralığı çarpanı (<1 daha sık) · sk: yetenek aralığı
+// çarpanı (<1 daha sık; patronun aşama sıklığı bossPick'te) · exp: kill EXP çarpanı.
+// Hedef: 1-3 hazırlık / temel mücadele · 4-5 belirgin daha zor · 6 Sv 50-55 için ilk büyük güç duvarı (tek başına çok zor)
+// · 7-9 grup koordinasyonu · 10 3-4 kişilik ana patron. Düşman hasarı oyuncu savunmasıyla (120/(120+def)) çok azaldığı için
+// atk çarpanları büyüktür; sayılar Sv 50 / tam +9 / Bronz Taş Zırh referansıyla hesaplandı (CHANGELOG_DEV.md).
+// Grup oyunu: canavar canı ek oyuncu başına +%60 (COOP_HP), hasar sabit → grup avantajı korunur.
+const templeFloorLv = (f) => 46 + 2 * f;
+const TEMPLE_POW = [
+  { hp: 1.7, atk: 2.0, def: 1.15, exp: 0.45 },
+  { hp: 1.8, atk: 2.1, def: 1.15, exp: 0.45 },
+  { hp: 2.0, atk: 2.3, def: 1.2, exp: 0.45 },
+  { hp: 2.2, atk: 2.7, def: 1.25, cd: 0.95, sk: 0.95, exp: 0.5 },
+  { hp: 2.2, atk: 3.0, def: 1.3, cd: 0.95, sk: 0.9, exp: 0.5 },
+  { hp: 3.4, atk: 5.8, def: 1.4, cd: 1.1, sk: 0.9, exp: 0.55 },
+  { hp: 2.5, atk: 3.4, def: 1.4, cd: 0.9, sk: 0.85, exp: 0.55 },
+  { hp: 2.6, atk: 3.6, def: 1.45, cd: 0.9, sk: 0.85, exp: 0.55 },
+  { hp: 2.4, atk: 3.2, def: 1.5, cd: 0.88, sk: 0.8, exp: 0.55 },
+  { hp: 4.2, atk: 4.6, def: 1.55, cd: 1.25, sk: 1, exp: 0.55 },
 ];
-const TEMPLE_FIRST = (f) => ({ gold: 400 * (f + 1), soul: f >= 5 ? 2 : 1, seal: f === 9 ? 2 : f === 5 ? 1 : 0 });
+// ---- Ödül tablosu (kat temizleme; canavarların kendi EXP / altın / eşya düşüşü buna ek olarak normal işler) ----
+// Mevcut ekonomiye göre: normal canavar altını ≈ 3 + 1.6·Sv (Sv 46-64 → 77-105), boss ×20; ilk zindan temizleme 150·n² altın.
+// exp: o anki seviyenin EXP ihtiyacına oran (tam tapınak turu toplamı ~%15; kill EXP'siyle birlikte Sv 55'te ~0.7, Sv 60'ta
+// ~0.35 seviye). mats: [yığın, en az, en çok, şans]. gear: { chance, rank, n } — rollGear (kademe 6, son oyun setleri dahil).
+// ess: Kadim Öz (yuvası rastgele) şansı. seal: Bronz Mühür Parçası [en az, en çok, şans].
+// 6-10. kat (Efsanevi + Taş Mühür): efs: her biri bir Efsanevi set parçası / silah / takı zarı (rollGear efs=1; Zor/Kabus şartı
+// bu kaynakta aranmaz) · minRar: bu katın eşyalarında en düşük nadirlik (0 Beyaz … 3 Mor) · ts: Taş Mühür zarları [kademe, şans]
+// (kademe 1 Kırık, 2 Bronz, 3 Kadim; her başarılı zar rastgele bir mühür türü verir). Kalite kat kat yükselir.
+const TEMPLE_REWARDS = [
+  { gold: 450, exp: 0.005, mats: [['ore', 2, 3, 1]] },
+  { gold: 550, exp: 0.006, mats: [['ore', 2, 4, 1], ['soul', 1, 1, 0.3]] },
+  { gold: 750, exp: 0.008, mats: [['ore', 3, 4, 1], ['soul', 1, 1, 0.5], ['j7', 1, 2, 0.5]], gear: { chance: 0.12, rank: 'elite', n: 1 } },
+  { gold: 850, exp: 0.01, mats: [['ore', 3, 5, 1], ['soul', 1, 2, 0.6], ['j7', 1, 2, 0.6]], gear: { chance: 0.16, rank: 'elite', n: 1 } },
+  { gold: 1000, exp: 0.012, mats: [['ore', 4, 5, 1], ['soul', 1, 2, 0.8], ['j7', 1, 3, 0.8]], gear: { chance: 0.2, rank: 'elite', n: 1 } },
+  { gold: 1600, exp: 0.02, chest: true, mats: [['soul', 2, 3, 1], ['j7', 2, 3, 1], ['bless', 1, 1, 0.25]], gear: { chance: 1, rank: 'boss', n: 1 }, ess: 0.25, seal: [1, 1, 0.45],
+    efs: [0.28], minRar: 1, ts: [[1, 1], [1, 0.35], [2, 0.12]] },
+  { gold: 1900, exp: 0.015, mats: [['soul', 2, 3, 1], ['j7', 2, 4, 1], ['bless', 1, 1, 0.1]], gear: { chance: 0.25, rank: 'elite', n: 1 }, ess: 0.3, seal: [1, 1, 0.1],
+    efs: [0.22], minRar: 1, ts: [[1, 0.7], [2, 0.25]] },
+  { gold: 2200, exp: 0.018, mats: [['soul', 2, 4, 1], ['j7', 3, 4, 1], ['bless', 1, 1, 0.15]], gear: { chance: 0.3, rank: 'elite', n: 1 }, ess: 0.35, seal: [1, 1, 0.15],
+    efs: [0.28], minRar: 2, ts: [[1, 0.6], [2, 0.35], [3, 0.03]] },
+  { gold: 2500, exp: 0.02, mats: [['soul', 3, 4, 1], ['j7', 3, 5, 1], ['bless', 1, 1, 0.2]], gear: { chance: 0.35, rank: 'elite', n: 1 }, ess: 0.4, seal: [1, 1, 0.2],
+    efs: [0.34], minRar: 2, ts: [[2, 0.5], [1, 0.4], [3, 0.06]] },
+  { gold: 5000, exp: 0.04, chest: true, mats: [['soul', 3, 5, 1], ['j7', 4, 6, 1], ['bless', 1, 2, 0.6]], gear: { chance: 1, rank: 'boss', n: 2 }, rare: 0.35, ess: 1, ess2: 0.4, seal: [2, 3, 1],
+    efs: [1, 0.5], minRar: 2, ts: [[2, 1], [2, 0.5], [3, 0.2], [1, 0.5]] },
+];
+// ilk kez temizlenen kat: bir kerelik ek ödül (ts: bir Taş Mühür, kademesi)
+const TEMPLE_FIRST = (f) => ({ gold: 400 * (f + 1), soul: f >= 5 ? 2 : 1, seal: f === 9 ? 2 : f === 5 ? 1 : 0, ts: f === 9 ? 3 : f === 5 ? 2 : f >= 6 ? 1 : 0 });
 
 // ---------- Tembel varlık yükleme ----------
 const TempleAssets = {
@@ -14337,9 +14467,13 @@ const Temple = {
     if (R.ess && Math.random() < R.ess) stack(RAREMAT[pick(SLOTS)], 1);
     if (R.ess2 && Math.random() < R.ess2) stack(RAREMAT[pick(SLOTS)], 1);
     if (R.seal && Math.random() < R.seal[2]) stack('bronzparca', n(R.seal[0], R.seal[1]));
+    const gname = (it, w) => itemName(it) + (w === 'depo' ? ' (depoya)' : w === 'altın' ? ' (çanta dolu → altın)' : '');
     const G_ = R.gear;
-    if (G_ && Math.random() < G_.chance) for (let k = 0; k < (G_.n || 1); k++) { const it = rollGear(6, G_.rank, 7, true); const w = give(it); got.push(itemName(it) + (w === 'depo' ? ' (depoya)' : w === 'altın' ? ' (çanta dolu → altın)' : '')); }
-    if (R.rare && Math.random() < R.rare) { const it = rollGear(6, 'boss', 7, true); it.rarity = Math.max(it.rarity, 2); const w = give(it); got.push('Nadir: ' + itemName(it) + (w === 'depo' ? ' (depoya)' : '')); }
+    if (G_ && Math.random() < G_.chance) for (let k = 0; k < (G_.n || 1); k++) { const it = rarityAtLeast(rollGear(6, G_.rank, 7, true), R.minRar); got.push(gname(it, give(it))); }
+    if (R.rare && Math.random() < R.rare) { const it = rarityAtLeast(rollGear(6, 'boss', 7, true), 2); got.push('Nadir: ' + gname(it, give(it))); }
+    // 6-10. kat: Efsanevi set parçası / silah / takı (efs zarları) ve Taş Mühür zarları (ts)
+    for (const p of R.efs || []) if (Math.random() < p) { const it = rarityAtLeast(rollGear(6, G_ ? G_.rank : 'elite', 7, true, 1), R.minRar); got.push('Efsanevi: ' + gname(it, give(it))); }
+    for (const [gr, p] of R.ts || []) if (Math.random() < p) stack(sealId(pick(SEAL_KEYS), gr), 1);
     // ilk kez temizlenen kat: bir kerelik başarı ödülü
     const bit = 1 << f;
     if (!((S.first | 0) & bit)) {
@@ -14348,6 +14482,7 @@ const Temple = {
       P.gold += F1.gold; got.push('İlk kez: +' + fmtFull(F1.gold) + ' altın');
       stack('soul', F1.soul);
       if (F1.seal) stack('bronzparca', F1.seal);
+      if (F1.ts) stack(sealId(pick(SEAL_KEYS), F1.ts), 1);
     }
     S.bestClear = Math.max(S.bestClear | 0, f + 1);
     if (f === TEMPLE_FLOORS.length - 1) { S.seals = (S.seals | 0) + 1; P.cleared[L.dg.id] = (P.cleared[L.dg.id] || 0) + 1; got.push('Bronz Mühür ilerlemesi: ' + S.seals); }
@@ -14415,7 +14550,7 @@ const Temple = {
       if (!s.on) return;
       const on = players.some((q) => dist(q.x, q.z, s.x, s.z) < 1.8);
       s.p = on ? s.p + dt : Math.max(0, s.p - dt * 0.6);
-      if (s.p >= 2.0) { s.on = false; this.sealFx(s); Coop.ev('T', 'so', i); feed('Bir mühür noktası söndü', '#ffd07a'); }
+      if (s.p >= SEAL_HOLD) { s.on = false; this.sealFx(s); Coop.ev('T', 'so', i); feed('Bir mühür noktası söndü', '#ffd07a'); }
     });
     if (TS.seals.every((s) => !s.on)) {
       boss.dmgK = 1; boss.stun = Math.max(boss.stun, 2.5);
@@ -14453,7 +14588,7 @@ const Temple = {
       if (Math.random() < dt * 10) FX.spark(s.x + rand(-1.2, 1.2), rand(0.1, 1.6), s.z + rand(-1.2, 1.2), 0xffb050, 0.8, 0.12);
       const here = me && !me.dead && dist(me.x, me.z, s.x, s.z) < 1.8;
       s.lp = here ? s.lp + dt : 0;
-      if (here && (s.ringT = (s.ringT || 0) - dt) <= 0) { s.ringT = 0.35; FX.ring(s.x, s.z, 0.6 + Math.min(1, (Coop.guest ? s.lp : s.p) / 2) * 1.2, 0xfff0c0, 0.3); }
+      if (here && (s.ringT = (s.ringT || 0) - dt) <= 0) { s.ringT = 0.35; FX.ring(s.x, s.z, 0.6 + Math.min(1, (Coop.guest ? s.lp : s.p) / SEAL_HOLD) * 1.2, 0xfff0c0, 0.3); }
     }
   },
   // ---- ortak oyun ----
@@ -15086,6 +15221,7 @@ const Combat = {
     const diff = P.lv - m.lv;
     if (diff > 6) exp *= Math.max(0.15, 1 - (diff - 6) * 0.15);
     if (diff < -3) exp *= 1.15;
+    if (P.lv >= 50 && P.lv < MAX_LV) exp = Math.min(exp, expNeed(P.lv) * EXP_KILL_CAP); // tek kill ile çoklu seviye atlama olmasın
     exp = Math.max(1, Math.round(exp));
     addExp(exp);
     FX.num(m.x, (m.barH || 2) + 0.4, m.z, '+' + exp + ' EXP', 'exp');
@@ -15236,7 +15372,7 @@ const Combat = {
       });
     }
   },
-  skillMult(id) { return skillPower(P.skills[id] || 1); },
+  skillMult(id) { return skillPower(P.skills[id] || 1) * (1 + (D.skillPct || 0)); },
   // canavarı (dx, dz) yönünde d birim kaydır (0.18 sn); metin taşları, ortak oyun kopyaları ve boss etkilenmez
   shove(m, dx, dz, d) {
     if (!m || m.dead || m.static || m.puppet || m.rank === 'boss' || !(d > 0)) return;
@@ -15253,7 +15389,7 @@ const Combat = {
     if (G.level.type === 'village' && sk.type !== 'buff' && sk.type !== 'heal' && Duel.phase !== 'fight') { toast('Köyde saldırı yeteneği kullanılamaz'); return; }
     if ((pl.cds[id] || 0) > 0) return;
     if (P.mp < sk.mp) { toast('Mana yetersiz'); SFX.play('deny'); return; }
-    const pw = skillPower(lvl);
+    const pw = skillPower(lvl) * (1 + (D.skillPct || 0)); // Taş Mühür: beceri hasarı bonusu
     const needsTarget = ['single', 'dash', 'projectile', 'axe_throw', 'leap'].includes(sk.type);
     let t = pl.target && !pl.target.dead ? pl.target : null;
     if (needsTarget || sk.type === 'aoe_target') {
@@ -16242,6 +16378,38 @@ const UI = {
         acts.appendChild(this.confirmBtn('dis' + it.uid, 'Parçala', '→ ' + txt, '', () => { if (dismantle(i)) { this.sel = null; this.render(); } }));
       } else acts.appendChild(this.confirmBtn('drop' + it.uid, 'Yok et', 'Emin misin?', '', () => { P.inv[i] = null; this.sel = null; this.render(); }));
     }
+    this.sealActs(acts, it);
+  },
+  // Taş Mühür: giyili ya da çantadaki eşyaya tak / sök; çantadaki mührü üst kademeye birleştir
+  sealActs(acts, it) {
+    if (it.type === 'stack') {
+      const q = sealParse(it.id);
+      if (!q || q.g >= 3) return;
+      const have = countStack(it.id);
+      if (have >= 3 && P.gold >= q.G.merge) {
+        acts.appendChild(this.confirmBtn('smerge' + it.id, '3 → 1 Birleştir', `${fmtFull(q.G.merge)} altın · Onayla`, 'gold', () => {
+          if (mergeSeal(it.id)) { SFX.play('success'); toast('+1 ' + STACKS[sealId(q.stat, q.g + 1)].name); saveGame(); this.sel = null; this.render(); }
+        }));
+      } else acts.appendChild(this.btn(`3 → 1 Birleştir (${have}/3 · ${fmtFull(q.G.merge)} altın)`, '', () => {}, true));
+      return;
+    }
+    if (it.type !== 'gear') return;
+    const q = sealParse(it.seal);
+    if (q) {
+      acts.appendChild(this.confirmBtn('sun' + it.uid, 'Mührü Sök', `${fmtFull(q.G.unsocket)} altın · Onayla`, '', () => {
+        if (unsocketSeal(it)) { SFX.play('anvil'); toast('Mühür çantaya döndü'); saveGame(); this.render(); }
+      }));
+      return;
+    }
+    const own = Object.keys(STACKS).filter((id) => STACKS[id].kind === 'seal' && countStack(id) > 0);
+    if (!own.length) return;
+    const open = this.sealMenu === it.uid;
+    acts.appendChild(this.btn(open ? 'Mühür seç ▲' : 'Taş Mühür Tak', 'blue', () => { this.sealMenu = open ? null : it.uid; this.render(); }));
+    if (open) for (const id of own) {
+      acts.appendChild(this.btn(`${STACKS[id].name} ×${countStack(id)}`, '', () => {
+        if (socketSeal(it, id)) { this.sealMenu = null; SFX.play('success'); toast(STACKS[id].name + ' takıldı'); saveGame(); this.render(); }
+      }));
+    }
   },
 
   p_char(b) {
@@ -16274,6 +16442,12 @@ const UI = {
     const sets = el('div', 'muted'); sets.style.marginTop = '10px';
     sets.innerHTML = '<b style="color:var(--parch)">Set bonusları</b><br>' + ((D.sets || []).length ? D.sets.map((x) => `<span style="color:${x.color}">${x.name} ${x.have}/${x.total}</span>: ${setBonusText(x.bonus)}`).join('<br>') : 'Aynı setten en az 2 parça giy: zırh seti (kask, zırh, ayakkabı, kalkan) ya da aynı kademeden takılar (yüzük, kolye, tılsım).');
     b.appendChild(sets);
+    const sealBox = el('div', 'muted'); sealBox.style.marginTop = '8px';
+    const sraw = (D.seals && D.seals.raw) || {};
+    sealBox.innerHTML = '<b style="color:var(--parch)">Taş Mühür bonusları</b><br>' + (Object.keys(sraw).length
+      ? SEAL_KEYS.filter((k) => sraw[k]).map((k) => { const S = SEAL_STATS[k], v = Math.min(S.cap, sraw[k]); return `${S.name} ${sealValText(S, v)}${sraw[k] > S.cap ? ' (üst sınır)' : ''}`; }).join('<br>')
+      : 'Ekipmana Taş Mühür tak: Bronz Taş Tapınağı\'nın 6-10. katlarında düşer.');
+    b.appendChild(sealBox);
     const sk = el('div', 'list'); sk.style.marginTop = '12px';
     for (const id of c.skills) {
       const s = SKILLS[id], lv = P.skills[id] || 0;
@@ -16658,11 +16832,11 @@ const UI = {
       b.appendChild(list);
       return;
     }
-    const whites = P.inv.filter((it) => it && it.type === 'gear' && it.rarity === 0 && it.plus === 0);
+    const whites = P.inv.filter((it) => it && it.type === 'gear' && it.rarity === 0 && it.plus === 0 && !it.seal);
     const whiteVal = whites.reduce((a, it) => a + sellPrice(it), 0);
     const bulk = el('div', 'tabs');
     bulk.appendChild(this.btn(`Beyazları sat (${fmtFull(whiteVal)})`, '', () => {
-      P.inv.forEach((it, i) => { if (it && it.type === 'gear' && it.rarity === 0 && it.plus === 0) { P.gold += sellPrice(it); P.inv[i] = null; } });
+      P.inv.forEach((it, i) => { if (it && it.type === 'gear' && it.rarity === 0 && it.plus === 0 && !it.seal) { P.gold += sellPrice(it); P.inv[i] = null; } });
       SFX.play('coin'); this.render();
     }, !whites.length));
     b.appendChild(bulk);
@@ -16677,7 +16851,7 @@ const UI = {
       F.acts.appendChild(this.btn(`Hepsini sat (+${fmtFull(sellPrice(it) * it.n)})`, 'gold', () => { P.gold += sellPrice(it) * it.n; P.inv[i] = null; this.sel = null; SFX.play('coin'); this.render(); }));
     } else {
       const val = sellPrice(it) * (it.n || 1);
-      const doSell = () => { P.gold += val; P.inv[i] = null; this.sel = null; SFX.play('coin'); this.render(); };
+      const doSell = () => { if (it.seal) { toast('Önce takılı Taş Mührü sök'); SFX.play('deny'); return; } P.gold += val; P.inv[i] = null; this.sel = null; SFX.play('coin'); this.render(); };
       if (it.type === 'gear' && (it.rarity >= 2 || it.plus > 0)) F.acts.appendChild(this.confirmBtn('sell' + it.uid, `Sat (+${fmtFull(val)})`, 'Değerli eşya, emin misin?', 'gold', doSell));
       else F.acts.appendChild(this.btn(`Sat (+${fmtFull(val)})`, 'gold', doSell));
     }
@@ -17372,7 +17546,8 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad };
+window.__tm = { Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+  TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML };
 try {
   const hot = window.claude && window.claude.hot;
   if (hot && hot.ready) hot.ready(boot); else boot(hot && hot.data ? hot.data : {});

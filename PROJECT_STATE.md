@@ -16,8 +16,8 @@ her zaman `grep -n` ile doğrula.
 | Satır~ | Bölüm / önemli semboller |
 |---|---|
 | 516 | yardımcılar (`rand`, `pick`, `clamp`, `dist`, `el`, `esc`, `fmtFull`, `mulberry32`), 562 `SFX` |
-| 629–1005 | oyun verisi: `MAX_LV`=70, `expNeed`, `CLASSES` (baltaci, warrior), `SKILLS`, `DUNGEONS` (691), `MOBS` (709), `RANK`, `mobBase`, `SLOTS`, `GEAR_SETS`, `STACKS` (880), `UPG`/`upgradeCost`, `DROP` (963), `DIFFS` (984), `DAILY_KINDS`, `THEMES` |
-| 2091–2660 | eşya sistemi (`makeGear`, `rollGear`, `itemName`, `sellPrice`), kayıt (`newCharacter` 2318, `saveGame` 2387, `applySave` 2459), `recalc` 2530, envanter (`addItem`, `countStack`, `removeStack`), `addExp` 2661 |
+| 629–1005 | oyun verisi: `MAX_LV`=70, `EXP_PLAN`/`expKills`/`expNeed` (639–651), `CLASSES` (baltaci, warrior), `SKILLS`, `DUNGEONS` (691), `MOBS` (709), `RANK`, `mobBase`, `SLOTS`, `GEAR_SETS`, `STACKS` (880; Taş Mühür yığınları `ts_*` ve `SEAL_GRADES`/`SEAL_STATS` ~934), `UPG`/`upgradeCost`, `DROP` (963), `DIFFS` (984), `DAILY_KINDS`, `THEMES` |
+| 2091–2660 | eşya sistemi (`makeGear`, `rollGear`, `itemName`, `sellPrice`), kayıt (`newCharacter` 2318, `saveGame` 2387, `applySave` 2459), `recalc` 2530, envanter (`addItem`, `countStack`, `removeStack`), `addExp` 2661; Taş Mühür: `sealParse`/`sealBonusOf`/`socketSeal`(~2680)/`unsocketSeal`/`mergeSeal` |
 | 7804 | `Cloud` (yalnız claude.ai Artifact içinde; GitHub Pages'te kapalı → kayıt yalnız localStorage) |
 | 7930–8020 | karakter GLB yükleyicileri: `BALTACI_BODIES`, `SAVASCI_FILES`/`savasciLoad`, `BONEKING` |
 | 8039 | zorluk (`diffUnlocked`, `markDiffClear`), `Daily` |
@@ -40,13 +40,14 @@ her zaman `grep -n` ile doğrula.
 - **Savaş:** `Combat.calc` (atk, def, kritik) → `hitMob` → `killMob` (EXP seviye farkıyla ölçeklenir, `rollLoot`). Canavar
   gücü `mobBase(Sv) × RANK × MOBS çarpanı × L.mobPow × DIFFS`. Ortak oyunda ek oyuncu başına can +%60 (`COOP_HP`).
 - **Eşya / envanter:** yuvalar `SLOTS`; set sınıfları `GEAR_SETS` (Bez, Kurt Dişi, Nihai, Bronz Taş, Efsanevi…); yığınlar `STACKS`;
+  **Taş Mühür:** eşya başına 1 yuva (`it.seal`), 5 tür × 3 kademe, tür üst sınırı; `recalc` ekler, UI `UI.sealActs` (çanta);
   geliştirme `UPG` + `upgradeCost` (+7…+9 için yuva özü `RAREMAT`); Simyacı (`p_alchemist`).
-- **Seviye / ödül:** `expNeed` (50 sonrası dik), günlük görevler `Daily`, zindan ilk temizleme ödülü `killMob` içinde.
+- **Seviye / ödül:** `expNeed`: Sv ≤50 eski formül; 51+ `EXP_PLAN` (canavar EXP'si × gereken öldürme, merkezi tablo), tek kill EXP'si `EXP_KILL_CAP` (%35) ile sınırlı, günlük görevler `Daily`, zindan ilk temizleme ödülü `killMob` içinde.
 - **Zindanlar:** `DUNGEONS` d1–d7 ızgara tabanlı (`buildDungeonInner`, oda + koridor, tohumlu düzen); d6 son katı Kadim Metin
   arenası; d7 Kemik Taht (Kemik Kral, kod-animasyonlu GLB). Zorluk Normal / Zor / Kabus (`DIFFS`).
 - **d8 Bronz Taş Tapınağı (dIdx 7):**
-  - Veri: `TEMPLE_FLOORS` (10 kat ve dalgalar), `TEMPLE_POW`, `templeFloorLv` (42 + 2·kat), `TEMPLE_REWARDS` / `TEMPLE_FIRST`
-    (merkezi ödül tablosu).
+  - Veri: `TEMPLE_FLOORS` (10 kat ve dalgalar), `TEMPLE_POW` (can/saldırı/savunma/`cd`/`sk`), `templeFloorLv` (46 + 2·kat), `TEMPLE_REWARDS` / `TEMPLE_FIRST`
+    (merkezi ödül tablosu; 6–10. katta `efs` Efsanevi, `ts` Taş Mühür, `minRar`).
   - Kat kurulumu: `buildTempleFloor` kurar. Çarpışma gerçek dairedir (`L.circ`, `templeWalk`); ızgara yalnız mini harita içindir.
   - Akış: `Temple` nesnesi; dalga / temizleme / ödül / panel `p_tapinak`.
   - Patron: `bossPick`, `bossPhase` / `applyPhase`, mühür noktaları `sealsOn` / `sealTick`, `templeShock` / `telegraphRing`.
@@ -62,8 +63,9 @@ her zaman `grep -n` ile doğrula.
   spin / roar / plant / cast / seal / shoot; sahne extras `enemy.{handMount, handMountL, shieldMount, ev}`.
 
 ## Bilinen sorunlar / kısıtlar
-- **Tapınak dengesi:** kullanıcı geri bildirimi — Sv 50 ve tam +9 ekipmanla tek başına çok kolay. Yeniden dengelenmeli;
-  kaldıraçlar `TEMPLE_POW`, `templeFloorLv`, `MOBS` (`tasmuhafiz` … `bronzmuhur`) çarpanları, patron `hpMul` / `atk`.
+- **Tapınak dengesi:** 2026-10-12'de yeniden dengelendi (simülasyon tabanlı; CHANGELOG_DEV.md). Gerçek oyuncu geri bildirimiyle ince ayar
+  gerekir; kaldıraçlar `TEMPLE_POW`, `TEMPLE_FLOORS` dalgaları, `MOBS` çarpanları. Mühür / Efsanevi şansları `TEMPLE_REWARDS`.
+- Set sınıflarında tapınağın sıradan `gear` düşüşü Bez Zırh parçası verebilir (önceden var; Efsanevi `efs` zarları telafi eder).
 - **Tapınak ortak oyunu gerçek cihazlarda grupla doğrulanmadı;** yalnız tek tarayıcıda olay simülasyonuyla test edildi.
 - Tapınak: tam temizleme anında bağlantısı kopan ve savaştan sonra dönen oyuncu o katın ödülünü almaz (bilinçli).
   Taş Canavarı için dört ayaklı model yok (golem kullanılıyor). Mini patron iskeleti tahmini. 8. kat ~296k üçgen
@@ -73,6 +75,7 @@ her zaman `grep -n` ile doğrula.
 - Yerel `src/` projesi bu depoyla eşitli değil.
 
 ## Son tamamlanan büyük özellikler
+- 2026-10-12 Oyun sonu dengesi: tapınak zorluğu, Efsanevi + Taş Mühür ödülleri, Sv 51–70 EXP eğrisi (dal `ozellik/oyun-sonu-denge`).
 - 2026-10-12 Bronz Taş Tapınağı (10 katlı dairesel arena grup zindanı) — `ca42025`.
 - Kılıç yükseltme görünümü +0…+9 (`3990959`) · yetenek kararlılık penceresi (`0c38673`) · Savaşçı yetenekleri ve animasyonları
   (`032b90e`, `12e578b`, `f65921b`) · Savaşçı sınıfı ve Sv 70 son oyun dengesi (`1889fb6`).
