@@ -1233,7 +1233,7 @@ const dailyReward = (lv) => ({ gold: Math.round(60 + lv * lv * 5), exp: lv < 50 
 
 // ---------- Görsel temalar ----------
 const THEMES = {
-  village: { fog: 0xd6c4a8, fogDensity: 0.0052, hemiSky: 0xdce6f2, hemiGround: 0xa4845e, hemiI: 0.98, sun: 0xffe8c8, sunI: 0.82, exposure: 1.0, vignette: 0.22, ambient: 'firefly', ambientN: 24 },
+  village: { fog: 0x9c8c88, fogDensity: 0.0058, hemiSky: 0xb8c4e4, hemiGround: 0x7a5e48, hemiI: 0.74, sun: 0xffb878, sunI: 0.58, exposure: 1.0, vignette: 0.3, ambient: 'firefly', ambientN: 24 },
   forest: { floor: 0x7a7458, wall: 0x5c5644, wallTop: 0x4c4838, fog: 0x2a3322, fogNear: 12, fogFar: 46, hemiSky: 0xd8e6c4, hemiGround: 0x6a6a4e, hemiI: 1.05, sun: 0xe8f0d0, sunI: 0.55, exposure: 1.2, light: 0xffd49a, lightI: 1.7, torch: 0xffa040, deco: 'forest', vignette: 0.24, ambient: 'firefly', ambientN: 34 },
   spider: { floor: 0x685a72, wall: 0x4c4058, wallTop: 0x62547a, fog: 0x281e32, fogNear: 12, fogFar: 44, hemiSky: 0xd4c4ec, hemiGround: 0x54466a, hemiI: 1.05, sun: 0xd8ccff, sunI: 0.5, exposure: 1.2, light: 0xc8ff9a, lightI: 1.7, torch: 0x9aff4a, deco: 'spider', vignette: 0.26, ambient: 'spore', ambientN: 30 },
   grave: { floor: 0x747884, wall: 0x565a66, wallTop: 0x6a7288, fog: 0x222838, fogNear: 12, fogFar: 46, hemiSky: 0xc4d2ee, hemiGround: 0x505a70, hemiI: 1.05, sun: 0xc8d8ff, sunI: 0.55, exposure: 1.2, light: 0xa8c0ff, lightI: 1.7, torch: 0x6ab0ff, deco: 'grave', vignette: 0.26, ambient: 'dust', ambientN: 26 },
@@ -8451,7 +8451,7 @@ const NPC_DAT = { portal: "Bekçi'ye", smith: "Demirci'ye", shop: "Tüccar'a", d
 const QUESTS = [
   // ---- 1. perde: Çatlayan Mühür (Sv 1-38) ----
   { id: 'q01', lv: 1, from: 'portal', to: 'portal', title: 'Köyün Altındaki Gürültü', type: 'kill', need: 8, goal: 'Zindanda canavar kes',
-    say: "Her gece fenerler titriyor; Kadim Mühür çatlıyor. Sesler köyün altındaki Yosunlu İn'den geliyor. Portal Taşı'ndan gir ve oradakilerden sekizini kes.",
+    say: "Her gece fenerler titriyor; Kadim Mühür çatlıyor. Sesler köyün altındaki Yosunlu İn'den geliyor. Bekçi'nin zindan girişinden gir ve oradakilerden sekizini kes.",
     done: 'Hâlâ ayaktasın, güzel. Çatlak büyüyor ama ilk adımı attın.', reward: { gold: 120, exp: 0.12, st: [['hp1', 4]] } },
   { id: 'q02', lv: 1, from: 'portal', to: 'portal', title: 'Kurtların Lordu', type: 'clear', d: 'd1', goal: "Yosunlu İn'in bossunu yen",
     say: "Çatlaktan sızan karanlık kurtları da değiştirdi. Başlarında Kurt Lordu Bozkır var. Onu yen, sonra bana dön.",
@@ -11170,6 +11170,7 @@ const HOUSE_STYLES = [
   { wall: PAL.plaster, timber: PAL.timber, roof: PAL.roofRed, frame: true, chimney: true },
   { wall: PAL.stoneWall, timber: PAL.timberLt, roof: PAL.roofBrown, quoins: true, chimney: false },
   { wall: PAL.plank, timber: PAL.timber, roof: PAL.roofMoss, planks: true, chimney: true },
+  { wall: PAL.plaster, timber: PAL.timber, roof: 0x44506e, frame: true, chimney: true }, // 3: arduvaz çatı (Simyacı evi)
 ];
 function buildHouse(L, x0, z0, w, d, face, styleIdx, opts) {
   opts = opts || {};
@@ -11244,6 +11245,7 @@ function buildHouse(L, x0, z0, w, d, face, styleIdx, opts) {
     return o;
   };
   const doorU = opts.doorU || 0;
+  if (!opts.noDoor) { // noDoor: kapıyı çağıran yapı kendisi kurar (zindan girişi salonu)
   const door = new THREE.Group();
   box(door, 1.3, 2.15, 0.12, tm, 0, 1.08 + 0.3, 0);
   box(door, 1.0, 1.9, 0.14, PAL.door, 0, 0.95 + 0.3, 0.02);
@@ -11254,6 +11256,7 @@ function buildHouse(L, x0, z0, w, d, face, styleIdx, opts) {
   const bd = box(awn, 1.9, 0.1, 0.9, mat(st.roof), 0, 0, 0.4); bd.rotation.x = 0.45;
   box(awn, 0.08, 0.5, 0.08, tm, -0.8, -0.25, 0.1); box(awn, 0.08, 0.5, 0.08, tm, 0.8, -0.25, 0.1);
   put(awn, doorU, 2.75);
+  }
   const winM = mat(PAL.windowGlow, { e: 0xffa040, ei: 0.55 });
   const winSpots = opts.windows || [-along / 3.2, along / 3.2];
   for (const u of winSpots) {
@@ -12469,6 +12472,228 @@ function mergeStatic(L) {
 }
 
 // ---------- KÖY ----------
+// ---------- Köy meydanı parçaları (referans tasarım: akşam ışığı, mühür anıtı, bayraklar, mangallar) ----------
+const FLAG_BLUE = 0x24365e;
+// Asılı bayrak: üstte altın çubuk, sivri uçlu lacivert kumaş, ortada altın mühür.
+function propBannerCloth(parent, x, y, z, w, h, ry) {
+  const b = pivot(parent, x, y, z); b.rotation.y = ry || 0;
+  box(b, w + 0.16, 0.1, 0.1, mat(PAL.gold), 0, 0, 0);
+  box(b, w, h, 0.05, FLAG_BLUE, 0, -h / 2 - 0.05, 0);
+  const tip = box(b, w * 0.72, w * 0.72, 0.05, FLAG_BLUE, 0, -h - 0.05, 0); tip.rotation.z = Math.PI / 4;
+  const em = box(b, w * 0.3, w * 0.3, 0.07, mat(PAL.gold, { e: 0x8a6010, ei: 0.4 }), 0, -h * 0.5, 0.02); em.rotation.z = Math.PI / 4;
+  return b;
+}
+// Ayaklı bayrak direği
+function propBannerPole(L, x, z, ry, h) {
+  h = h || 3.6;
+  const g = pivot(L.group, x, 0, z); g.rotation.y = ry || 0;
+  box(g, 0.5, 0.25, 0.5, PAL.foundation, 0, 0.12, 0);
+  box(g, 0.14, h, 0.14, 0x3a2a1c, 0, h / 2, 0);
+  box(g, 1.3, 0.1, 0.1, 0x3a2a1c, 0, h - 0.15, 0);
+  propBannerCloth(g, 0, h - 0.2, 0.02, 0.9, 1.9, 0);
+  return g;
+}
+// Köy alevleri tek InstancedMesh'te (çizim çağrısı tasarrufu); halelerde tek sprite
+function addFlameInst(L, x, y, z, s) { (L.flames = L.flames || []).push({ x, y, z, s: s || 1, ph: Math.random() * 10 }); }
+function flushFlames(L) {
+  const fl = L.flames;
+  if (!fl || !fl.length) return;
+  const m = basicMat(0xffa838, 0.92, true);
+  const im = new THREE.InstancedMesh(coneGeo(0.22, 0.6, 5), m, fl.length);
+  im.frustumCulled = false; im.userData.dyn = true; im.renderOrder = 3;
+  L.group.add(im); L.disposables.push(m);
+  const m4 = new THREE.Matrix4(), sc = new THREE.Vector3(), q = new THREE.Quaternion(), ps = new THREE.Vector3();
+  L.anims.push((t) => {
+    for (let i = 0; i < fl.length; i++) {
+      const f = fl[i], k = 1 + Math.sin(t * 13 + f.ph) * 0.14 + Math.sin(t * 7.3 + f.ph) * 0.09;
+      ps.set(f.x, f.y + 0.3 * f.s * k, f.z); sc.set(f.s * k, f.s * k * 1.15, f.s * k);
+      m4.compose(ps, q, sc); im.setMatrixAt(i, m4);
+    }
+    im.instanceMatrix.needsUpdate = true;
+  });
+}
+function addGlowSprite(L, x, y, z, color, scale) {
+  const sp = new THREE.Sprite(glowSpriteMat(color));
+  sp.position.set(x, y, z); sp.scale.setScalar(scale); sp.userData.dyn = true;
+  L.group.add(sp);
+  return sp;
+}
+// Mangal: taş kaide, siyah kâse, titreyen alev + hale
+function propBrazier(L, x, z, s) {
+  s = s || 1;
+  const g = pivot(L.group, x, 0, z);
+  box(g, 0.75 * s, 0.25, 0.75 * s, PAL.foundation, 0, 0.12, 0);
+  box(g, 0.44 * s, 0.7 * s, 0.44 * s, 0x6a6678, 0, 0.6, 0);
+  part(g, cylGeo(0.5 * s, 0.3 * s, 0.34 * s, 8), mat(0x2e2a30), 0, 1.12 * s, 0);
+  addFlameInst(L, x, 1.22 * s, z, 0.85 * s);
+  addGlowSprite(L, x, 1.7 * s, z, 0xffa040, 3.0 * s);
+  return g;
+}
+const ROCK_COLS = [0x7b7d86, 0x6e7079];
+function propRock(parent, x, z, s, ry) {
+  const g = pivot(parent, x, 0, z); g.rotation.y = ry || 0;
+  part(g, icoGeo(0.9, 0), mat(ROCK_COLS[Math.floor(Math.abs(x * 7 + z * 3)) % 2], { flat: true }), 0, 0.42 * s, 0).scale.set(1.25 * s, 0.85 * s, 1.0 * s);
+  if (s > 1) part(g, icoGeo(0.6, 0), mat(ROCK_COLS[Math.floor(Math.abs(x + z * 5)) % 2], { flat: true }), 1.0 * s, 0.28 * s, 0.45 * s).scale.set(s, 0.8 * s, 0.9 * s);
+  return g;
+}
+function propChest(p, x, z, ry) {
+  const g = pivot(p, x, 0, z); g.rotation.y = ry || 0;
+  box(g, 1.0, 0.7, 0.7, 0x8a5a32, 0, 0.35, 0);
+  box(g, 1.04, 0.14, 0.74, mat(0x6a4426), 0, 0.74, 0);
+  box(g, 0.12, 0.74, 0.76, mat(PAL.gold), -0.3, 0.37, 0); box(g, 0.12, 0.74, 0.76, mat(PAL.gold), 0.3, 0.37, 0);
+  return g;
+}
+// Taş gözcü kulesi: kaide, taş gövde, bantlar, ahşap halka, sivri çatı, parlayan pencere
+function buildTower(L, x, z, h) {
+  h = h || 5.6;
+  const g = pivot(L.group, x, 0, z), r = 1.55;
+  part(g, cylGeo(r + 0.25, r + 0.35, 0.5, 8), mat(PAL.foundation), 0, 0.25, 0);
+  part(g, cylGeo(r, r + 0.12, h, 8), mat(PAL.stoneWall), 0, 0.5 + h / 2, 0);
+  for (let k = 1; k < 4; k++) part(g, cylGeo(r + 0.06, r + 0.06, 0.12, 8), mat(0x8f8472), 0, 0.5 + (k * h) / 4, 0);
+  part(g, cylGeo(r + 0.4, r + 0.4, 0.3, 8), mat(PAL.timber), 0, 0.5 + h, 0);
+  part(g, coneGeo(r + 0.6, 2.2, 8), mat(0x5a3a2a), 0, 0.5 + h + 1.25, 0);
+  const win = mat(PAL.windowGlow, { e: 0xffa040, ei: 0.7 });
+  for (const [a, y] of [[0, h * 0.62], [1.1, h * 0.38], [-1.1, h * 0.38]]) {
+    const w = box(g, 0.5, 0.85, 0.12, win, Math.sin(a) * (r + 0.04), 0.5 + y, Math.cos(a) * (r + 0.04)); w.rotation.y = a;
+  }
+  addGlowSprite(L, x, 0.5 + h * 0.62, z + r + 0.3, 0xffa040, 3.2);
+  return g;
+}
+// Depocu kulübesi: batıya açık, yana eğimli koyu çatılı, içinde sandıklar
+function buildShed(L, x, z, w, d) {
+  const g = pivot(L.group, x, 0, z);
+  const wood = mat(0x8a5a32), dk = mat(0x5a3a22);
+  box(g, w, 0.2, d, PAL.foundation, 0, 0.1, 0);
+  box(g, 0.3, 3.0, d, wood, w / 2 - 0.15, 1.7, 0);
+  for (const sz of [-1, 1]) box(g, w, 1.3, 0.22, wood, 0, 0.85, sz * (d / 2 - 0.11));
+  for (const sz of [-1, 0, 1]) box(g, 0.2, 3.3, 0.2, dk, -w / 2 + 0.2, 1.85, sz * (d / 2 - 0.2));
+  box(g, 0.2, 0.2, d, dk, -w / 2 + 0.2, 3.4, 0);
+  const roof = pivot(g, 0, 3.45, 0); roof.rotation.z = 0.2;
+  box(roof, w + 1.1, 0.22, d + 0.9, 0x5a3a2a, 0, 0, 0);
+  for (let k = 0; k < 4; k++) box(roof, w + 1.12, 0.07, 0.14, mat(0x5a3a22), 0, 0.14, -d / 2 + 0.5 + (k * (d - 1)) / 3);
+  box(g, 0.5, 0.1, d - 0.8, wood, w / 2 - 0.6, 1.5, 0);
+  for (let k = 0; k < 3; k++) box(g, 0.4, 0.4, 0.4, 0xa8784a, w / 2 - 0.6, 1.75, -d / 3 + k * (d / 3));
+  propChest(g, w / 2 - 1.5, -d / 4, Math.PI / 2); propChest(g, w / 2 - 1.5, d / 4, Math.PI / 2);
+  propChest(g, w / 2 - 1.5, 0.05, Math.PI / 2).position.y = 0.2;
+  addGlowSprite(L, x - w / 2 + 0.6, 2.6, z, 0xffa040, 3.0);
+  addLightSpot(L, x - w / 2 + 0.8, 2.4, z, 0xffa040, 0.9, 8);
+  return g;
+}
+// Simyacı çadırı: mor piramit çatı, direkler, altın bordür; içi mor ışıklı
+function buildTent(L, x, z) {
+  const g = pivot(L.group, x, 0, z);
+  const purple = mat(0x6a3aa8), purpleD = mat(0x4e2a82), gold = mat(PAL.gold);
+  part(g, cylGeo(3.0, 3.1, 0.07, 10), mat(0x5a4478), 0, 0.04, 0);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(g, 0.16, 2.7, 0.16, mat(0x5a3a22), sx * 2.3, 1.35, sz * 2.3);
+  const roof = part(g, coneGeo(3.7, 2.2, 4), purple, 0, 2.7 + 1.1, 0); roof.rotation.y = Math.PI / 4;
+  for (const [px, pz, ry] of [[0, -2.4, 0], [-2.4, 0, Math.PI / 2], [2.4, 0, Math.PI / 2]]) {
+    const f = box(g, 4.8, 0.5, 0.07, purpleD, px, 2.45, pz); f.rotation.y = ry;
+    box(g, 4.8, 0.07, 0.09, gold, px, 2.2, pz).rotation.y = ry;
+    box(g, 4.8, 0.07, 0.09, gold, px, 2.72, pz).rotation.y = ry;
+  }
+  part(g, sphGeo(0.2, 6, 4), gold, 0, 4.95, 0);
+  addGlowHalo(L, x, 1.5, z, 0xb06aff, 3.2);
+  addLightSpot(L, x, 2.2, z + 0.5, 0x9a5aff, 1.2, 9, { pri: 1.2 });
+  return g;
+}
+// Merkez anıt: üç kademeli platform, mavi rünlü dikilitaş, iki yan taş, zincirler, rün halkası, dönen rün taşları
+function buildMonument(L, C) {
+  const g = pivot(L.group, C, 0, C);
+  const stone = mat(0x8f8a98), stone2 = mat(0x9d98a6), stoneDk = mat(0x6a6678), iron = mat(0x30323a);
+  const rot = Math.PI / 7;
+  part(g, cylGeo(3.5, 3.6, 0.2, 10), mat(PAL.foundation), 0, 0.1, 0).rotation.y = rot;
+  part(g, cylGeo(3.0, 3.05, 0.2, 10), stone, 0, 0.3, 0).rotation.y = rot;
+  part(g, cylGeo(2.5, 2.55, 0.2, 10), stone2, 0, 0.5, 0).rotation.y = rot;
+  const runeM = new THREE.MeshLambertMaterial({ color: 0x6ad8ff, emissive: 0x3ab8ff, emissiveIntensity: 1.1 });
+  L.disposables.push(runeM);
+  const lineM = mat(PAL.rune, { e: 0x2fb6ff, ei: 0.45 });
+  const ring = part(g, new THREE.TorusGeometry(2.05, 0.035, 3, 28), lineM, 0, 0.61, 0); ring.rotation.x = Math.PI / 2; ring.geometry.userData.tmp = true;
+  for (let k = 0; k < 8; k++) { const a = (k / 8) * TAU; box(g, 0.07, 0.03, 0.8, lineM, Math.cos(a) * 1.55, 0.61, Math.sin(a) * 1.55).rotation.y = -a + Math.PI / 2; }
+  // dikilitaş
+  part(g, cylGeo(0.82, 1.0, 0.5, 6), stoneDk, 0, 0.85, 0);
+  part(g, cylGeo(0.6, 0.86, 4.2, 6), stone, 0, 3.2, 0);
+  part(g, coneGeo(0.62, 0.95, 6), stone2, 0, 5.78, 0);
+  for (const sy of [2.2, 4.1]) part(g, cylGeo(0.74 - sy * 0.025, 0.74 - sy * 0.025, 0.1, 6), stoneDk, 0, sy, 0);
+  const dia = box(g, 0.5, 0.5, 0.1, runeM, 0, 3.35, 0.72); dia.rotation.z = Math.PI / 4;
+  const dia2 = box(g, 0.2, 0.2, 0.1, runeM, 0, 4.25, 0.64); dia2.rotation.z = Math.PI / 4;
+  box(g, 0.07, 0.8, 0.1, runeM, 0, 2.55, 0.76); box(g, 0.07, 0.5, 0.1, runeM, 0, 4.9, 0.6);
+  // yan taşlar
+  for (const sx of [-1, 1]) {
+    const s = pivot(g, sx * 1.75, 0.6, -0.25); s.rotation.y = -sx * 0.28;
+    box(s, 0.78, 2.6, 0.55, stone, 0, 1.3, 0);
+    part(s, coneGeo(0.5, 0.55, 4), stone2, 0, 2.85, 0).rotation.y = Math.PI / 4;
+    box(s, 0.07, 1.1, 0.1, runeM, 0, 1.4, 0.3); box(s, 0.28, 0.07, 0.1, runeM, 0, 1.75, 0.3);
+    // zincir: yan taştan dikilitaşa sarkan halkalar
+    for (let i = 0; i < 6; i++) {
+      const t = i / 5, px = lerp(sx * 1.55, sx * 0.62, t), py = 2.3 + 0.35 * t - 0.5 * Math.sin(Math.PI * t) + 0.55;
+      const lk = box(g, 0.2, 0.09, 0.09, iron, px, py, 0.05);
+      lk.rotation.set(i % 2 ? Math.PI / 2 : 0, 0, (sx > 0 ? 1 : -1) * (t - 0.5) * 0.9);
+    }
+  }
+  // platform kenarında dört küçük alev kasesi
+  for (const a of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
+    const bx = Math.cos(a) * 3.15, bz = Math.sin(a) * 3.15;
+    box(g, 0.34, 0.3, 0.34, stoneDk, bx, 0.35, bz);
+    addFlameInst(L, C + bx, 0.52, C + bz, 0.55);
+  }
+  // dönen rün taşları + alt parıltı
+  const orb = pivot(g, 0, 0, 0); orb.userData.dyn = true;
+  for (let i = 0; i < 5; i++) { const a = (i / 5) * TAU; part(orb, icoGeo(0.13), runeM, Math.cos(a) * 1.65, 3.4, Math.sin(a) * 1.65); }
+  glowDecal(L.group, C, 0.64, C, 2.8, 0x3ab8ff, 0.2).userData.dyn = true;
+  addGlowHalo(L, C, 3.4, C + 0.9, 0x5ac8ff, 3.4);
+  L.anims.push((t, dt) => {
+    orb.rotation.y += dt * 0.7; runeM.emissiveIntensity = 1.0 + Math.sin(t * 2) * 0.3;
+    if (Math.random() < dt * 6) FX.spawn(C + rand(-1.8, 1.8), 0.7, C + rand(-1.8, 1.8), 0, rand(1.2, 2.2), 0, 0x6ad8ff, 1.2, 0.08, 0);
+  });
+  addLightSpot(L, C, 3.0, C + 1.6, 0x5ab8ff, 1.1, 10, { flicker: false, pri: 1.3 });
+  // plaza kademeleri: dört mangal (çapraz)
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) propBrazier(L, C + sx * 4.1, C + sz * 4.1, 1.05);
+}
+// Zindan girişi: taş salon + büyük kapı, merdiven, bayraklar, mangallar (kuzey, Bekçi'nin arkası)
+function buildDungeonHall(L, C) {
+  buildHouse(L, C - 7, 0.5, 14, 7.5, 's', 1, { wh: 4.4, noDoor: true, windows: [-5, 5] });
+  const g = pivot(L.group, C, 0, 7.7);
+  const stone = mat(0xa89c86), wood = mat(PAL.door), iron = mat(0x2e2a30), gold = mat(PAL.gold);
+  for (const sx of [-1, 1]) {
+    box(g, 0.9, 4.4, 0.8, stone, sx * 2.1, 2.2, 0);
+    box(g, 1.1, 0.3, 1.0, mat(PAL.foundation), sx * 2.1, 0.15, 0.05);
+    box(g, 1.1, 0.3, 1.0, stone, sx * 2.1, 4.5, 0.02);
+    box(g, 1.6, 3.3, 0.14, wood, sx * 0.83, 1.7, -0.05);
+    box(g, 1.6, 0.1, 0.18, iron, sx * 0.83, 1.0, -0.02); box(g, 1.6, 0.1, 0.18, iron, sx * 0.83, 2.6, -0.02);
+    part(g, sphGeo(0.07, 4, 3), gold, sx * 0.12 * 2.0, 1.7, 0.08);
+  }
+  box(g, 3.4, 0.9, 0.1, 0x2e2a30, 0, 3.8, -0.1);
+  box(g, 5.5, 0.55, 1.0, stone, 0, 4.2 + 0.28, 0.02);
+  const key = part(g, coneGeo(0.75, 0.9, 4), stone, 0, 5.05, 0.02); key.rotation.y = Math.PI / 4; key.scale.z = 0.5;
+  const runeM = new THREE.MeshLambertMaterial({ color: 0x6ad8ff, emissive: 0x3ab8ff, emissiveIntensity: 1.1 });
+  L.disposables.push(runeM);
+  const dia = box(g, 0.42, 0.42, 0.1, runeM, 0, 4.5, 0.56); dia.rotation.z = Math.PI / 4;
+  propBannerCloth(g, -4.0, 4.0, 0.12, 1.1, 2.4); propBannerCloth(g, 4.0, 4.0, 0.12, 1.1, 2.4);
+  // merdiven (üçe kademe, alt basamak oyuncu tarafında)
+  for (const [zz, hh] of [[10.0, 0.1], [9.35, 0.2], [8.7, 0.3]]) box(L.group, 5.2, hh, 0.7, mat(zz > 9.5 ? 0xb8ab94 : 0xa89c86), C, hh / 2, zz);
+  addLightSpot(L, C, 3.2, 9.4, 0xffb060, 1.0, 9, { pri: 1.2 });
+  addGlowSprite(L, C, 2.2, 8.4, 0xffa050, 4.6);
+  for (const sx of [-1, 1]) propBrazier(L, C + sx * 3.7, 10.8, 1.1);
+}
+// Köy çıkışı: iki taş sütun, üstte ahşap kiriş, bayraklar, mangallar, basamaklar
+function buildExitGate(L, C, zz) {
+  const stone = mat(0xa89c86), beam = mat(0x5a3a22);
+  for (const sx of [-1, 1]) {
+    const x = C + sx * 3.7;
+    box(L.group, 1.2, 0.4, 1.2, PAL.foundation, x, 0.2, zz);
+    box(L.group, 0.95, 3.2, 0.95, stone, x, 2.0, zz);
+    box(L.group, 1.2, 0.3, 1.2, mat(0xb8ab94), x, 3.75, zz);
+    part(L.group, cylGeo(0.5, 0.32, 0.3, 8), mat(0x2e2a30), x, 4.05, zz);
+    addFlameInst(L, x, 4.15, zz, 0.8);
+    addGlowSprite(L, x, 4.6, zz, 0xffa040, 3.4);
+  }
+  box(L.group, 8.6, 0.35, 0.45, beam, C, 3.55, zz);
+  box(L.group, 7.4, 0.25, 0.4, beam, C, 3.1, zz);
+  for (const sx of [-1, 1]) propBannerCloth(L.group, C + sx * 2.4, 3.4, zz - 0.28, 1.0, 2.2);
+  for (const [dz, hh] of [[-2.9, 0.08], [-2.25, 0.16], [-1.6, 0.24]]) box(L.group, 5.2, hh, 0.65, 0xa89c86, C, hh / 2, zz + dz);
+  addLightSpot(L, C, 4.0, zz - 0.8, 0xffa040, 1.0, 9);
+}
+
 function buildVillage() {
   const L = newLevel('village');
   L.theme = THEMES.village;
@@ -12481,6 +12706,7 @@ function buildVillage() {
   const C = 31; // merkez (dünya birimi)
   setAtmosphere(L.theme);
   const F = Foliage();
+  const noTree = (x, z) => Math.abs(x - C) < 4.5 || (z < 10 && Math.abs(x - C) < 9.5); // ortada yollar + zindan girişi salonu
 
   // --- Zemin: dokulu çimen düzlemi + taş derzli meydan/yollar ---
   const gm = new THREE.MeshLambertMaterial({ color: PAL.grass, map: grassTex() });
@@ -12529,9 +12755,9 @@ function buildVillage() {
   // --- Evler (3 stil) ---
   const HOUSES = [
     { b: [3, 11, 7, 16], face: 'e', style: 1, id: 'smith' },
-    { b: [23, 11, 27, 16], face: 'w', style: 0, id: 'shop' },
-    { b: [4, 21, 9, 25], face: 'n', style: 2, id: 'depot' },
+    { b: [23, 8, 27, 13], face: 'w', style: 0, id: 'shop' },
     { b: [21, 21, 26, 25], face: 'n', style: 0, id: 'master', doorU: 0 },
+    { b: [3, 22, 7, 26], face: 'e', style: 3, id: 'alch' },
     { b: [3, 3, 8, 7], face: 's', style: 2 },
     { b: [22, 3, 27, 7], face: 's', style: 1 },
   ];
@@ -12544,43 +12770,27 @@ function buildVillage() {
     for (const [bx, bz] of [[x0 - 0.6, z0 - 0.6], [x1 + 0.6, z0 - 0.6], [x0 - 0.6, z1 + 0.6], [x1 + 0.6, z1 + 0.6]]) if (chance(0.6)) fBush(F, bx, bz, rand(0.8, 1.1));
   }
 
-  // --- Taş çeşme (merkez) ---
-  block(15, 15, 15, 15);
-  const ft = new THREE.Group(); ft.position.set(C, 0, C); L.group.add(ft);
-  part(ft, cylGeo(1.5, 1.6, 0.2, 8), mat(PAL.foundation), 0, 0.1, 0).rotation.y = Math.PI / 8;
-  part(ft, cylGeo(1.25, 1.3, 0.55, 8), mat(0xa89c86), 0, 0.45, 0).rotation.y = Math.PI / 8;
-  part(ft, cylGeo(1.34, 1.34, 0.1, 8), mat(0xbcae94), 0, 0.76, 0).rotation.y = Math.PI / 8;
-  part(ft, cylGeo(1.08, 1.08, 0.06, 8), mat(PAL.water, { e: 0x0a4a7a, ei: 0.35 }), 0, 0.68, 0).rotation.y = Math.PI / 8;
-  part(ft, cylGeo(0.22, 0.3, 1.3, 6), mat(0xa89c86), 0, 1.2, 0);
-  part(ft, cylGeo(0.55, 0.2, 0.25, 8), mat(0xbcae94), 0, 1.9, 0);
-  part(ft, cylGeo(0.44, 0.44, 0.04, 8), mat(PAL.water, { e: 0x0a4a7a, ei: 0.35 }), 0, 2.0, 0);
-  L.anims.push((t, dt) => { if (Math.random() < dt * 14) FX.spawn(C + rand(-0.1, 0.1), 2.1, C + rand(-0.1, 0.1), rand(-0.6, 0.6), rand(1.5, 2.4), rand(-0.6, 0.6), 0x9fd8ff, 0.7, 0.07, 6); });
-
-  // --- Portal platformu (basamaklı, rune çizgili) + taş ---
-  block(14, 4, 16, 6);
-  const pst = new THREE.Group(); pst.position.set(C, 0, 11); L.group.add(pst);
-  part(pst, cylGeo(3.0, 3.1, 0.2, 10), mat(0x8a8290), 0, 0.1, 0);
-  part(pst, cylGeo(2.55, 2.6, 0.2, 10), mat(0x9a93a0), 0, 0.3, 0);
-  part(pst, cylGeo(2.1, 2.15, 0.2, 10), mat(0xaaa3b0), 0, 0.5, 0);
-  const lineM = mat(PAL.rune, { e: 0x2fb6ff, ei: 0.35 });
-  for (let k = 0; k < 8; k++) {
-    const a = (k / 8) * TAU;
-    const b = box(pst, 0.07, 0.03, 1.0, lineM, Math.cos(a) * 1.45, 0.61, Math.sin(a) * 1.45);
-    b.rotation.y = -a + Math.PI / 2;
+  // --- Merkez anıt (Taş Mühür'ün sembolü) + plaza halkaları ---
+  block(14, 14, 16, 16);
+  buildMonument(L, C);
+  const ringM = new THREE.MeshBasicMaterial({ color: 0x5a4a36, transparent: true, opacity: 0.32, depthWrite: false });
+  L.disposables.push(ringM);
+  for (const [r0, r1] of [[5.6, 5.76], [9.0, 9.16], [12.9, 13.2]]) {
+    const rg = new THREE.RingGeometry(r0, r1, 56);
+    const rm = new THREE.Mesh(rg, ringM); rm.rotation.x = -Math.PI / 2; rm.position.set(C, 0.02, C); rm.userData.dyn = true; rm.renderOrder = 1;
+    L.group.add(rm); L.disposables.push(rg);
   }
-  const rr = part(pst, new THREE.TorusGeometry(1.95, 0.03, 3, 24), lineM, 0, 0.61, 0); rr.rotation.x = Math.PI / 2; rr.geometry.userData.tmp = true;
-  const stM = mat(0x5e5a70);
-  const runeM = new THREE.MeshLambertMaterial({ color: 0x6ad8ff, emissive: 0x3ab8ff, emissiveIntensity: 1.0 });
-  L.disposables.push(runeM);
-  part(pst, cylGeo(0.45, 0.8, 3.4, 6), stM, 0, 2.3, 0);
-  part(pst, coneGeo(0.46, 0.8, 6), stM, 0, 4.4, 0);
-  for (let i = 0; i < 3; i++) { const r = part(pst, new THREE.TorusGeometry(0.75 - i * 0.1, 0.04, 3, 12), runeM, 0, 1.3 + i * 0.9, 0); r.rotation.x = Math.PI / 2; r.geometry.userData.tmp = true; }
-  const orb = pivot(pst, 0, 0, 0);
-  orb.userData.dyn = true;
-  for (let i = 0; i < 5; i++) { const a = (i / 5) * TAU; part(orb, icoGeo(0.13), runeM, Math.cos(a) * 1.5, 3.1, Math.sin(a) * 1.5); }
-  glowDecal(L.group, C, 0.64, 11, 2.2, 0x3ab8ff, 0.18).userData.dyn = true;
-  L.anims.push((t, dt) => { orb.rotation.y += dt * 0.8; runeM.emissiveIntensity = 0.9 + Math.sin(t * 2) * 0.3; if (Math.random() < dt * 6) FX.spawn(C + rand(-1.6, 1.6), 0.7, 11 + rand(-1.6, 1.6), 0, rand(1.2, 2.2), 0, 0x6ad8ff, 1.2, 0.08, 0); });
-  addLightSpot(L, C, 2.6, 12.2, 0x5ab8ff, 1.0, 9, { flicker: false, pri: 1.3 });
+
+  // --- Zindan girişi (kuzey): salon, merdiven, kuleler ---
+  block(12, 2, 18, 3); block(14, 4, 16, 4);
+  buildDungeonHall(L, C);
+  blockAt(C - 3.7, 10.8); blockAt(C + 3.7, 10.8);
+  buildTower(L, 20.5, 8, 5.6); buildTower(L, 41.5, 8, 5.6);
+  block(9, 3, 10, 4); block(20, 3, 21, 4);
+
+  // --- Köy çıkışı (güney): sütunlu kapı ---
+  buildExitGate(L, C, H * T - 4.4);
+  blockAt(C - 3.7, H * T - 4.4); blockAt(C + 3.7, H * T - 4.4);
 
   // --- Fenerler ---
   for (const [x, z, ry] of [[24, 27, 0], [24, 35, 0], [38, 27, Math.PI], [38, 35, Math.PI], [27.3, 21.5, 0], [34.7, 21.5, Math.PI], [27.3, 40.5, 0], [34.7, 40.5, Math.PI]]) buildLantern(L, x, z, ry);
@@ -12608,13 +12818,13 @@ function buildVillage() {
     const edge = i < 2 || j < 2 || i > W - 3 || j > H - 3;
     if (!edge || !chance(0.5)) continue;
     const x = (i + 0.5) * T + rand(-0.6, 0.6), z = (j + 0.5) * T + rand(-0.6, 0.6);
-    if (Math.abs(x - C) < 4.5) continue;
+    if (noTree(x, z)) continue;
     chance(0.6) ? fTreePine(F, x, z, rand(0.85, 1.3)) : fTreeRound(F, x, z, rand(0.9, 1.25));
   }
   for (let k = 0; k < 130; k++) {
     const x = rand(-16, W * T + 16), z = rand(-16, H * T + 16);
     if (x > 1 && x < W * T - 1 && z > 1 && z < H * T - 1) continue;
-    if (Math.abs(x - C) < 4.5) continue;
+    if (noTree(x, z)) continue;
     chance(0.55) ? fTreePine(F, x, z, rand(1, 1.5)) : fTreeRound(F, x, z, rand(1, 1.4));
   }
   for (let k = 0; k < 26; k++) {
@@ -12622,8 +12832,11 @@ function buildVillage() {
     if (Math.abs(u - C) < 4.5) continue;
     const x = side === 0 ? u : side === 1 ? u : side === 2 ? 5.2 : W * T - 5.2;
     const z = side === 0 ? 5.2 : side === 1 ? H * T - 5.2 : u;
+    if (noTree(x, z)) continue;
     fBush(F, x, z, rand(0.8, 1.2));
   }
+  // kayalar (çit dışı + kapı yanları)
+  for (const [rx, rz, rs, rr] of [[3, 12, 1.3, 0.4], [2.6, 27, 1.7, 1.2], [3, 44, 1.2, 2.2], [2.8, 57, 1.5, 0.7], [59.2, 15, 1.4, 1.9], [59.6, 30, 1.8, 0.3], [59, 49, 1.3, 2.6], [58.6, 58, 1.5, 1.1], [12, 60.5, 1.2, 0.5], [19, 61.5, 1.6, 2.0], [43, 60.8, 1.4, 1.4], [50, 61.4, 1.7, 0.9], [C - 6.6, 59.4, 1.5, 0.6], [C + 6.8, 59.8, 1.9, 2.4], [22.5, 2.0, 1.4, 1.0], [39.5, 1.6, 1.2, 0.2]]) propRock(L.group, rx, rz, rs, rr);
 
   // --- Demirci ocağı + örs ---
   blockAt(17.5, 26); blockAt(18.2, 30);
@@ -12645,8 +12858,8 @@ function buildVillage() {
   propCrate(L.group, 17.2, 33.4, 0.9, 0.3); propCrate(L.group, 17.3, 33.3, 0.6, 0.9).position.y = 0.72; blockAt(17.2, 33.4);
 
   // --- Tüccar tezgâhı ---
-  block(21, 14, 21, 16);
-  const stall = new THREE.Group(); stall.position.set(43.5, 0, 31); L.group.add(stall);
+  block(21, 11, 21, 13);
+  const stall = new THREE.Group(); stall.position.set(43.5, 0, 24.5); L.group.add(stall);
   box(stall, 1.3, 0.95, 3.4, 0x8a5a32, 0, 0.48, 0);
   box(stall, 1.4, 0.08, 3.5, mat(0x6a4426), 0, 0.98, 0);
   for (const sz of [-1.6, 1.6]) for (const sx of [-0.55, 0.6]) box(stall, 0.12, 2.7, 0.12, mat(0x5a3a22), sx, 1.35, sz);
@@ -12656,48 +12869,48 @@ function buildVillage() {
     part(stall, sphGeo(0.13, 6, 4), mat(c, { e: c, ei: 0.2 }), -0.2 + (k % 2) * 0.3, 1.14, -1.35 + k * 0.45);
     box(stall, 0.06, 0.1, 0.06, mat(0xe8e0c8), -0.2 + (k % 2) * 0.3, 1.3, -1.35 + k * 0.45);
   }
-  propAppleCrate(L.group, 45.2, 23.5); blockAt(45.2, 23.5);
-  propBarrel(L.group, 45.0, 36.4); propBarrel(L.group, 44.1, 37.2, 0.85); blockAt(45.0, 36.4);
-  propSack(L.group, 40.6, 34.4); propSack(L.group, 41.2, 34.9); blockAt(40.6, 34.4);
+  propAppleCrate(L.group, 45.2, 17.2); blockAt(45.2, 17.2);
+  propBarrel(L.group, 45.0, 29.4); propBarrel(L.group, 44.1, 30.2, 0.85); blockAt(45.0, 29.4);
+  propSack(L.group, 40.6, 28.0); propSack(L.group, 41.2, 28.5); blockAt(40.6, 28.0);
 
-  // --- Depo sandıkları ---
-  for (let k = 0; k < 4; k++) {
-    const g = new THREE.Group(); g.position.set(8.8 + k * 1.3, 0, 40.8 + (k % 2) * 0.3); L.group.add(g);
-    box(g, 1.0, 0.7, 0.7, 0x8a5a32, 0, 0.35, 0);
-    box(g, 1.04, 0.14, 0.74, mat(0x6a4426), 0, 0.74, 0);
-    box(g, 0.12, 0.74, 0.76, mat(PAL.gold), -0.3, 0.37, 0); box(g, 0.12, 0.74, 0.76, mat(PAL.gold), 0.3, 0.37, 0);
-  }
-  block(4, 20, 6, 20);
-  propSack(L.group, 18.2, 41); propSack(L.group, 19, 41.5); propSack(L.group, 18.6, 40.4); blockAt(18.6, 41);
+  // --- Depocu kulübesi (sağ) ---
+  buildShed(L, 53, 33.2, 8, 6.4);
+  propChest(L.group, 49.6, 31.4, Math.PI / 2); propChest(L.group, 49.6, 35.0, Math.PI / 2); propChest(L.group, 49.6, 31.4, Math.PI / 2).position.y = 0.72;
+  block(24, 15, 28, 18);
+  propBarrel(L.group, 49.5, 37.6); propBarrel(L.group, 50.4, 38.1, 0.85); blockAt(49.5, 37.6);
+  propSack(L.group, 46.2, 30.2); propSack(L.group, 46.9, 30.7); blockAt(46.2, 30.2);
 
-  // --- Simyacı: kazan + masa ---
-  propCauldron(L, 33.4, 47.6); blockAt(33.4, 47.6); blockAt(31.6, 47.7); blockAt(32.4, 47.7);
+  // --- Simyacı: mor çadır + kazan (sol alt) ---
+  buildTent(L, 20.2, 47.5);
+  propCauldron(L, 22.2, 48.8);
+  block(8, 22, 11, 25);
 
   // --- Usta geçidi + saksılar ---
   const shr = new THREE.Group(); shr.position.set(47, 0, 39.2); L.group.add(shr);
   for (const sx of [-1.6, 1.6]) { box(shr, 0.3, 2.8, 0.3, 0xa8322a, sx, 1.4, 0); box(shr, 0.5, 0.3, 0.5, mat(PAL.foundation), sx, 0.15, 0); }
   box(shr, 4.4, 0.3, 0.5, mat(0x8a2a22), 0, 2.9, 0);
   box(shr, 3.8, 0.2, 0.4, mat(0x2a1a10), 0, 2.45, 0);
+  propBannerCloth(shr, -0.9, 2.8, 0.3, 0.7, 1.5); propBannerCloth(shr, 0.9, 2.8, 0.3, 0.7, 1.5);
   propPlanter(L.group, 43.2, 40.9); propPlanter(L.group, 50.8, 40.9); blockAt(43.2, 40.9); blockAt(50.8, 40.9);
 
   // --- Meydan ve kuzey propları ---
   for (const [x, z, ry] of [[24.8, 24.8, Math.PI / 4], [37.2, 37.2, -3 * Math.PI / 4], [37.2, 24.8, -Math.PI / 4], [24.8, 37.2, 3 * Math.PI / 4]]) { propBench(L.group, x, z, ry); blockAt(x, z); }
   propBench(L.group, 12, 17.8, 0); blockAt(12, 17.8);
-  propBench(L.group, 50, 17.8, 0); blockAt(50, 17.8);
-  propCart(L.group, 20.5, 9.5, 0.2); block(10, 4, 10, 5);
-  propHay(L.group, 41.5, 9, 0.3); propHay(L.group, 42.4, 10.4, -0.2); block(20, 4, 21, 5);
+  propBench(L.group, 43, 18.2, 0); blockAt(43, 18.2);
+  propCart(L.group, 23.5, 13.2, 0.2); block(11, 6, 11, 6);
+  propHay(L.group, 38.8, 13.2, 0.3); propHay(L.group, 39.7, 14.6, -0.2); block(19, 6, 19, 7);
   propBarrel(L.group, 23.4, 41.6); blockAt(23.4, 41.6);
   propBarrel(L.group, 38.6, 20.6); propCrate(L.group, 39.6, 21.2, 0.7, 0.4); blockAt(38.6, 20.6);
   propPlanter(L.group, 27.3, 17.3); propPlanter(L.group, 34.7, 17.3); blockAt(27.3, 17.3); blockAt(34.7, 17.3);
 
   // --- NPC'ler + halı taşları ---
   const NPCS = [
-    { id: 'smith', name: 'Demirci', role: 'Geliştirme · Onarım', x: 19.8, z: 28.2, face: Math.PI / 2, rug: 0xc8602a },
-    { id: 'shop', name: 'Tüccar', role: 'İksir · Satış', x: 41.6, z: 31, face: -Math.PI / 2, rug: 0x2f7a5a },
-    { id: 'depot', name: 'Depocu', role: 'Depo', x: 14.5, z: 40.6, face: Math.PI, rug: 0x8a6a3a },
+    { id: 'smith', name: 'Demirci', role: 'Eşya Geliştirme', x: 19.8, z: 28.2, face: Math.PI / 2, rug: 0xc8602a },
+    { id: 'shop', name: 'Tüccar', role: 'İksir · Satış', x: 41.6, z: 24.5, face: -Math.PI / 2, rug: 0x2f7a5a },
+    { id: 'depot', name: 'Depocu', role: 'Depo', x: 47.0, z: 33.2, face: -Math.PI / 2, rug: 0x8a6a3a },
     { id: 'master', name: 'Usta', role: 'Yetenek Hocası', x: 47, z: 40.4, face: Math.PI, rug: 0xa8322a },
-    { id: 'alchemist', name: 'Simyacı', role: 'Kadim Öz', x: 29.2, z: 47.4, face: Math.PI, rug: 0x6a3aa8 },
-    { id: 'portal', name: 'Bekçi', role: 'Zindan Bekçisi', x: 25.0, z: 12.2, face: Math.PI / 2, rug: 0x2a6ad8 },
+    { id: 'alchemist', name: 'Simyacı', role: 'Kadim Öz · Efsun', x: 25.2, z: 44.2, face: 2.45, rug: 0x6a3aa8 },
+    { id: 'portal', name: 'Bekçi', role: 'Zindan Girişi', x: C, z: 12.6, face: 0, rug: 0x2a6ad8 },
   ];
   L.npcs = [];
   for (const n of NPCS) {
@@ -12714,11 +12927,10 @@ function buildVillage() {
     L.interact.push(it);
     L.npcs.push(it);
   }
-  const lbP = addLabel(L, 'Portal Taşı', 'Zindan seç', C, 5.5, 11, '#9fe0ff');
-  L.interact.push({ kind: 'npc', id: 'portal', x: C, z: 11, r: 3.9, label: 'Portal Taşı', active: true, lbl: lbP });
   L.spawn = { x: C, z: 36 };
-  L.spawnPortal = { x: C, z: 15.5 };
+  L.spawnPortal = { x: C, z: 16.4 };
   flushFoliage(L, F);
+  flushFlames(L);
   mergeStatic(L);
   markShadows(L);
   LightPool.reset(L.lightSpots);
@@ -18243,7 +18455,7 @@ function startPlay() {
   goVillage(false);
   if (P.kills === 0) {
     setTimeout(() => {
-      feed('İpucu: Kuzeydeki mavi Portal Taşı\'na yürü, zindan seç.', '#9fe0ff');
+      feed('İpucu: Kuzeydeki zindan girişine, Bekçi\'nin yanına yürü ve zindan seç.', '#9fe0ff');
       feed('Kırmızı tuş en yakın canavara saldırır. Basılı tut: art arda vur.', '#f1e3c4');
       feed('Loot\'u Tüccar\'a sat, Demirci\'de +9\'a bas.', '#e8c547');
     }, 1800);
