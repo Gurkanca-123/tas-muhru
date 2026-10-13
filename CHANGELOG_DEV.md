@@ -10,6 +10,13 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-14 (19) — Beceri Ustalığı son dengeleme main'e alındı (kayıt 2026-10-13 (11) ile aynı iş) · `ozellik/ustalik-asama2` → main, kullanıcı onayıyla (yedek: `yedek/main-ustalik-denge-oncesi`)
+- Yedek: `yedek/ustalik-denge-oncesi`. Değişen tek veri: `MASTERY_STEP` M 0.08→0.04, G 0.12→0.06 (`index.html`, 1 satır + yorum).
+- Çarpanlar: Sv5 1.72 · M1 1.76 · M5 1.92 · M10 2.12 · G1 2.18 · G3 2.30 · G5 2.42 (formül `Sv5 + 0.04·min(aşama,10) + 0.06·max(0,aşama−10)`; beklenen tabloyla birebir).
+- Dokunulmadı: normal Sv1–5 skalası, Taş Mührü sınırları (beceri %30, saldırı %20), başarı oranları, parşömen fiyat/tüketim, buff/bekleme/animasyon, demirci, EXP, tapınak.
+- Testler: yeni `t_denge` 16/16 (16 aşamanın tamamı, gerçek savaşta `hitMob` çarpanı Sv5/M10/G5), `t_mastery` 29/29, `t_logic` 21/21, `t_temple` 34/34, `t_reg` hatasız, `node --check`.
+- Kapsam: ustalığın sayısal altyapısı bu kayıtla kapandı. Sonraki ayrı iş: ustalık animasyon/ışıklandırma efektleri, G2…G5 yükseltmesi, kaynak/düşme (Tüccar denemesi duruyor).
+
 ## 2026-10-14 (18) — Bekleme kılıç açısı + ince kılıçlar · dal `ozellik/savasci-durus`
 - Kullanıcı: tutuş başarılı, bilek kırılması yok; ama kılıç fazla yana bakıyor, kılıçlar fazla kalın.
 - `idleReady`: kılıç hedefi kalça çerçevesinde (-0,66, 0,62, 0,42) → (-0,40, 0,66, 0,64) (daha ileri-yukarı, daha az yana); önkol hafif az içe.
