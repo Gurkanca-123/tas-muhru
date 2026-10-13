@@ -10,6 +10,15 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (13) — Minimal fantastik arayüz yenilemesi (Aşama 1 HUD + Aşama 2 Çanta/Görev defteri) · dal `ozellik/arayuz-minimal` (yedek: `yedek/arayuz-oncesi`)
+- Taban: `ozellik/gorev-sistemi` ucu `6b9e2d4` (HUD'daki Görevler düğmesi ve çanta sayfaları `main`'de yok; `main` = `10f7a92`, değişmedi).
+- **Aşama 1 (HUD):** yalnız CSS, stil sayfasının SONUNDAKİ «HUD: minimal fantastik» bloğu (eski kuralları ezer, geri almak = bloğu silmek). Koyu yarı saydam panel + 1px pirinç çizgi (`#hud` kapsamı).
+  Görsel boyutlar: portre 44→36, iksir / menü düğmesi 44→36, Görevler 96×30→80×26, can-mana çubuğu 170×14→140×11, minimap 104→88. Dokunma alanı görselden ayrı: `::before{inset:-4px}` ile ~44px etkin alan (yalnız `#hud .ibtn/.potbtn/.qbtn`).
+  Savaş düğmeleri (saldırı, yetenek, joystick) boyutça aynı; yetenek çerçevesi inceltildi. Görev satırı genişliği yatayda ekrana göre (`100vw − 412px`), hedef kartı görev satırının altına alındı, dikeyde bölge adı alta (eski kural) korundu.
+- **Aşama 2 (Pencereler):** `#panel[data-p="bag"|"quest"]` kapsamlı CSS (aynı blok sonrası); diğer paneller değişmedi. Çanta ızgarası `auto-fill` sütun (8 sütuna kadar), kısa yatay ekranda (`max-height:420px`) kompakt ekipman alanı. Nadirlik / +N ışıltı kuralları ezilmedi.
+- Testler (Playwright + Chromium, tek tarayıcı): HUD 32/32 (844×390, 640×360, 568×320 yatay; 390×844, 360×640 dikey: taşma, çakışma, dokunma alanı, iksir / çanta / Görevler genişletilmiş alandan tıklama), Çanta+Görev 26/26 (Giy / Parçala / Sırala, sayfa satın alma + yeniden yükleme kalıcılığı, görev teslimi), eski görev 40/40 ve çanta sayfası 22/22; `node --check`.
+- DENENMEDİ: gerçek telefon (dokunma hissi, safe-area / çentik, parlaklıkta okunabilirlik). Dokunmatik cihazda dikey ekran «Telefonu yatay çevir» uyarısı gösterir; dikey HUD yalnız dokunmatik olmayan tarayıcıda ölçüldü. 568 px genişlikte görev satırı üç satıra sarabilir.
+
 ## 2026-10-13 (12) — Çanta sayfaları + Görevler düğmesi + Görev defteri yeniden tasarımı · dal `ozellik/gorev-sistemi`
 - Çanta: 3 sayfa × 40 yuva. 2. ve 3. sayfa sırayla `INV_PAGE_COST` (100.000 altın, onaylı) ile açılır. Kayıt: `P.invPages` (1…3, `applySave` doğrular; eski kayıt = 1 sayfa).
   `P.inv` tek düz dizi olarak kaldı (uzunluk `invCap()`), yalnız `UI.invGrid` sayfa sekmeleri çizer ve gerçek dizin ofsetiyle çağırır → Depocu, Tüccar, Demirci ve ganimet kodu değişmedi. `Sırala` tüm sayfaları birlikte sıralar.
