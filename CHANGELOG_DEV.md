@@ -10,6 +10,10 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (9) — Boss adı kısaltıldı: «Kadim Mühür» · dal `ozellik/kadim-muhur`
+- Kullanıcı isteği: «Kadim mühür yeterli». Son zindan boss'u `Kadim Kırık Taş Mühür` → `Kadim Mühür` (banner `KADİM MÜHÜR`, tüm metinler). Küçük taş «Kırık Taş Mühür» kaldı.
+- Kod kimlikleri ve kayıt alanları değişmedi. Testler: `node --check`, `t_logic`, `t_temple`.
+
 ## 2026-10-13 (8) — Metin taşı yeniden adlandırıldı: «Kırık Taş Mühür» · dal `ozellik/kirik-tas-muhur`
 - Yalnız oyuncuya görünen metinler: küçük taş `Metin Taşı` → `Kırık Taş Mühür`; son zindan boss'u `Kadim Metin` → `Kadim Kırık Taş Mühür`
   (bannerlar, günlük görev, bildirimler, zindan/eşya açıklamaları, giriş/zafer metni). Ekler uyumlu: «…Mühür'ü», «…Mühür'den», «…Mühür'ün».

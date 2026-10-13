@@ -461,7 +461,7 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
   </div>
   <div id="title" class="screen" hidden>
     <h1>TAŞ<br>MÜHRÜ</h1>
-    <div class="tag">Köyden çık, zindanda kasıl, loot'unu ocakta +9'a bas.<br>Son tapınaktaki Kadim Kırık Taş Mühür'ü kır ve mühürle.</div>
+    <div class="tag">Köyden çık, zindanda kasıl, loot'unu ocakta +9'a bas.<br>Son tapınaktaki Kadim Mühür'ü kır ve mühürle.</div>
     <div class="btns"><button class="pbtn gold" id="t-cont" hidden>Karakter seç</button><button class="pbtn" id="t-new">Yeni karakter</button></div>
     <div class="foot">Telefonda yatay tut. Sol başparmak: yürü · Sağ: saldırı ve yetenekler</div>
     <div class="cloudst"></div>
@@ -485,7 +485,7 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
   </div>
   <div id="ending" class="screen" hidden>
     <h2>Mühür tamam</h2>
-    <p>Kadim Kırık Taş Mühür paramparça. Taşın fısıltısı sustu, köyün fenerleri bu gece rahat yanacak.<br>Zindanlar açık kalıyor: kasılmaya, +9'a ve daha iyi loot'a devam edebilirsin.<br><b>Taşın altında 7. zindan açıldı: Kemik Taht</b> (Sv 45). Tahtında Kemik Kral bekliyor.</p>
+    <p>Kadim Mühür paramparça. Taşın fısıltısı sustu, köyün fenerleri bu gece rahat yanacak.<br>Zindanlar açık kalıyor: kasılmaya, +9'a ve daha iyi loot'a devam edebilirsin.<br><b>Taşın altında 7. zindan açıldı: Kemik Taht</b> (Sv 45). Tahtında Kemik Kral bekliyor.</p>
     <div class="kv px" id="endStats" style="padding:12px"></div>
     <button class="pbtn gold" id="e-ok" style="font-size:18px;padding:12px 22px">Kasılmaya devam</button>
   </div>
@@ -753,10 +753,10 @@ const DUNGEONS = [
   { id: 'd4', name: 'Kor Ocağı', theme: 'fire', req: 20, lv: [20, 27], floors: 3, mobs: ['imp', 'lavaturtle'], elite: 'flameguard', boss: 'firelord', junk: 'j4', desc: 'Lav gölleri arasında ateş ifritleri.' },
   { id: 'd5', name: 'Ayaz Mağarası', theme: 'ice', req: 28, lv: [28, 36], floors: 3, mobs: ['icewolf', 'snowgolem'], elite: 'icewitch', boss: 'frostgiant', junk: 'j5', desc: 'Donmuş koridorlar. Buz seni yavaşlatır.' },
   // diffLv: zorluğa göre canavar seviyesine eklenen (Normal / Zor / Kabus) — Sv 50-70 son oyunu buralarda geçer
-  { id: 'd6', name: 'Kara Taş Tapınağı', theme: 'temple', req: 38, lv: [38, 45], diffLv: [0, 6, 12], floors: 2, mobs: ['shade', 'stoneling'], elite: 'templeguard', boss: 'metin', junk: 'j6', final: true, desc: 'Kadim Kırık Taş Mühür burada. Taşı kır, dalgalara dayan, mührü tamamla.' },
-  // 7. zindan: Kadim Kırık Taş Mühür mühürlendikten sonra açılır (needSeal). pow: kat gücü (Mob yapıcısı, L.mobPow)
+  { id: 'd6', name: 'Kara Taş Tapınağı', theme: 'temple', req: 38, lv: [38, 45], diffLv: [0, 6, 12], floors: 2, mobs: ['shade', 'stoneling'], elite: 'templeguard', boss: 'metin', junk: 'j6', final: true, desc: 'Kadim Mühür burada. Taşı kır, dalgalara dayan, mührü tamamla.' },
+  // 7. zindan: Kadim Mühür mühürlendikten sonra açılır (needSeal). pow: kat gücü (Mob yapıcısı, L.mobPow)
   { id: 'd7', name: 'Kemik Taht', theme: 'bone', req: 45, lv: [45, 50], diffLv: [0, 7, 16], floors: 3, mobs: ['bonewarrior', 'bonemage'], elite: 'deathknight', boss: 'boneking', junk: 'j7', needSeal: true, throne: true,
-    pow: { hp: 1.3, atk: 1.25, def: 1.2, exp: 1.3 }, desc: 'Kadim Kırık Taş Mühür\'ün altındaki ölüler diyarı. Kemik ordular, ruh büyücüleri ve tahtında bekleyen Kemik Kral.' },
+    pow: { hp: 1.3, atk: 1.25, def: 1.2, exp: 1.3 }, desc: 'Kadim Mühür\'ün altındaki ölüler diyarı. Kemik ordular, ruh büyücüleri ve tahtında bekleyen Kemik Kral.' },
   // 8. zindan: Bronz Taş Tapınağı — 10 dairesel arena katı (TEMPLE_FLOORS). Her deneme 1. kattan başlar; kat ödülü
   // temizlenince kaydedilir. Kat düzeni / dalgalar / ödüller "BRONZ TAŞ TAPINAĞI" bölümünde (Temple).
   { id: 'd8', name: 'Bronz Taş Tapınağı', theme: 'bronze', req: 40, lv: [46, 64], floors: 10, mobs: ['tasmuhafiz', 'kiriksavasci'], elite: 'tascanavari', boss: 'bronzmuhur', junk: 'j7', temple: true,
@@ -813,7 +813,7 @@ const MOBS = {
   kirikmuhur: { name: 'Kırık Mühür Muhafızı', model: 'tapinak', tm: 'minib', fb: 'golem', color: 0x4a3a30, eye: 0xff5a2a, size: 1.35, rank: 'boss', hpMul: 0.55, atk: 1.1, def: 1.2, skills: ['slam', 'spin', 'charge'], wR: 'warhammer', frenzy: true },
   bronzmuhur: { name: 'Bronz Mühür Muhafızı', model: 'tapinak', tm: 'boss', fb: 'golem', color: 0x8a5a2a, eye: 0xffb040, size: 1.75, rank: 'boss', hpMul: 2.0, atk: 1.35, def: 1.3, proj: 0xffa040, skills: ['slam', 'spin', 'shock'], wR: 'lavahammer', phases: true },
 
-  metin: { name: 'Kadim Kırık Taş Mühür', model: 'metin', color: 0x1a1620, eye: 0xff2a8a, rank: 'metin', big: true },
+  metin: { name: 'Kadim Mühür', model: 'metin', color: 0x1a1620, eye: 0xff2a8a, rank: 'metin', big: true },
   minimetin: { name: 'Kırık Taş Mühür', model: 'metin', color: 0x2a2630, eye: 0x9a4aff, rank: 'metin' },
 };
 
@@ -865,7 +865,7 @@ const GEAR_SETS = {
     bonus: { 2: { hpPct: 0.06 }, 3: { defPct: 0.1 }, 4: { atkPct: 0.08, crit: 3 } },
     names: { head: 'Kurt Dişi Başlığı', chest: 'Kurt Dişi Göğüslüğü', feet: 'Kurt Dişi Çizmesi', shield: 'Kurt Dişi Kalkanı' } },
   // Bronz Taş Zırh: son oyun seti (Sv 45). Normal zindan düşüşünde çıkmaz; yalnız `endgame` kaynaklarından
-  // (7. zindan Kemik Taht ve Kadim Kırık Taş Mühür) düşer — rank → şans (09_combat.js rollLoot / 03_items.js rollGear).
+  // (7. zindan Kemik Taht ve Kadim Mühür) düşer — rank → şans (09_combat.js rollLoot / 03_items.js rollGear).
   bronzz: { name: 'Bronz Taş Zırh Seti', tier: 6, lv: 45, body: 'bronzz', mat: 'j7', color: '#c9a45a', endgame: { normal: 0.05, elite: 0.12, boss: 0.45, metin: 0.35 },
     bonus: { 2: { hpPct: 0.08 }, 3: { defPct: 0.14 }, 4: { atkPct: 0.12, mob: 8 } },
     names: { head: 'Bronz Taş Miğfer', chest: 'Bronz Taş Göğüslük', feet: 'Bronz Taş Çizme', shield: 'Bronz Taş Kalkan' } },
@@ -943,17 +943,17 @@ const STACKS = {
   mp2: { name: 'Orta Mavi İksir', kind: 'pot', mp: 180, price: 55, icon: 'potion', tint: '#2a5ad0', lv: 12 },
   mp3: { name: 'Büyük Mavi İksir', kind: 'pot', mp: 500, price: 160, icon: 'potion', tint: '#3a2ab0', lv: 28 },
   ore: { name: 'Demir Cevheri', kind: 'mat', price: 60, icon: 'ore', tint: '#8a8a94', desc: '+1 … +4 geliştirmelerde kullanılır. Her canavardan düşebilir; gereksiz eşyayı parçalayınca da çıkar.' },
-  soul: { name: 'Ruh Taşı', kind: 'mat', icon: 'soul', tint: '#a84aff', sell: 110, desc: '+5 … +6 geliştirmelerde kullanılır. Elitlerden, bosslardan ve Kadim Kırık Taş Mühür\'den düşer.' },
-  // Nadir cevherler: +7…+9 geliştirmede, yuvaya özel olarak gerekir. Sadece bosslardan, Kadim Kırık Taş Mühür'den
+  soul: { name: 'Ruh Taşı', kind: 'mat', icon: 'soul', tint: '#a84aff', sell: 110, desc: '+5 … +6 geliştirmelerde kullanılır. Elitlerden, bosslardan ve Kadim Mühür\'den düşer.' },
+  // Nadir cevherler: +7…+9 geliştirmede, yuvaya özel olarak gerekir. Sadece bosslardan, Kadim Mühür'den
   // ve üst zindanların (4. zindan ve sonrası) elitlerinden düşer — seviye yükseldikçe bulmak zorlaşır.
-  ess_weapon: { name: 'Kadim Alev Özü', kind: 'ess', icon: 'soul', tint: '#ff6a3a', sell: 480, desc: '+7 … +9 silah geliştirmede kullanılır. Bosslardan, Kadim Kırık Taş Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
-  ess_head: { name: 'Ruh Gözü', kind: 'ess', icon: 'soul', tint: '#8fd8ff', sell: 480, desc: '+7 … +9 kask geliştirmede kullanılır. Bosslardan, Kadim Kırık Taş Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
-  ess_chest: { name: 'Ejder Pulu', kind: 'ess', icon: 'soul', tint: '#5fd08a', sell: 480, desc: '+7 … +9 zırh geliştirmede kullanılır. Bosslardan, Kadim Kırık Taş Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
-  ess_feet: { name: 'Fırtına Tozu', kind: 'ess', icon: 'soul', tint: '#b8a0ff', sell: 480, desc: '+7 … +9 ayakkabı geliştirmede kullanılır. Bosslardan, Kadim Kırık Taş Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
-  ess_ring: { name: 'Kehanet Kristali', kind: 'ess', icon: 'soul', tint: '#ff8fd0', sell: 480, desc: '+7 … +9 yüzük geliştirmede kullanılır. Bosslardan, Kadim Kırık Taş Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
-  ess_shield: { name: 'Ejder Kabuğu', kind: 'ess', icon: 'soul', tint: '#e05a3a', sell: 480, desc: '+7 … +9 kalkan geliştirmede kullanılır. Bosslardan, Kadim Kırık Taş Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
-  ess_charm: { name: 'Kehribar Damlası', kind: 'ess', icon: 'soul', tint: '#e8b040', sell: 480, desc: '+7 … +9 tılsım geliştirmede kullanılır. Bosslardan, Kadim Kırık Taş Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
-  ess_neck: { name: 'Gölge İncisi', kind: 'ess', icon: 'soul', tint: '#7a7aff', sell: 480, desc: '+7 … +9 kolye geliştirmede kullanılır. Bosslardan, Kadim Kırık Taş Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
+  ess_weapon: { name: 'Kadim Alev Özü', kind: 'ess', icon: 'soul', tint: '#ff6a3a', sell: 480, desc: '+7 … +9 silah geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
+  ess_head: { name: 'Ruh Gözü', kind: 'ess', icon: 'soul', tint: '#8fd8ff', sell: 480, desc: '+7 … +9 kask geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
+  ess_chest: { name: 'Ejder Pulu', kind: 'ess', icon: 'soul', tint: '#5fd08a', sell: 480, desc: '+7 … +9 zırh geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
+  ess_feet: { name: 'Fırtına Tozu', kind: 'ess', icon: 'soul', tint: '#b8a0ff', sell: 480, desc: '+7 … +9 ayakkabı geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
+  ess_ring: { name: 'Kehanet Kristali', kind: 'ess', icon: 'soul', tint: '#ff8fd0', sell: 480, desc: '+7 … +9 yüzük geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
+  ess_shield: { name: 'Ejder Kabuğu', kind: 'ess', icon: 'soul', tint: '#e05a3a', sell: 480, desc: '+7 … +9 kalkan geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
+  ess_charm: { name: 'Kehribar Damlası', kind: 'ess', icon: 'soul', tint: '#e8b040', sell: 480, desc: '+7 … +9 tılsım geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
+  ess_neck: { name: 'Gölge İncisi', kind: 'ess', icon: 'soul', tint: '#7a7aff', sell: 480, desc: '+7 … +9 kolye geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
   bless: { name: 'Kutsama Kağıdı', kind: 'scroll', price: 2500, sell: 300, icon: 'scroll', tint: '#d8a02a', desc: 'Geliştirme başarısız olursa eşya seviyesi düşmez.' },
   tp: { name: 'Dönüş Parşömeni', kind: 'scroll', price: 30, icon: 'scroll', tint: '#3a8ae0', desc: 'Zindandan anında köye ışınlar.' },
   // Beceri ustalığı parşömenleri: düşüş / ödül tablosuna bağlı değil. DENEME: Tüccar'da geçici olarak satılık (price; SHOP_LIST)
@@ -1069,7 +1069,7 @@ const DROP = {
   oreN: { normal: [1, 1], elite: [1, 2], boss: [3, 5], metin: [2, 3] },
   soul: { normal: 0.02, elite: 0.4, boss: 1, metin: 1 },
   soulN: { normal: [1, 1], elite: [1, 1], boss: [2, 3], metin: [2, 3] },
-  // nadir yuva cevheri: yalnızca bosslardan, Kadim Kırık Taş Mühür'den ve üst zindanların (4. ve sonrası) elitlerinden — seviye yükseldikçe daha zor bulunur
+  // nadir yuva cevheri: yalnızca bosslardan, Kadim Mühür'den ve üst zindanların (4. ve sonrası) elitlerinden — seviye yükseldikçe daha zor bulunur
   essence: { normal: 0, elite: 0.07, boss: 0.24, metin: 0.4 },
   junk: 0.28,
   potion: 0.06,
@@ -2355,7 +2355,7 @@ function rollRarity(tier, rank) {
   if (rank === 'boss') r = Math.max(1, r);
   return r;
 }
-// tier: eşya kademesi (0-6), dTier: zindan kademesi (1-7; set düşme payları buna göre). endgame: Kadim Kırık Taş Mühür /
+// tier: eşya kademesi (0-6), dTier: zindan kademesi (1-7; set düşme payları buna göre). endgame: Kadim Mühür /
 // Kemik Taht kaynağı — yalnız oradan düşen setler (GEAR_SETS[*].endgame) devreye girer.
 function rollGear(tier, rank, dTier, endgame, efs) {
   dTier = dTier || tier;
@@ -2373,7 +2373,7 @@ function rollGear(tier, rank, dTier, endgame, efs) {
   // set sınıfı: zırh yuvalarında yalnız set parçası (Kurt Dişi nadir), silahta yalnız adlı baltalar (Bronz nadir)
   const roll = (opts, base) => { for (const k of opts) if (Math.random() < (GEAR_SETS[k].drop[dTier] || 0)) return k; return base; };
   if (sets && SET_SLOTS.includes(slot)) {
-    // son oyun setleri: yalnız 6. zindanın Kadim Kırık Taş Mühür'ü ve 7. zindan; payı canavar rütbesine göre (Efsanevi: Zor+)
+    // son oyun setleri: yalnız 6. zindanın Kadim Mühür'ü ve 7. zindan; payı canavar rütbesine göre (Efsanevi: Zor+)
     if (endgame) for (const k in GEAR_SETS) { const S = GEAR_SETS[k], e = S.endgame; if (e && SET_SLOTS.some((s) => S.names[s]) && setDiffOk(S) && Math.random() < (e[rank] || 0)) return makeGear(slot, 0, rollRarity(tier, rank), cls, k); }
     return makeGear(slot, 0, rollRarity(tier, rank), cls, roll(['nihai', 'kurt'], 'bez'));
   }
@@ -8087,7 +8087,7 @@ const Cloud = {
 //            Bacak eşyası giyiliyse üstüne başlangıç pantolonu (outfits.json baltaci_pantolon) oturur.
 //   bez    — göğüs kademe 0: kullanıcının "bez zırh" başlangıç kostümü (102k üçgen).
 //   kurt   — göğüs kademe 1+: kullanıcının "kurt dişi zırhı" (103k üçgen).
-//   bronzz — Bronz Taş Zırh (Sv 45; yalnız Kadim Kırık Taş Mühür ve Kemik Taht'tan; 28k üçgen, hazır Mixamo adlarıyla).
+//   bronzz — Bronz Taş Zırh (Sv 45; yalnız Kadim Mühür ve Kemik Taht'tan; 28k üçgen, hazır Mixamo adlarıyla).
 // Hepsi Meshy rig'i (Mixamo kemik adları, Running/Walking); prep: tools/prep_character.mjs (üçgen korunur,
 // doku 2048 / normal 1024 / metal 512). Büyük oldukları için sayfaya gömülmezler: build.py her birini ayrı
 // betik dosyası yapar (dist/assets/<ad>.js → window.TM_ASSETS[ad] = base64 GLB).
@@ -8201,7 +8201,7 @@ function diffUnlocked(dg, k) {
   const best = P.clearDiff[dg.id] != null ? P.clearDiff[dg.id] : -1;
   return best >= k - 1;
 }
-// Boss / Kadim Kırık Taş Mühür yenilince: zorluğu kaydet; yeni açılan zorluğun adını döndür (yoksa null)
+// Boss / Kadim Mühür yenilince: zorluğu kaydet; yeni açılan zorluğun adını döndür (yoksa null)
 function markDiffClear(L) {
   const id = L.dg.id, k = L.diff | 0;
   const prev = P.clearDiff[id] != null ? P.clearDiff[id] : -1;
@@ -9034,7 +9034,7 @@ const Coop = {
       else if (w === 'charge') { if (m.rank !== 'normal') banner('', m.name + ' saldırıya geçti!', 1); }
       else if (w === 'frenzy') { m.frenzyN = (m.frenzyN || 0) + 1; if (m.M.tm) m.M.tm.spd *= 1.2; banner(m.name, 'saldırıları hızlanıyor!', 2); SFX.play('boom'); FX.pillar(m.x, m.z, 0xff7a30, 6, 1.0, 1.6); }
       else if (w === 'rain') banner('', m.name + ': kemik yağmuru!', 1);
-      else if (w === 'metin') { banner('KADİM KIRIK TAŞ MÜHÜR', 'Taşı kır, dalgalara dayan!', 2.5); SFX.play('boom'); }
+      else if (w === 'metin') { banner('KADİM MÜHÜR', 'Taşı kır, dalgalara dayan!', 2.5); SFX.play('boom'); }
       else if (w === 'wave') { SFX.play('portal'); feed('Kırık Taş Mühür yeni bir dalga çağırdı!', '#ff7ab0'); }
     }
   },
@@ -12380,7 +12380,7 @@ function buildDungeonInner(dIdx, floorIdx, unseed) {
   L.floorLv = Math.round(dg.lv[0] + ((dg.lv[1] - dg.lv[0]) * floorIdx) / Math.max(1, dg.floors - 1));
   if (dg.final && P.sealed) L.floorLv += 3;
   if (dg.diffLv) L.floorLv += dg.diffLv[L.diff | 0] || 0; // Zor/Kabus: Sv 50-70 son oyun canavarları
-  // son zindan: 1. kat canavarları güçlü, Kadim Kırık Taş Mühür katı daha da güçlü
+  // son zindan: 1. kat canavarları güçlü, Kadim Mühür katı daha da güçlü
   if (dg.final) L.mobPow = isArena ? { hp: 1.5, atk: 1.35, def: 1.3, exp: 1.3, metinHp: 1.15 } : { hp: 1.35, atk: 1.25, def: 1.2, exp: 1.25 };
   if (dg.pow) L.mobPow = dg.pow; // 7. zindan: tüm katlar güçlü
   setAtmosphere(th);
@@ -13913,7 +13913,7 @@ class Mob {
     if (Math.random() < dt * 4) FX.spark(this.x + rand(-1, 1), rand(0.5, 4), this.z + rand(-1, 1), this.t.eye, 1, 0.12);
     if (!this.engaged && Coop.anyNear(this.x, this.z, 9)) {
       this.engaged = true;
-      if (this.t.big) { banner('KADİM KIRIK TAŞ MÜHÜR', 'Taşı kır, dalgalara dayan!', 2.5); SFX.play('boom'); Coop.ev('x', this.nid, 'metin'); }
+      if (this.t.big) { banner('KADİM MÜHÜR', 'Taşı kır, dalgalara dayan!', 2.5); SFX.play('boom'); Coop.ev('x', this.nid, 'metin'); }
     }
     if (this.t.big && this.engaged) {
       // can azaldıkça dalgalar sıklaşır ve kalabalıklaşır
@@ -15482,7 +15482,7 @@ const Combat = {
     const L = G.level;
     const rank = m.rank;
     const dTier = Math.min(7, L.dIdx + 1), tier = Math.min(6, dTier); // eşya kademesi en çok 6; 7. zindan (ve tapınak) kademe 6 + daha iyi paylar
-    const endgame = L.dg.id === 'd7' || !!L.dg.temple || !!(m.static && m.t.big); // son oyun kaynağı: Kemik Taht, Bronz Taş Tapınağı ve Kadim Kırık Taş Mühür
+    const endgame = L.dg.id === 'd7' || !!L.dg.temple || !!(m.static && m.t.big); // son oyun kaynağı: Kemik Taht, Bronz Taş Tapınağı ve Kadim Mühür
     const n = (k) => (Array.isArray(k) ? randi(k[0], k[1]) : k);
     if (Math.random() < DROP.gold[rank]) {
       const g = Math.round(m.gold * rand(0.7, 1.3));
@@ -15509,7 +15509,7 @@ const Combat = {
     const st = (id, c) => { const it = makeStack(id, c); spawnDrop(L, m.x, m.z, { item: it, n: c }); };
     if (Math.random() < DROP.ore[rank] * df.drop) st('ore', n(DROP.oreN[rank]));
     if (Math.random() < DROP.soul[rank] * df.drop) st('soul', n(DROP.soulN[rank]));
-    // nadir yuva cevheri: bosslar/Kadim Kırık Taş Mühür her zindanda, elitler yalnız 4. zindan ve sonrasında
+    // nadir yuva cevheri: bosslar/Kadim Mühür her zindanda, elitler yalnız 4. zindan ve sonrasında
     if (!(rank === 'elite' && tier < 4) && Math.random() < DROP.essence[rank] * df.ess) st(RAREMAT[pick(SLOTS)], 1);
     if (Math.random() < DROP.bless[rank]) st('bless', 1);
     if (!m.static && Math.random() < DROP.junk) st(L.dg.junk, rank === 'normal' ? 1 : randi(2, 4));
@@ -16755,7 +16755,7 @@ const UI = {
     }));
     bk.appendChild(ta); bk.appendChild(brow);
     col.appendChild(bk);
-    col.appendChild(el('div', 'muted', `<b style="color:var(--parch)">Nasıl oynanır</b><br>Sol alan: sanal joystick. Kırmızı tuş: en yakın canavara otomatik hedefle ve vur (basılı tut). Dört küçük tuş: yetenekler. Ekrana dokun: o canavarı hedefle ya da oraya yürü. NPC'ye dokun: konuş.<br>Döngü: Portal Taşı → zindan → loot → köy → Demirci'de +0…+9 → daha zor zindan. Son hedef: Kara Taş Tapınağı'ndaki Kadim Kırık Taş Mühür.<br>Klavye: WASD, Boşluk, 1-4, Q/E iksir, I envanter, C karakter, F konuş.`));
+    col.appendChild(el('div', 'muted', `<b style="color:var(--parch)">Nasıl oynanır</b><br>Sol alan: sanal joystick. Kırmızı tuş: en yakın canavara otomatik hedefle ve vur (basılı tut). Dört küçük tuş: yetenekler. Ekrana dokun: o canavarı hedefle ya da oraya yürü. NPC'ye dokun: konuş.<br>Döngü: Portal Taşı → zindan → loot → köy → Demirci'de +0…+9 → daha zor zindan. Son hedef: Kara Taş Tapınağı'ndaki Kadim Mühür.<br>Klavye: WASD, Boşluk, 1-4, Q/E iksir, I envanter, C karakter, F konuş.`));
     b.appendChild(col);
   },
 
@@ -16773,7 +16773,7 @@ const UI = {
       const r = el('div', 'dg' + (lock ? ' lock' : ''));
       const boss = MOBS[d.boss].name;
       const cl = P.cleared[d.id] || 0, best = P.clearDiff[d.id];
-      r.innerHTML = `<div class="num">${i + 1}</div><div class="t"><b>${d.name}</b> <span style="display:inline;color:${lock ? 'var(--bad)' : 'var(--exp)'}">Sv ${d.req}+${sealLock ? ' · önce Kadim Kırık Taş Mühür\'ü mühürle' : ''}</span><span>${d.desc}</span><span>${d.floors} kat · Canavar Sv ${d.lv[0]}–${d.lv[1]}${d.diffLv ? ' (Zor Sv ' + (d.lv[0] + d.diffLv[1]) + '–' + (d.lv[1] + d.diffLv[1]) + ', Kabus Sv ' + (d.lv[0] + d.diffLv[2]) + '–' + (d.lv[1] + d.diffLv[2]) + ')' : ''} · Son oda: ${boss}${cl ? ' · ✓ ' + cl + ' kez' : ''}${best != null ? ' · en zor: <b style="color:' + DIFFS[best].color + '">' + DIFFS[best].name + '</b>' : ''}</span></div>`;
+      r.innerHTML = `<div class="num">${i + 1}</div><div class="t"><b>${d.name}</b> <span style="display:inline;color:${lock ? 'var(--bad)' : 'var(--exp)'}">Sv ${d.req}+${sealLock ? ' · önce Kadim Mühür\'ü mühürle' : ''}</span><span>${d.desc}</span><span>${d.floors} kat · Canavar Sv ${d.lv[0]}–${d.lv[1]}${d.diffLv ? ' (Zor Sv ' + (d.lv[0] + d.diffLv[1]) + '–' + (d.lv[1] + d.diffLv[1]) + ', Kabus Sv ' + (d.lv[0] + d.diffLv[2]) + '–' + (d.lv[1] + d.diffLv[2]) + ')' : ''} · Son oda: ${boss}${cl ? ' · ✓ ' + cl + ' kez' : ''}${best != null ? ' · en zor: <b style="color:' + DIFFS[best].color + '">' + DIFFS[best].name + '</b>' : ''}</span></div>`;
       const bb = el('div', 'libtns dbtns');
       if (lock) bb.appendChild(this.btn('Kilitli', '', () => {}, true));
       else DIFFS.forEach((df, k) => {
@@ -17415,7 +17415,7 @@ function goDungeon(dIdx, floor, diff, join) {
     if (join) feed((Net.peers[join.host] && Net.peers[join.host].name || 'Arkadaşın') + ' ile aynı zindandasın', '#9fe0ff');
     const d = DUNGEONS[dIdx];
     if (L.temple) { banner(d.name, Temple.title(L), 2.4); Temple.enter(L); } else
-    banner(d.name + (L.diff ? ' · ' + DIFFS[L.diff].name : ''), `${floor + 1}. kat / ${d.floors}` + (L.lastFloor ? (d.final ? ' · Kadim Kırık Taş Mühür burada' : ' · Son odada ' + MOBS[d.boss].name) : ''), 2.2);
+    banner(d.name + (L.diff ? ' · ' + DIFFS[L.diff].name : ''), `${floor + 1}. kat / ${d.floors}` + (L.lastFloor ? (d.final ? ' · Kadim Mühür burada' : ' · Son odada ' + MOBS[d.boss].name) : ''), 2.2);
   });
 }
 

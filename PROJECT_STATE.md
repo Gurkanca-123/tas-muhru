@@ -44,7 +44,7 @@ her zaman `grep -n` ile doğrula.
   **Taş Mühür:** eşya başına 1 yuva (`it.seal`), 5 tür × 3 kademe, tür üst sınırı; `recalc` ekler, UI `UI.sealActs` (çanta);
   geliştirme `UPG` + `upgradeCost` (+7…+9 için yuva özü `RAREMAT`); Simyacı (`p_alchemist`).
 - **Seviye / ödül:** `expNeed` = `expNeed0` × 2 (Sv ≥ 45, `EXP_X2_LV`; ödüller `expNeed0` kullanır); `expNeed0`: Sv ≤50 eski formül; 51+ `EXP_PLAN` (canavar EXP'si × gereken öldürme, merkezi tablo), tek kill EXP'si `EXP_KILL_CAP` (%35) ile sınırlı, günlük görevler `Daily`, zindan ilk temizleme ödülü `killMob` içinde.
-- **Zindanlar:** `DUNGEONS` d1–d7 ızgara tabanlı (`buildDungeonInner`, oda + koridor, tohumlu düzen); d6 son katı Kadim Kırık Taş Mühür (eski ad: Kadim Metin; kod kimlikleri `metin`/`minimetin` aynı kaldı; küçük taş = «Kırık Taş Mühür»)
+- **Zindanlar:** `DUNGEONS` d1–d7 ızgara tabanlı (`buildDungeonInner`, oda + koridor, tohumlu düzen); d6 son katı Kadim Mühür (eski ad: Kadim Metin; kod kimlikleri `metin`/`minimetin` aynı kaldı; küçük taş = «Kırık Taş Mühür»)
   arenası; d7 Kemik Taht (Kemik Kral, kod-animasyonlu GLB). Zorluk Normal / Zor / Kabus (`DIFFS`).
 - **d8 Bronz Taş Tapınağı (dIdx 7):**
   - Veri: `TEMPLE_FLOORS` (10 kat ve dalgalar), `TEMPLE_POW` (can/saldırı/savunma/`cd`/`sk`), `templeFloorLv` (46 + 2·kat), `TEMPLE_REWARDS` / `TEMPLE_FIRST`
