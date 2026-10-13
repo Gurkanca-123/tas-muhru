@@ -1,6 +1,6 @@
 # Taş Mührü — proje durumu (kısa teknik hafıza)
 
-Son güncelleme: 2026-10-12 · `main` = `ca42025` (Bronz Taş Tapınağı). Satır numaraları bu sürüme göredir ve kayar;
+Son güncelleme: 2026-10-13 · `main` ucu `10f7a92` (Beceri Ustalığı Aşama 2); görev sistemi dalı `ozellik/gorev-sistemi` (main'e alınmadı). Satır numaraları bu sürüme göredir ve kayar;
 her zaman `grep -n` ile doğrula.
 
 ## Dosyalar
@@ -38,6 +38,11 @@ her zaman `grep -n` ile doğrula.
 - **Karakter:** sınıflar `baltaci` (Baltacı) ve `warrior` (Savaşçı); ikisi de GLB gövde + AnimationMixer, zırh setine göre gövde
   değişir. Yetenek animasyonu kilidi `SKILL_LOCK` / `SAVASCI_SKILL_T`. Statlar `recalc()` → `D`.
 - **Beceri ustalığı (Aşama 1–2, main):** DENEME: iki parşömen Tüccar'da geçici satılık (`SHOP_LIST`, `price`) — kaynakları belirlenince kaldır. `P.mastery[beceriId]` 0 normal · 1…10 M1…M10 · 11…15 G1…G5 (`MASTERY`, `masteryOf`, `masteryLabel`, `skillLvText`). Geçişler yalnız parşömenle: `usta_parsomen` (Sv `SKILL_MAX` → M1 → … → M10; her kademe `MASTERY_RATE` şansıyla, başarısızlıkta parşömen yanar, kademe düşmez), `busta_parsomen` (M10 → G1, kesin; G2…G5 yok) — `MASTERY_SCROLLS`, `masteryCheck`, `masteryNext`, `useMasteryScroll`, çanta `UI.masteryActs`. Güç: `skillPowerOf(id)` = `skillPower(Sv)` + `masteryBonus` (M +0.08, G +0.12 / kademe; `MASTERY_STEP`) → `useSkill` `pw` ve `skillMult`. Normal Sv1–5 skalası (1.0…1.72) DEĞİŞMEDİ; becerilerin güç skalasını baştan dengeleme, G2…G5 ve ustalık görsel efektleri sonraki aşama. `applySave` doğrular.
+- **Ana görev zinciri (dal `ozellik/gorev-sistemi`):** `QUESTS` tablosu (sıra = zincir sırası; alanlar dosyadaki bölüm başlığında) + `Quest` motoru
+  (`ensure` aktif görevi başlatır, `ev(tür, veri)` olayları işler, `atNpc` / `turnIn` / `complete`, `migrate` eski kayıt, `hud` HUD satırı + NPC işaretleri).
+  Kayıt: `P.quest = { done, cur: { id, n, ready, brief } }`. Arayüz: `#qline`, `UI.p_quest`, Menü düğmesi, Bekçi listesinde `Quest.star`. Kancalar tek satırlık `Quest.ev(...)`.
+  **Yeni zindan** eklenince: `QUESTS`'e `{type:'clear', d:'<id>'}` satırı (sıra + `lv` ile). **Yeni sınıf** (Büyücü / Şaman): `CLASSES[cls].skills` sırası yeterli (metinlerde `sk(i)`);
+  sınıfa özel görev gerekirse `cls:['kimlik']` alanı (`Quest.ok`). Günlük görevler (`Daily`) ayrı sistemdir. NPC adları yalnız rol (`NPC_ROLE`).
 - **Savaş:** `Combat.calc` (atk, def, kritik) → `hitMob` → `killMob` (EXP seviye farkıyla ölçeklenir, `rollLoot`). Canavar
   gücü `mobBase(Sv) × RANK × MOBS çarpanı × L.mobPow × DIFFS`. Ortak oyunda ek oyuncu başına can +%60 (`COOP_HP`).
 - **Eşya / envanter:** yuvalar `SLOTS`; set sınıfları `GEAR_SETS` (Bez, Kurt Dişi, Nihai, Bronz Taş, Efsanevi…); yığınlar `STACKS`;
@@ -74,10 +79,12 @@ her zaman `grep -n` ile doğrula.
   Taş Canavarı için dört ayaklı model yok (golem kullanılıyor). Mini patron iskeleti tahmini. 8. kat ~296k üçgen
   (gölge dahil; Yosunlu İn ~254k).
 - GitHub Pages'te bulut kaydı yok: tarayıcının "çerezler ve site verileri" silinirse karakterler gider (Menü → Kodu kopyala ile yedek).
+- **Görev sistemi:** gerçek cihazda ve ortak oyun misafir tarafında denenmedi; ödül dengesi (altın / parşömen / mühür) oyuncu geri bildirimiyle ince ayar ister (`QUESTS[].reward`).
 - `run.mjs` Baltacı "Yer Sarsan" kontrolü rastgele düzende ara sıra kalıyor (oyun hatası değil).
 - Yerel `src/` projesi bu depoyla eşitli değil.
 
 ## Son tamamlanan büyük özellikler
+- 2026-10-13 Ana görev zinciri (23 görev, HUD satırı, Görev defteri, NPC ❗/✔, eski kayıt göçü) — dal `ozellik/gorev-sistemi` (main'e alınmadı).
 - 2026-10-13 Beceri Ustalığı Aşama 1 (veri + iki parşömen; parşömenler geçici olarak Tüccar'da) + Tüccar bedava ilk alım hatası düzeltildi — main.
 - 2026-10-13 Alev haresi azaltıldı — main.
 - 2026-10-13 Demirci +7…+9 daha zor (`UPG.rate`, `GEL_MULT`, malzeme ×1.5) ve Sv 45+ EXP 2 kat (`expNeed`/`expNeed0`) — dal `ozellik/demirci-exp-zorluk`.

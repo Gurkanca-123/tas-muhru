@@ -10,6 +10,17 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (11) — Ana görev zinciri + oyuncu yönlendirmesi (Fener Köyü hikâyesi) · dal `ozellik/gorev-sistemi` (yedek: `yedek/gorev-oncesi`)
+- Yeni: `QUESTS` (23 görev, Sv 1→70) + `Quest` motoru (`index.html`, «Ana görev zinciri» bölümü, Ortak oyun'dan önce). Doğrusal zincir, aynı anda tek aktif görev.
+  Hikâye: Kadim Mühür çatlıyor → 3 perde (Sv 1-38 Çatlayan Mühür · 38-45 Mührün Gölgesi · 45-70 Bronz Mühür). NPC'ler yalnız rolle anılır (Bekçi, Demirci, Tüccar, Depocu, Usta, Simyacı).
+- Arayüz: HUD satırı `#qline` (dokununca Görev defteri), NPC üstünde ❗ (yeni görev) / ✔ (teslim), `UI.p_quest` (hikâye + hedef + ödül; NPC'de teslim),
+  Menü → «Görev defteri», Bekçi listesinde hedef zindana ★. Görev ödülleri mevcut yığınlardan (usta parşömeni, Taş Mühür, Kutsama, Ruh Taşı, Bronz Mühür Parçası) — ustalık / mühür döngüsüne kaynak sağlar.
+- Kayıt: `P.quest = { done: [kimlik…], cur: { id, n, ready, brief } | null }` (`applySave` doğrular, bilinmeyen kimlik süzülür). Alanı olmayan eski kayıt ilk açılışta ilerlemesi kadar görevi ÖDÜLSÜZ atlar (`Quest.migrate`).
+- Olay kancaları (tek satır): `killMob`, zindan / metin boss temizleme (`markDiffClear` yanı), `Temple.grant`, `addExp`, yükseltme başarısı, `doEfsun`, `spendPoint`, `useSkill`, Usta (yetenek öğrenme), `socketSeal`, `useMasteryScroll`.
+- Sınıf bağımsız: yetenekler sınıfın `CLASSES[cls].skills` sırasıyla (`sk(i)`) anılır; Büyücü / Şaman eklenince görev satırları değişmez. Yeni zindan → `QUESTS`'e `type:'clear'` satırı.
+- Testler (Playwright + Chromium, tek tarayıcı): 40/40 mantık/arayüz (23 görev tutarlılığı, iki sınıf, akış, panel, kayıt gidiş-dönüş, eski kayıt göçü) + gerçek işlev kancaları (Bekçi etkileşimi, `killMob`, `socketSeal`, `useMasteryScroll`); `node --check`; sayfa hatası yok.
+- DENENMEDİ: gerçek telefonda dokunma / yerleşim, ortak oyunda misafir tarafında görev ilerlemesi, Sv 70'e kadar tam oynayış ve ödül dengesi, tapınak (`floor`) görevlerinin gerçek tapınak oyununda tetiklenmesi (yalnız olay simülasyonu).
+
 ## 2026-10-13 (10) — Beceri Ustalığı Aşama 2: M1→M10 yükseltme + kademe başına hasar artışı · dal `ozellik/ustalik-asama2`
 - Usta Yetenek Parşömeni artık M1→M2→…→M10 yükseltir (aynı parşömen). Şans tablosu `MASTERY_RATE` (M1–M3 %100, M4 %95, M5 %92, M6 %88, M7 %84,
   M8 %80, M9 %75, M10 %70). Başarısızlıkta parşömen yanar, kademe aynı kalır (düşmez) — «Demirci gibi» düşüş seçeneği kullanıcıya sorulmadı, güvenli varsayım.

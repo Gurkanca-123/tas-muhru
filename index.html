@@ -90,6 +90,11 @@ img[src$="#sm"]{image-rendering:auto!important}
 #party{position:absolute;left:50%;top:calc(34px + var(--st));transform:translateX(-50%);font-size:12px;line-height:1.2;padding:3px 10px;background:rgba(14,30,40,.7);box-shadow:0 0 0 2px var(--ink);color:#bfefff;text-shadow:1px 1px 0 var(--ink);white-space:nowrap;pointer-events:auto;cursor:pointer}
 #party i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:#ffb24a;vertical-align:0}
 #party.on i{background:var(--good)} #party.err i{background:var(--bad)}
+#qline{position:absolute;left:50%;top:calc(34px + var(--st));transform:translateX(-50%);max-width:min(70vw,520px);font-size:12px;line-height:1.2;padding:3px 10px;background:rgba(40,30,10,.72);box-shadow:0 0 0 2px var(--ink);color:#ffe9b0;text-shadow:1px 1px 0 var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;cursor:pointer}
+#qline.rdy{background:rgba(16,50,24,.78);color:#b8ffc4} #qline.idle{opacity:.7}
+#party:not([hidden]) ~ #qline{top:calc(60px + var(--st))}
+@media (orientation:portrait){#qline{top:calc(8px + var(--st));max-width:60vw}}
+.nlabel.qmark::before{content:'❗ ';color:#ffd54a} .nlabel.qdone::before{content:'✔ ';color:#7dff9a}
 #duelq{position:absolute;left:50%;top:calc(62px + var(--st));transform:translateX(-50%);z-index:30;padding:8px 12px;background:rgba(48,16,14,.92);box-shadow:0 0 0 2px var(--ink),0 0 0 4px #ff7a4a;color:#ffd9c8;text-align:center;font-size:13px;line-height:1.3;text-shadow:1px 1px 0 var(--ink);pointer-events:auto}
 #duelq .dq-b{display:flex;gap:8px;justify-content:center;margin-top:6px}
 #duelq button{font:inherit;font-size:13px;padding:6px 14px;min-width:84px;border:0;color:#fff;background:#3a8f4a;box-shadow:0 0 0 2px var(--ink);cursor:pointer;touch-action:manipulation}
@@ -435,6 +440,7 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
     </div>
     <div id="zone"></div>
     <div id="party" hidden></div>
+    <div id="qline" hidden></div>
     <div id="coopq" hidden><div class="dq-t"></div><div class="dq-b"><button id="coop-ok" class="pbtn">Katıl</button><button id="coop-no" class="pbtn">Kapat</button></div></div>
     <div id="duelq" hidden><div class="dq-t"></div><div class="dq-b"><button id="duel-ok" class="pbtn">Kabul</button><button id="duel-no" class="pbtn">Reddet</button></div></div>
     <div id="feed"></div>
@@ -759,7 +765,7 @@ function useMasteryScroll(scrollId, skillId, rnd) {
   if (!removeStack(scrollId, 1)) return { ok: false, why: 'Parşömen yok' };
   if (!P.mastery) P.mastery = {};
   const success = (rnd == null ? Math.random() : rnd) * 100 < nx.rate;
-  if (success) P.mastery[skillId] = nx.to;
+  if (success) { P.mastery[skillId] = nx.to; Quest.ev('mastery', { st: nx.to }); }
   return { ok: true, success, stage: masteryOf(skillId), from, to: nx.to, rate: nx.rate };
 }
 
@@ -2456,6 +2462,7 @@ function newCharacter(cls, name) {
     skills: {}, mastery: {}, cleared: {}, sealed: false, // mastery: beceri ustalık aşamaları (bkz. MASTERY)
     clearDiff: {}, // zindan → bitirilen en yüksek zorluk (0 Normal, 1 Zor, 2 Kabus); bir sonraki zorluğu açar
     daily: null, // günlük görevler (Bekçi): { day, q: [{ k, need, n, claimed }], chest }
+    quest: { done: [], cur: null }, // ana görev zinciri (bkz. QUESTS / Quest): done = bitenlerin kimlikleri, cur = { id, n, ready, brief }
     kills: 0, deaths: 0, bosses: 0, playTime: 0, bestPlus: 0, upgrades: 0,
     duelW: 0, duelL: 0, // düello galibiyet / yenilgi (04k_net.js Duel)
     settings: { sound: true, autoPot: true, gfx: 'lowpoly', zoom: 1, cam: 'iso' },
@@ -2648,6 +2655,12 @@ function applySave(o) {
     const q = dy.q.filter((x) => x && DAILY_KINDS[x.k]).slice(0, DAILY_N).map((x) => ({ k: x.k, need: Math.max(1, Math.floor(_num(x.need, 1, 1, 9999))), n: Math.floor(_num(x.n, 0, 0, 9999)), claimed: !!x.claimed }));
     if (q.length) T.daily = { day: dy.day.slice(0, 10), q, chest: !!dy.chest };
   }
+  T.quest = { done: [], cur: null };
+  if (o.quest && typeof o.quest === 'object') {
+    if (Array.isArray(o.quest.done)) T.quest.done = [...new Set(o.quest.done.filter((id) => typeof id === 'string' && QUESTS.some((q) => q.id === id)))].slice(0, 200);
+    const qc = o.quest.cur;
+    if (qc && typeof qc === 'object' && QUESTS.some((q) => q.id === qc.id) && !T.quest.done.includes(qc.id)) T.quest.cur = { id: qc.id, n: Math.floor(_num(qc.n, 0, 0, 1e6)), ready: !!qc.ready, brief: !!qc.brief };
+  } else T.quest.mig = true; // quest alanı olmayan eski kayıt: ilk ensure'de ilerlemesi kadar görev ödülsüz atlanır
   for (const k of ['kills', 'deaths', 'bosses', 'playTime', 'bestPlus', 'upgrades', 'duelW', 'duelL']) T[k] = _num(o[k], 0, 0, 1e12);
   T.settings = Object.assign(T.settings, o.settings && typeof o.settings === 'object' ? o.settings : {});
   if (!['lowpoly', 'retro', 'perf'].includes(T.settings.gfx)) T.settings.gfx = 'lowpoly';
@@ -2753,6 +2766,7 @@ function socketSeal(it, id) {
   if (!it || it.type !== 'gear' || it.seal || !sealParse(id) || !removeStack(id, 1)) return false;
   it.seal = id;
   recalc();
+  Quest.ev('seal');
   return true;
 }
 // mührü sök: altın bedeli (kademeye göre) ödenir, mühür çantaya döner (yok olmaz); yer yoksa hiçbir şey olmaz
@@ -2848,6 +2862,7 @@ function addExp(n) {
     recalc();
     if (!(G.player && G.player.dead)) { P.hp = D.maxHp; P.mp = D.maxMp; }
     SFX.play('levelup');
+    Quest.ev('level', { lv: P.lv });
     banner('SEVİYE ' + P.lv, P.pts + ' stat puanın var · Karakter menüsünden dağıt');
     if (G.player) FX.levelUp(G.player.x, G.player.z);
     const c = CLASSES[P.cls];
@@ -2861,6 +2876,7 @@ function spendPoint(stat, n) {
   if (n <= 0) return;
   P.stats[stat] += n; P.pts -= n;
   recalc();
+  Quest.ev('stat', { n });
 }
 function autoSpend() {
   const rec = CLASSES[P.cls].rec;
@@ -8295,6 +8311,277 @@ const Daily = {
   },
 };
 
+// ---------- Ana görev zinciri (Fener Köyü) ----------
+// Tek, doğrusal zincir: oyuncunun her an en çok BİR aktif görevi var (HUD satırı `#qline`, NPC üstünde ❗ / ✔, Görev defteri
+// `UI.p_quest`). Yeni zindan / sınıf / geliştirme eklenince YALNIZ aşağıdaki QUESTS tablosuna satır eklenir; sıra = zincir sırası.
+// Kayıtta yalnız görev kimlikleri tutulur (P.quest = { done: [kimlik…], cur: { id, n, ready, brief } | null }); tabloya satır
+// eklemek / araya sokmak eski kayıtları bozmaz. Sınıfa özel metin gereken yerde `say` / `goal` bir işlev olabilir (sk(i) = sınıfın
+// i. yeteneğinin adı) — yeni sınıf eklenince görev satırları değişmez; sınıfa özel görev gerekirse `cls: ['kimlik']` alanı kullanılır.
+// Alanlar:
+//   id · lv (açılış seviyesi) · from (veren NPC) · to (teslim NPC; `talk` görevinde otomatik tamamlanır) · title · say (verilirken
+//   hikâye) · done (teslimde) · goal (HUD hedef metni) · reward { gold, exp (EXP ihtiyacı oranı), st: [[yığın, adet]] } ·
+//   grant (görev başlarken verilen yığınlar) · type + eşleşme alanları:
+//     kill {mob:[anahtar], rank} · clear {d, diff} · floor {f} (Bronz Taş Tapınağı'nda f. kat ve üstü) · level · plus · efsun ·
+//     stat · skilluse {sk:[sıra]} · skillgain {sk: sıra} · seal · mastery · talk (veren NPC ile konuş)
+//   need: sayı / eşik (kill, stat, skilluse: adet · level, plus, mastery: hedef değer).
+const NPC_ROLE = { portal: 'Bekçi', smith: 'Demirci', shop: 'Tüccar', depot: 'Depocu', master: 'Usta', alchemist: 'Simyacı' };
+const QUESTS = [
+  // ---- 1. perde: Çatlayan Mühür (Sv 1-38) ----
+  { id: 'q01', lv: 1, from: 'portal', to: 'portal', title: 'Köyün Altındaki Gürültü', type: 'kill', need: 8, goal: 'Zindanda canavar kes',
+    say: "Her gece fenerler titriyor; Kadim Mühür çatlıyor. Sesler köyün altındaki Yosunlu İn'den geliyor. Portal Taşı'ndan gir ve oradakilerden sekizini kes.",
+    done: 'Hâlâ ayaktasın, güzel. Çatlak büyüyor ama ilk adımı attın.', reward: { gold: 120, exp: 0.12, st: [['hp1', 4]] } },
+  { id: 'q02', lv: 1, from: 'portal', to: 'portal', title: 'Kurtların Lordu', type: 'clear', d: 'd1', goal: "Yosunlu İn'in bossunu yen",
+    say: "Çatlaktan sızan karanlık kurtları da değiştirdi. Başlarında Kurt Lordu Bozkır var. Onu yen, sonra bana dön.",
+    done: 'Kurt Lordu düştü. Köy bu geceyi rahat geçirecek.', reward: { gold: 250, exp: 0.2, st: [['tp', 2]] } },
+  { id: 'q03', lv: 2, from: 'master', to: 'master', title: 'Yeteneğin Sesi', type: 'skilluse', sk: [0, 1], need: 6, goal: 'İlk iki yeteneğini 6 kez kullan',
+    say: (sk) => `Kolun kadar yeteneklerin de seni ayakta tutar. ${sk(0)} ve ${sk(1)} yeteneklerini canavarlar üstünde toplam 6 kez kullan; yetenek tuşları sağ altta.`,
+    done: 'Yetenek, silahın uzantısıdır. Unutma.', reward: { gold: 100, exp: 0.1, st: [['mp1', 4]] } },
+  { id: 'q04', lv: 3, from: 'smith', to: 'smith', title: 'Ocağın İlk Dersi', type: 'plus', need: 1, goal: "Demirci'de bir eşyayı +1'e geliştir",
+    say: "Yeni silah arama, eldekini ateşte güçlendir. Ocakta bir eşyanı +1'e çıkar; ilk basamak neredeyse hiç boşa gitmez. Demir cevheri ve zindan malzemesi gerekir.",
+    done: 'İşte bu. Çekiç sesini sevmeye başlayacaksın.', reward: { gold: 150, exp: 0.1, st: [['ore', 5]] } },
+  { id: 'q05', lv: 5, from: 'shop', to: 'shop', title: 'Eli Boş Girilmez', type: 'talk', goal: 'Tüccar ile konuş',
+    say: 'Zindana iksirsiz girilmez. Tüccar ile konuş, yanında hep birkaç iksir bulundur.', done: 'İksirlerini tazele; zindanlar acımasız.',
+    reward: { gold: 80, exp: 0.05, st: [['hp1', 6], ['mp1', 6]] } },
+  { id: 'q06', lv: 7, from: 'portal', to: 'portal', title: "Ağ Kuyusu'nun Kraliçesi", type: 'clear', d: 'd2', goal: "Ağ Kuyusu'nun bossunu yen",
+    say: "Mührün çatlağı başka yerlere de uzandı. Ağ Kuyusu'nda Kraliçe Karadul ağını köye doğru örüyor. Onu durdur.",
+    done: 'Ağlar çözüldü. Ama çatlak hâlâ yayılıyor.', reward: { gold: 500, exp: 0.2, st: [['hp1', 6]] } },
+  { id: 'q07', lv: 8, from: 'depot', to: 'depot', title: 'Emanet', type: 'talk', goal: 'Depocu ile konuş',
+    say: 'Çantan dolunca değerli eşyaları bana emanet edebilirsin. Gel, depoyu tanı.', done: 'Eşyalarını burada güvende tut.',
+    reward: { gold: 150, exp: 0.05 } },
+  { id: 'q08', lv: 10, from: 'master', to: 'master', title: 'Yeni Bir Ders', type: 'skillgain', sk: 2, goal: 'Üçüncü yeteneğini Usta\'dan öğren',
+    say: (sk) => `Sv 10'da üçüncü yeteneğin, ${sk(2)}, öğrenilmeye hazır. Altınla öğren; sonra gel.`,
+    done: 'Her yetenek savaşın biçimini değiştirir.', reward: { gold: 400, exp: 0.12, st: [['hp2', 3], ['mp2', 3]] } },
+  { id: 'q09', lv: 13, from: 'portal', to: 'portal', title: 'Sessiz Mezarlık', type: 'clear', d: 'd3', goal: 'Sessiz Mezarlık\'ın bossunu yen',
+    say: 'Mührün fısıltısı ölüleri uyandırdı. Mezarlıkta Kemik Lordu iskeletlerini topluyor. Susmasını sağla.',
+    done: 'Ölüler yeniden sustu. Şimdilik.', reward: { gold: 900, exp: 0.18, st: [['hp2', 4]] } },
+  { id: 'q10', lv: 20, from: 'portal', to: 'portal', title: 'Kor Ocağı', type: 'clear', d: 'd4', goal: "Kor Ocağı'nın bossunu yen",
+    say: "Çatlak yerin derinine ulaştı ve lavı uyandırdı. Kor Ocağı'nda Alev Beyi Kızılhan ateş ifritlerini topluyor. Gidip söndür.",
+    done: 'Ateş söndü. Mühür biraz daha dayanacak.', reward: { gold: 2000, exp: 0.18, st: [['hp2', 5], ['soul', 2]] } },
+  { id: 'q11', lv: 20, from: 'alchemist', to: 'alchemist', title: 'Eşyaya Fısıltı', type: 'efsun', goal: "Simyacı'da bir eşyayı efsunla",
+    say: 'Her eşyanın içinde saklı bir güç var. Efsunla bir eşyanın bonus satırlarını yeniden yazdır; Ruh Taşı ve zindan malzemesi gerekir.',
+    done: 'Mührün gücü eşyaların içinde de uyanır.', reward: { gold: 1500, exp: 0.1, st: [['soul', 2]] } },
+  { id: 'q12', lv: 20, from: 'master', to: 'master', title: 'Son Ders', type: 'skillgain', sk: 3, goal: 'Dördüncü yeteneğini Usta\'dan öğren',
+    say: (sk) => `${sk(3)} dördüncü ve son yeteneğin. Savaşın gidişini değiştirir; öğren ve savaşta kullan.`,
+    done: 'Artık tam bir savaşçısın.', reward: { gold: 1500, exp: 0.12, st: [['hp2', 4], ['mp2', 4]] } },
+  { id: 'q13', lv: 28, from: 'portal', to: 'portal', title: 'Ayaz Mağarası', type: 'clear', d: 'd5', goal: "Ayaz Mağarası'nın bossunu yen",
+    say: 'Soğuk, mühürden sızan karanlıkla birleşti. Ayaz Mağarası\'nda Buz Devi Ayaz köye doğru ilerliyor. Dur de ona.',
+    done: 'Buz çözülüyor. Son durak, Kara Taş Tapınağı.', reward: { gold: 3500, exp: 0.18, st: [['hp3', 3], ['bless', 1]] } },
+  // ---- 2. perde: Mührün Gölgesi (Sv 38-45) ----
+  { id: 'q14', lv: 38, from: 'portal', to: 'portal', title: 'Kadim Mühür', type: 'clear', d: 'd6', goal: "Kara Taş Tapınağı'nda Kadim Mühür'ü kır",
+    say: "Her şey buraya çıkıyor: Kara Taş Tapınağı'ndaki Kadim Mühür. Taşı kır, dalgalara dayan, mührü tamamla. Köyün feneri senin elinde.",
+    done: 'Taş paramparça. Ama altında başka bir kapı açıldı: Kemik Taht.', reward: { gold: 8000, exp: 0.25, st: [['bless', 2], ['soul', 3]] } },
+  { id: 'q15', lv: 40, from: 'smith', to: 'smith', title: 'Ocağın Sınavı', type: 'plus', need: 5, goal: "Bir eşyayı +5'e geliştir",
+    say: "Yeni düşmanlar yeni güç ister. Bir eşyanı +5'e kadar geliştir; +5'ten sonra Ruh Taşı gerekir ve başarısızlık eşyadan götürür.",
+    done: 'Ateşten geçen eşya, sahibini de ateşten geçirir.', reward: { gold: 6000, exp: 0.1, st: [['soul', 3], ['bless', 1]] } },
+  { id: 'q16', lv: 40, from: 'portal', to: 'portal', title: 'Bronz Mührün İzi', type: 'floor', f: 3, goal: "Bronz Taş Tapınağı'nın 3. katını temizle",
+    say: 'Taşın altında eski bir tapınak bulundu: Bronz Taş Tapınağı. Üç katını temizle; kırık mühür parçalarını Simyacı\'ya götürebilirsin.',
+    done: 'Bronz mühür parçaları iyi bir işaret. Tapınak daha derine iniyor.', reward: { gold: 6000, exp: 0.15, st: [['bronzparca', 2]] } },
+  // ---- 3. perde: Bronz Mühür (Sv 45-70) ----
+  { id: 'q17', lv: 45, from: 'portal', to: 'portal', title: 'Kemik Taht', type: 'clear', d: 'd7', goal: "Kemik Taht'ın bossunu yen",
+    say: "Kadim Mühür'ün altındaki ölüler diyarı uyandı. Tahtında Kemik Kral Karaçor bekliyor. Onu yenmeden köy rahat nefes alamaz.",
+    done: 'Kemik Kral düştü. Efsanevi zırhın izini sür.', reward: { gold: 12000, exp: 0.2, st: [['bless', 2], ['soul', 4]] } },
+  { id: 'q18', lv: 45, from: 'portal', to: 'portal', title: 'Kırık Mühür Muhafızı', type: 'floor', f: 6, goal: "Bronz Taş Tapınağı'nın 6. katını temizle",
+    say: 'Tapınağın 6. katında Kırık Mühür Muhafızı bekliyor. Onu yenersen Taş Mühür düşer; mühürler eşyalarına ekstra güç verir.',
+    done: 'Mühür senin elinde. Şimdi bir eşyaya tak.', reward: { gold: 15000, exp: 0.12, st: [[sealId('skill', 1), 1], [sealId('hp', 1), 1]] } },
+  { id: 'q19', lv: 45, from: 'alchemist', to: 'alchemist', title: 'İlk Mühür', type: 'seal', goal: 'Bir eşyaya Taş Mühür tak (Çanta → eşya)',
+    say: 'Taş Mühür çantadan bir eşyaya takılır ve giyilirken güç verir. Elindeki mührü bir eşyaya tak.',
+    done: 'Mühür artık eşyanın parçası. Sökmek altına mal olur, dikkat et.', reward: { gold: 8000, exp: 0.08, st: [['bronzparca', 2]] } },
+  { id: 'q20', lv: 50, from: 'master', to: 'master', title: 'Ustalığın Eşiği', type: 'mastery', need: 1, goal: 'Parşömenle bir beceriyi M1 yap (Çanta → parşömen)',
+    say: 'Tam seviyedeki bir beceri ustalaşabilir. Sana bir Usta Yetenek Parşömeni veriyorum; Çanta\'dan kullan ve bir becerini M1\'e çıkar.',
+    grant: [['usta_parsomen', 1]], done: 'Ustalık başladı. M10\'a giden yol uzun ve şansa bağlı.', reward: { gold: 20000, exp: 0.1, st: [['usta_parsomen', 2]] } },
+  { id: 'q21', lv: 52, from: 'portal', to: 'portal', title: 'Zor Sınav', type: 'clear', d: 'd7', diff: 1, goal: "Kemik Taht'ı Zor zorlukta bitir",
+    say: 'Normal artık seni sınamıyor. Kemik Taht\'ı Zor zorlukta bitir; ödüller ve canavarlar daha sert.',
+    done: 'Zor zorluk senin için artık alışılmış bir şey.', reward: { gold: 30000, exp: 0.12, st: [['bless', 3], ['soul', 5]] } },
+  { id: 'q22', lv: 60, from: 'portal', to: 'portal', title: 'Bronz Mühür Muhafızı', type: 'floor', f: 10, goal: "Bronz Taş Tapınağı'nın 10. katını temizle",
+    say: "Tapınağın son katında Bronz Mühür Muhafızı bekliyor. Dört aşamalı savaşı tek başına çok zor; grupla gelmek akıllıca olur.",
+    done: 'Bronz mühür tamam. Fener Köyü senin sayende ayakta.', reward: { gold: 60000, exp: 0.12, st: [[sealId('skill', 3), 1], ['busta_parsomen', 1]] } },
+  { id: 'q23', lv: 70, from: 'portal', to: 'portal', title: "Fener Köyü'nün Efsanesi", type: 'level', need: 70, goal: 'Seviye 70\'e ulaş',
+    say: 'Köyün efsanesi olmak için son adım: Seviye 70. Daha çok zindan, daha çok mühür, daha çok ustalık; yolun açık.',
+    done: 'Artık adın fenerlerde anılıyor.', reward: { gold: 250000, exp: 0, st: [['bless', 5], ['busta_parsomen', 1]] } },
+];
+
+const Quest = {
+  // kayıt alanı: P.quest = { done: [kimlik…], cur: { id, n, ready, brief } | null, mig?: true (yalnız eski kayıt, ilk ensure'e dek) }
+  d() { if (!P.quest || typeof P.quest !== 'object') P.quest = { done: [], cur: null }; return P.quest; },
+  ok(q) { return !q.cls || q.cls.includes(P.cls); },
+  byId(id) { return QUESTS.find((x) => x.id === id) || null; },
+  nextDef() { const D = this.d(); return QUESTS.find((q) => this.ok(q) && !D.done.includes(q.id)) || null; },
+  skillIds() { return (CLASSES[P.cls] && CLASSES[P.cls].skills) || []; },
+  txt(v) {
+    if (typeof v !== 'function') return v || '';
+    const ids = this.skillIds();
+    return v((i) => (ids[i] && SKILLS[ids[i]] ? SKILLS[ids[i]].name : 'yeteneğin'));
+  },
+  counting(q) { return q.type === 'kill' || q.type === 'stat' || q.type === 'skilluse'; },
+  // kalıcı durumdan görev zaten sağlanıyor mu? true / false; sayaç ya da olaya bağlı görevlerde undefined
+  has(q) {
+    const ids = this.skillIds();
+    switch (q.type) {
+      case 'clear': return (P.cleared[q.d] || 0) > 0 && (!q.diff || (P.clearDiff[q.d] | 0) >= q.diff);
+      case 'floor': return (Temple.save().bestClear | 0) >= q.f;
+      case 'level': return P.lv >= q.need;
+      case 'plus': return (P.bestPlus | 0) >= q.need;
+      case 'mastery': return Object.keys(P.mastery || {}).some((k) => P.mastery[k] >= q.need);
+      case 'seal': return SLOTS.some((sl) => P.equip[sl] && P.equip[sl].seal);
+      case 'skillgain': return !!ids[q.sk] && (P.skills[ids[q.sk]] | 0) >= 1;
+      default: return undefined;
+    }
+  },
+  // eski kayıt: ilerlemesi kadar görevi ödülsüz atla (ödül sağanağı olmasın); ilk sağlanmayan görevde dur
+  migrate() {
+    const D = this.d();
+    D.mig = false;
+    for (const q of QUESTS) {
+      if (!this.ok(q) || D.done.includes(q.id)) continue;
+      const h = this.has(q);
+      if (h === true || (h === undefined && P.lv >= q.lv + 2)) D.done.push(q.id); else break;
+    }
+  },
+  give(id, n) {
+    const it = makeStack(id, n);
+    if (addItem(it)) return;
+    const r = it.n; // addItem kısmen birleştirdiyse kalan adet
+    const j = P.depot.indexOf(null);
+    if (j >= 0) { P.depot[j] = it; feed(r + ' ' + STACKS[id].name + ' (çanta dolu → depoya)', '#c8b89a'); return; }
+    P.gold += (STACKS[id].sell || STACKS[id].price || 0) * r;
+  },
+  // aktif görevi hazırla: yoksa sıradakini (seviye yetiyorsa) başlat. Aktif görev döner (yoksa null).
+  ensure() {
+    if (!P) return null;
+    const D = this.d();
+    if (D.mig) this.migrate();
+    if (D.cur && !this.byId(D.cur.id)) D.cur = null;
+    if (D.cur) return D.cur;
+    const q = this.nextDef();
+    if (!q || P.lv < q.lv) return null;
+    D.cur = { id: q.id, n: 0, ready: false, brief: false };
+    for (const [id, n] of q.grant || []) this.give(id, n);
+    feed('Yeni görev: ' + q.title + ' · ' + NPC_ROLE[q.from] + ' ile konuş', '#9fe0ff');
+    banner('YENİ GÖREV', q.title, 2.2);
+    if (this.has(q) === true) { D.cur.ready = true; if (q.type === 'talk') D.cur.ready = false; }
+    UI.dirty = true;
+    saveGame();
+    return D.cur;
+  },
+  // oyun olayı: kancalar buraya bildirir. a: olay verisi
+  ev(type, a) {
+    if (!P) return;
+    const c = this.ensure();
+    if (!c || c.ready) return;
+    const q = this.byId(c.id);
+    if (!q || q.type !== type || !this.match(q, a || {})) return;
+    if (this.counting(q)) c.n = Math.min(q.need, c.n + ((a && a.n) || 1)); else c.n = q.need || 1;
+    if (c.n < (q.need || 1)) { UI.dirty = true; return; }
+    c.ready = true;
+    UI.dirty = true;
+    if (q.type === 'talk') { this.complete(q); return; }
+    feed('Görev hazır: ' + q.title + ' · ödül için ' + NPC_ROLE[q.to] + '\'a git', '#9affb0');
+    SFX.play('levelup');
+    saveGame();
+  },
+  match(q, a) {
+    const ids = this.skillIds();
+    switch (q.type) {
+      case 'kill': return (!q.mob || q.mob.includes(a.key)) && (!q.rank || a.rank === q.rank);
+      case 'clear': return a.d === q.d && (a.diff | 0) >= (q.diff | 0);
+      case 'floor': return (a.f | 0) >= q.f;
+      case 'level': return (a.lv | 0) >= q.need;
+      case 'plus': return (a.plus | 0) >= q.need;
+      case 'mastery': return (a.st | 0) >= q.need;
+      case 'skilluse': { const i = ids.indexOf(a.id); return i >= 0 && (!q.sk || q.sk.includes(i)); }
+      case 'skillgain': return ids.indexOf(a.id) === q.sk;
+      case 'talk': return a.npc === q.from;
+      default: return true; // efsun, stat, seal
+    }
+  },
+  // bu NPC ile konuşurken görev paneli açılsın mı? (teslim ya da ilk kez görev anlatımı)
+  atNpc(id) {
+    const c = this.ensure(), q = c && this.byId(c.id);
+    if (!q) return false;
+    if (c.ready && q.to === id) return true;
+    if (!c.ready && !c.brief && q.from === id && q.type !== 'talk') { c.brief = true; return true; }
+    return false;
+  },
+  turnIn() {
+    const c = this.d().cur, q = c && this.byId(c.id);
+    if (!q || !c.ready) return false;
+    this.complete(q);
+    return true;
+  },
+  complete(q) {
+    const D = this.d(), R = q.reward || {};
+    if (!D.done.includes(q.id)) D.done.push(q.id);
+    D.cur = null;
+    const gold = R.gold != null ? R.gold : Math.round(40 + q.lv * q.lv * 3);
+    P.gold += gold;
+    const parts = [fmtFull(gold) + ' altın'];
+    const fr = R.exp != null ? R.exp : 0.06;
+    if (fr > 0 && P.lv < MAX_LV) { addExp(Math.max(1, Math.round(expNeed0(P.lv) * fr))); parts.push('EXP'); }
+    for (const [id, n] of R.st || []) { this.give(id, n); parts.push(n + ' ' + STACKS[id].name); }
+    if (q.done) feed(NPC_ROLE[q.to] + ': ' + q.done, '#c8d8ff');
+    feed('Görev tamam: ' + q.title + ' · ' + parts.join(', '), '#ffd07a');
+    banner('GÖREV TAMAM', q.title, 2.2);
+    SFX.play('success');
+    UI.dirty = true;
+    this.ensure();
+    saveGame();
+  },
+  rewardText(q) {
+    const R = q.reward || {}, gold = R.gold != null ? R.gold : Math.round(40 + q.lv * q.lv * 3);
+    const p = [fmtFull(gold) + ' altın'];
+    if ((R.exp != null ? R.exp : 0.06) > 0) p.push('EXP');
+    for (const [id, n] of R.st || []) p.push(n + ' ' + STACKS[id].name);
+    return p.join(' · ');
+  },
+  // Bekçi listesinde önerilen zindan (★): aktif görev bir zindan / tapınak katı istiyorsa onun kimliği
+  target() {
+    const c = this.d().cur, q = c && this.byId(c.id);
+    if (!q || c.ready) return null;
+    if (q.type === 'clear') return q.d;
+    if (q.type === 'floor') { const t = DUNGEONS.find((d) => d.temple); return t ? t.id : null; }
+    return null;
+  },
+  star(row, dgId) {
+    if (this.target() !== dgId) return;
+    const nb = row.querySelector('.t b');
+    if (nb) nb.textContent = '★ ' + nb.textContent;
+  },
+  badge() { const c = this.d().cur; return c && c.ready ? ' ✔' : c ? ' ❗' : ''; },
+  // NPC etiketi işareti: ✔ teslim / ❗ yeni görev (HUD güncellemesiyle birlikte)
+  mark(id) {
+    const c = this.d().cur, q = c && this.byId(c.id);
+    if (!q) return '';
+    if (c.ready && q.to === id) return 'qdone';
+    if (!c.ready && q.from === id && (q.type === 'talk' || !c.brief)) return 'qmark';
+    return '';
+  },
+  hud() {
+    const qe = $('#qline');
+    if (!qe || !P) return;
+    if (!qe._b) { qe._b = true; qe.addEventListener('click', () => { if (UI.panel) return; UI.qNpc = null; UI.open('quest'); }); }
+    const c = this.ensure(), q = c && this.byId(c.id);
+    let html = '', cls = '';
+    if (q) {
+      if (c.ready) { html = `<b>✔ ${esc(q.title)}</b> · ${NPC_ROLE[q.to]}'a git`; cls = 'rdy'; }
+      else html = `<b>${esc(q.title)}</b> · ${esc(this.txt(q.goal))}` + (this.counting(q) && q.need > 1 ? ` (${c.n}/${q.need})` : '');
+    } else {
+      const nx = this.nextDef();
+      html = nx ? `Sonraki görev Sv ${nx.lv}: ${esc(nx.title)}` : 'Ana görev zinciri tamamlandı';
+      cls = 'idle';
+    }
+    if (qe._h !== html) { qe.innerHTML = html; qe._h = html; }
+    qe.className = cls;
+    qe.hidden = false;
+    const npcs = (G.level && G.level.interact) || [];
+    for (const it of npcs) {
+      if (it.kind !== 'npc' || !it.lbl) continue;
+      const m = this.mark(it.id);
+      it.lbl.el.classList.toggle('qmark', m === 'qmark');
+      it.lbl.el.classList.toggle('qdone', m === 'qdone');
+    }
+  },
+};
+
 // ---------- Ortak oyun (online, 1. aşama: köyde birbirini görme) ----------
 // Aracı: Supabase Realtime (ücretsiz plan), tarayıcının kendi WebSocket'iyle Phoenix protokolü 1.0.0 — kütüphane yok.
 // Yapılandırma yalnız web sitesi derlemesinde gelir (build.py → window.TM_NET = {url, key}); Artifact ve tek dosyada
@@ -12286,13 +12573,13 @@ function buildVillage() {
     buildRug(L, n.x + Math.sin(n.face) * 1.6, n.z + Math.cos(n.face) * 1.6, n.rug);
     const ph = Math.random() * 5;
     L.anims.push((t) => { h.body.position.y = Math.sin(t * 2 + ph) * 0.03; h.armL.rotation.x = Math.sin(t * 1.3 + ph) * 0.08; });
-    addLabel(L, n.name, n.role, n.x, 2.75, n.z, '#fff4d8');
-    const it = { kind: 'npc', id: n.id, x: n.x, z: n.z, r: 3.2, label: 'Konuş: ' + n.name, active: true, model: h };
+    const lb0 = addLabel(L, n.name, n.role, n.x, 2.75, n.z, '#fff4d8');
+    const it = { kind: 'npc', id: n.id, x: n.x, z: n.z, r: 3.2, label: 'Konuş: ' + n.name, active: true, model: h, lbl: lb0 };
     L.interact.push(it);
     L.npcs.push(it);
   }
-  L.interact.push({ kind: 'npc', id: 'portal', x: C, z: 11, r: 3.9, label: 'Portal Taşı', active: true });
-  addLabel(L, 'Portal Taşı', 'Zindan seç', C, 5.5, 11, '#9fe0ff');
+  const lbP = addLabel(L, 'Portal Taşı', 'Zindan seç', C, 5.5, 11, '#9fe0ff');
+  L.interact.push({ kind: 'npc', id: 'portal', x: C, z: 11, r: 3.9, label: 'Portal Taşı', active: true, lbl: lbP });
   L.spawn = { x: C, z: 36 };
   L.spawnPortal = { x: C, z: 15.5 };
   flushFoliage(L, F);
@@ -14697,6 +14984,7 @@ const Temple = {
       if (F1.ts) stack(sealId(pick(SEAL_KEYS), F1.ts), 1);
     }
     S.bestClear = Math.max(S.bestClear | 0, f + 1);
+    Quest.ev('floor', { f: f + 1 });
     if (f === TEMPLE_FLOORS.length - 1) { S.seals = (S.seals | 0) + 1; P.cleared[L.dg.id] = (P.cleared[L.dg.id] || 0) + 1; got.push('Bronz Mühür ilerlemesi: ' + S.seals); }
     feed('Kat ödülü kaydedildi: ' + got.slice(0, 3).join(', ') + (got.length > 3 ? '…' : ''), '#ffd07a');
     saveGame();
@@ -15426,6 +15714,7 @@ const Combat = {
     if (G.player.target === m) G.player.target = null;
     P.kills++;
     Daily.progress('kill');
+    Quest.ev('kill', { key: m.key, rank: m.rank });
     if (m.rank === 'elite') Daily.progress('elite');
     if (m.static && !m.t.big) Daily.progress('metin');
     // EXP
@@ -15454,6 +15743,7 @@ const Combat = {
       const first = !P.cleared[L.dg.id];
       P.cleared[L.dg.id] = (P.cleared[L.dg.id] || 0) + 1;
       const nd = markDiffClear(L);
+      Quest.ev('clear', { d: L.dg.id, diff: L.diff | 0 });
       Daily.progress('boss');
       banner('ZİNDAN TEMİZLENDİ', L.dg.name + (first ? ' · ilk temizleme ödülü!' : nd ? ' · ' + nd + ' zorluğu açıldı!' : ''), 3);
       SFX.play('success');
@@ -15474,6 +15764,7 @@ const Combat = {
         P.cleared[L.dg.id] = (P.cleared[L.dg.id] || 0) + 1;
         P.bosses++;
         const nd = markDiffClear(L);
+        Quest.ev('clear', { d: L.dg.id, diff: L.diff | 0 });
         Daily.progress('boss');
         if (nd) feed(L.dg.name + ': ' + nd + ' zorluğu açıldı!', DIFFS[DIFFS.findIndex((x) => x.name === nd)].color);
         camPunch(1.5);
@@ -15619,6 +15910,7 @@ const Combat = {
       pl.face(Math.atan2(t.x - pl.x, t.z - pl.z), 1, 1);
     }
     P.mp -= sk.mp;
+    Quest.ev('skilluse', { id });
     pl.cds[id] = sk.cd;
     pl.skillCast = id; // yalnız animasyon: modelin yetenek klibi varsa oynar
     if (pl.H && pl.H.clips && pl.H.clips.skills && pl.H.clips.skills[id]) { pl.skillLock = skillLockOf(id); pl.autoMove = null; }
@@ -16255,7 +16547,7 @@ const UI = {
   },
   interactWith(it) {
     SFX.play('click');
-    if (it.kind === 'npc') this.open(it.id);
+    if (it.kind === 'npc') { Quest.ev('talk', { npc: it.id }); if (Quest.atNpc(it.id)) { this.qNpc = it.id; this.open('quest'); } else this.open(it.id); }
     else if (it.kind === 'exit') goVillage(true);
     else if (it.kind === 'down') {
       if (!it.active) { toast('Portal mühürlü: önce kat muhafızını (elit) yen'); SFX.play('deny'); return; }
@@ -16347,6 +16639,7 @@ const UI = {
         if (pt._h !== h) { pt.innerHTML = h; pt._h = h; }
         pt.className = Net.state === 'on' ? 'on' : Net.state === 'error' ? 'err' : '';
       }
+      Quest.hud();
       this.dirty = false;
     }
     if (this.mapT <= 0) { this.mapT = 0.1; this.drawMinimap(); }
@@ -16729,6 +17022,7 @@ const UI = {
     col.appendChild(cam);
     const acts = el('div', 'acts'); acts.style.display = 'flex'; acts.style.gap = '8px'; acts.style.flexWrap = 'wrap';
     acts.appendChild(this.btn('Kaydet', 'green', () => { toast(saveGame() ? 'Kaydedildi' : 'Bu tarayıcı kaydı engelliyor'); }));
+    acts.appendChild(this.btn('Görev defteri' + Quest.badge(), '', () => { this.qNpc = null; this.open('quest'); }));
     acts.appendChild(this.btn('Ortak oyun' + (Net.room ? ' · ' + Net.room : ''), 'gold', () => this.open('party')));
     if (Orient.canFullscreen()) acts.appendChild(this.btn(document.fullscreenElement ? 'Tam ekrandan çık' : 'Tam ekran + yatay kilit', '', async () => { await Orient.toggleFullscreen(); this.render(); }));
     if (G.level.type === 'dungeon') acts.appendChild(this.btn(`Köye ışınlan (Dönüş Parşömeni: ${countStack('tp')})`, 'blue', () => { if (G.transitioning || P.hp <= 0 || (G.player && G.player.dead)) return; if (!removeStack('tp', 1)) { toast('Dönüş Parşömenin yok. Çıkış portalını kullan.'); return; } this.close(); goVillage(true); }, countStack('tp') <= 0));
@@ -16779,6 +17073,30 @@ const UI = {
     b.appendChild(col);
   },
 
+  // Görev defteri: aktif ana görev (hikâye, hedef, ödül). NPC ile konuşurken açıldıysa (qNpc) teslim düğmesi de çıkar.
+  p_quest(b, S) {
+    const c = Quest.ensure(), q = c && Quest.byId(c.id), D = Quest.d(), npc = this.qNpc;
+    this.title(npc ? NPC_ROLE[npc] || 'Görev' : 'Görev defteri', npc ? 'Görev' : 'Ana görev zinciri');
+    const atTurn = !!(q && c.ready && npc === q.to);
+    if (q) {
+      b.appendChild(el('div', 'muted', esc(Quest.txt(atTurn && q.done ? q.done : q.say))));
+      const r = el('div', 'li quest');
+      const pr = Quest.counting(q) && q.need > 1 ? c.n + ' / ' + q.need : '';
+      const where = c.ready ? 'Ödül için: <b style="color:var(--good)">' + NPC_ROLE[q.to] + '</b>' : 'Veren: ' + NPC_ROLE[q.from];
+      r.innerHTML = `<div class="t"><b>${esc(q.title)}</b><span style="display:block">${esc(Quest.txt(q.goal))}${pr ? ' · ' + pr : ''}</span>`
+        + (pr ? `<div class="meter"><i style="width:${Math.round((c.n / q.need) * 100)}%;background:var(--exp)"></i></div>` : '')
+        + `<span style="display:block">${where}</span><span style="display:block">Ödül: ${esc(Quest.rewardText(q))}</span></div>`;
+      b.appendChild(r);
+    } else {
+      const nx = Quest.nextDef();
+      b.appendChild(el('div', 'muted', nx ? `Sıradaki görev <b>Seviye ${nx.lv}</b>'de açılır: ${esc(nx.title)}. Bu arada zindanlarda ilerle, eşyalarını geliştir.` : 'Ana görev zinciri tamamlandı. Yeni zindanlar ve görevler eklendikçe burada belirecek.'));
+    }
+    const last = D.done.slice(-3).reverse().map((id) => Quest.byId(id)).filter(Boolean);
+    if (last.length) b.appendChild(el('div', 'muted', '<b style="color:var(--parch)">Tamamlananlar (' + D.done.length + ')</b><br>' + last.map((x) => '✔ ' + esc(x.title)).join('<br>')));
+    const acts = el('div', 'facts'); S.foot.appendChild(acts);
+    if (atTurn) acts.appendChild(this.btn('Ödülü al', 'gold big', () => { if (Quest.turnIn()) this.render(); }));
+    if (npc) acts.appendChild(this.btn('Hizmetler', 'blue big', () => this.open(npc)));
+  },
   // Bekçi / Portal Taşı: zindan + zorluk seçimi ve günlük görevler
   p_portal(b, S) {
     const ready = Daily.ready() + (Daily.chestReady() ? 1 : 0);
@@ -16805,6 +17123,7 @@ const UI = {
         bb.appendChild(bt);
       });
       r.appendChild(bb);
+      Quest.star(r, d.id);
       list.appendChild(r);
     });
     b.appendChild(list);
@@ -16819,6 +17138,7 @@ const UI = {
     bt.dataset.diff = 0;
     bb.appendChild(bt);
     r.appendChild(bb);
+    Quest.star(r, d.id);
     return r;
   },
   // Bronz Taş Tapınağı: kat temizlenince (ya da üst kat portalına dokununca) — kaydedilen ödüller + Üst Kata Çık / Köye Dön
@@ -16916,7 +17236,7 @@ const UI = {
       if (!max) r.appendChild(this.btn(lv === 0 ? 'Öğren' : 'Geliştir', 'gold', () => {
         if (P.lv < req) { toast('Seviye ' + req + ' gerekli'); SFX.play('deny'); return; }
         if (P.gold < cost) { toast('Altın yetersiz'); SFX.play('deny'); return; }
-        P.gold -= cost; P.skills[id] = lv + 1; SFX.play('levelup'); toast(s.name + (lv === 0 ? ' öğrenildi!' : ' geliştirildi!')); saveGame(); this.render();
+        P.gold -= cost; P.skills[id] = lv + 1; Quest.ev('skillgain', { id }); SFX.play('levelup'); toast(s.name + (lv === 0 ? ' öğrenildi!' : ' geliştirildi!')); saveGame(); this.render();
       }, P.lv < req || P.gold < cost));
       list.appendChild(r);
     }
@@ -17005,6 +17325,7 @@ const UI = {
     it.bonus = rollBonus(it.slot, it.tier, RARITY[it.rarity].lines);
     recalc();
     Daily.progress('efsun');
+    Quest.ev('efsun');
     SFX.play('success');
     this.lastRes = { ok: true, text: 'Efsun tuttu: yeni satırlar yazıldı.' };
     saveGame();
@@ -17204,6 +17525,7 @@ const UI = {
       if (ok) {
         it.plus++;
         P.bestPlus = Math.max(P.bestPlus, it.plus);
+        Quest.ev('plus', { plus: it.plus });
         this.lastRes = { ok: true, text: it.plus >= 9 ? 'Altın iplikler dokunuyor! +9: en yüksek ışıltı.' : it.plus === 8 ? 'Işıltı güçleniyor!' : it.plus === 7 ? 'Eşyan ışıldamaya başladı!' : 'Ocak senden yana.' };
         SFX.play('success');
         anv.classList.add('burst');
@@ -17800,7 +18122,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
