@@ -10,6 +10,12 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (8) — Metin taşı yeniden adlandırıldı: «Kırık Taş Mühür» · dal `ozellik/kirik-tas-muhur`
+- Yalnız oyuncuya görünen metinler: küçük taş `Metin Taşı` → `Kırık Taş Mühür`; son zindan boss'u `Kadim Metin` → `Kadim Kırık Taş Mühür`
+  (bannerlar, günlük görev, bildirimler, zindan/eşya açıklamaları, giriş/zafer metni). Ekler uyumlu: «…Mühür'ü», «…Mühür'den», «…Mühür'ün».
+- Kod kimlikleri (`metin`, `minimetin`, `DROP.metin`, `rank`, `model`, `updateMetin`) ve kayıt alanları DEĞİŞMEDİ → eski kayıtlar etkilenmez.
+- Testler: `node --check`, `t_logic` 21/21, `t_temple` 34/34, `t_reg` hatasız. Cihazda görsel doğrulama yapılmadı.
+
 ## 2026-10-13 (7) — DENEME: ustalık parşömenleri Tüccar'da + Tüccar bedava alım hatası düzeltildi · `main`
 - Kullanıcı isteği (geçici): `SHOP_LIST`'e `usta_parsomen` (3.000 altın) ve `busta_parsomen` (10.000 altın) eklendi. Kaynakları belirlenince `SHOP_LIST`'ten ve `price` alanlarından kaldırılacak.
 - Hata düzeltmesi (`p_shop` `buy`): çantada hiç olmayan bir yığın alınınca yeni yuvaya giren nesnenin adedi 0'a inmediği için `bought = n - it.n` 0 çıkıyor, altın düşmüyordu (ilk alım bedavaydı; tüm Tüccar eşyaları). Artık alınan adet `countStack` farkıyla hesaplanır.
