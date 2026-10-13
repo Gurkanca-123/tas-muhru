@@ -10,7 +10,13 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
-## 2026-10-13 (6) — Beceri Ustalığı Aşama 1: veri yapısı + iki parşömen · dal `ozellik/beceri-ustalik` (main'e alınmadı)
+## 2026-10-13 (7) — DENEME: ustalık parşömenleri Tüccar'da + Tüccar bedava alım hatası düzeltildi · `main`
+- Kullanıcı isteği (geçici): `SHOP_LIST`'e `usta_parsomen` (3.000 altın) ve `busta_parsomen` (10.000 altın) eklendi. Kaynakları belirlenince `SHOP_LIST`'ten ve `price` alanlarından kaldırılacak.
+- Hata düzeltmesi (`p_shop` `buy`): çantada hiç olmayan bir yığın alınınca yeni yuvaya giren nesnenin adedi 0'a inmediği için `bought = n - it.n` 0 çıkıyor, altın düşmüyordu (ilk alım bedavaydı; tüm Tüccar eşyaları). Artık alınan adet `countStack` farkıyla hesaplanır.
+- Testler: `node --check` tamam; Tüccar alım kontrolü (parşömen ilk alım 3.000 düşer, ikinci alım yığına eklenir, 10'lu iksir doğru ücret, yetersiz altında alım yok); `t_mastery` 21/21, `t_logic` 21/21, `t_temple` 34/34, `t_reg` temiz.
+- Beceri ustalığı Aşama 1 ve bu deneme birlikte `main`'e alındı (kullanıcı isteği). Yedek: `yedek/beceri-ustalik-oncesi`.
+
+## 2026-10-13 (6) — Beceri Ustalığı Aşama 1: veri yapısı + iki parşömen · dal `ozellik/beceri-ustalik` (sonra main'e alındı, bkz. 7)
 - Dosya: `index.html` (+ bu kayıt, `PROJECT_STATE.md`). Yedek: `yedek/beceri-ustalik-oncesi` (= `b208b14`).
 - Veri: `P.mastery = { [beceriId]: aşama }` — 0 normal, 1…10 M1…M10, 11…15 G1…G5 (`MASTERY`, `masteryOf`, `masteryLabel`). Anahtar beceri kimliği → beceri başına tek kayıt; yalnız 0'dan büyük aşamalar saklanır. Güce / bekleme süresine / maliyete etkisi YOK (sonraki aşama).
 - Kayıt: `newCharacter` şablonuna `mastery: {}`; `applySave` beyaz listesi: yalnız sınıfın becerileri, 1…15 aralığı ve normal seviyesi `SKILL_MAX` olan beceriler kabul edilir; eski kayıtta alan yoksa `{}`.

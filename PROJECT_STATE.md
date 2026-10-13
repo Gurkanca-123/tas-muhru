@@ -37,7 +37,7 @@ her zaman `grep -n` ile doğrula.
 ## Sistemler
 - **Karakter:** sınıflar `baltaci` (Baltacı) ve `warrior` (Savaşçı); ikisi de GLB gövde + AnimationMixer, zırh setine göre gövde
   değişir. Yetenek animasyonu kilidi `SKILL_LOCK` / `SAVASCI_SKILL_T`. Statlar `recalc()` → `D`.
-- **Beceri ustalığı (Aşama 1, dal `ozellik/beceri-ustalik`):** `P.mastery[beceriId]` 0 normal · 1…10 M1…M10 · 11…15 G1…G5 (`MASTERY`, `masteryOf`, `masteryLabel`, `skillLvText`). Geçişler yalnız parşömenle: `usta_parsomen` (Seviye `SKILL_MAX` → M1), `busta_parsomen` (M10 → G1) — `MASTERY_SCROLLS`, `masteryCheck`, `useMasteryScroll`, çanta `UI.masteryActs`. Güç etkisi yok; `applySave` doğrular.
+- **Beceri ustalığı (Aşama 1, main):** DENEME: iki parşömen Tüccar'da geçici satılık (`SHOP_LIST`, `price`) — kaynakları belirlenince kaldır. `P.mastery[beceriId]` 0 normal · 1…10 M1…M10 · 11…15 G1…G5 (`MASTERY`, `masteryOf`, `masteryLabel`, `skillLvText`). Geçişler yalnız parşömenle: `usta_parsomen` (Seviye `SKILL_MAX` → M1), `busta_parsomen` (M10 → G1) — `MASTERY_SCROLLS`, `masteryCheck`, `useMasteryScroll`, çanta `UI.masteryActs`. Güç etkisi yok; `applySave` doğrular.
 - **Savaş:** `Combat.calc` (atk, def, kritik) → `hitMob` → `killMob` (EXP seviye farkıyla ölçeklenir, `rollLoot`). Canavar
   gücü `mobBase(Sv) × RANK × MOBS çarpanı × L.mobPow × DIFFS`. Ortak oyunda ek oyuncu başına can +%60 (`COOP_HP`).
 - **Eşya / envanter:** yuvalar `SLOTS`; set sınıfları `GEAR_SETS` (Bez, Kurt Dişi, Nihai, Bronz Taş, Efsanevi…); yığınlar `STACKS`;
@@ -78,7 +78,7 @@ her zaman `grep -n` ile doğrula.
 - Yerel `src/` projesi bu depoyla eşitli değil.
 
 ## Son tamamlanan büyük özellikler
-- 2026-10-13 Beceri Ustalığı Aşama 1 (veri + iki parşömen) — dal `ozellik/beceri-ustalik` (main'e alınmadı).
+- 2026-10-13 Beceri Ustalığı Aşama 1 (veri + iki parşömen; parşömenler geçici olarak Tüccar'da) + Tüccar bedava ilk alım hatası düzeltildi — main.
 - 2026-10-13 Alev haresi azaltıldı — main.
 - 2026-10-13 Demirci +7…+9 daha zor (`UPG.rate`, `GEL_MULT`, malzeme ×1.5) ve Sv 45+ EXP 2 kat (`expNeed`/`expNeed0`) — dal `ozellik/demirci-exp-zorluk`.
 - 2026-10-13 Zırh +7…+9 alev kabuğu (`makeFlameShell`, `H.shell`) — main.

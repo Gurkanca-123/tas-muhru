@@ -956,9 +956,9 @@ const STACKS = {
   ess_neck: { name: 'Gölge İncisi', kind: 'ess', icon: 'soul', tint: '#7a7aff', sell: 480, desc: '+7 … +9 kolye geliştirmede kullanılır. Bosslardan, Kadim Metin\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
   bless: { name: 'Kutsama Kağıdı', kind: 'scroll', price: 2500, sell: 300, icon: 'scroll', tint: '#d8a02a', desc: 'Geliştirme başarısız olursa eşya seviyesi düşmez.' },
   tp: { name: 'Dönüş Parşömeni', kind: 'scroll', price: 30, icon: 'scroll', tint: '#3a8ae0', desc: 'Zindandan anında köye ışınlar.' },
-  // Beceri ustalığı parşömenleri (henüz hiçbir düşüş / ödül tablosuna bağlı değil; satış fiyatı geçici)
-  usta_parsomen: { name: 'Usta Yetenek Parşömeni', kind: 'scroll', sell: 500, icon: 'scroll', tint: '#4ad0c0', desc: 'Seviye 5\'e (en yüksek normal seviye) ulaşmış bir beceriyi M1 ustalık aşamasına geçirir. Çantada Kullan → beceri seç.' },
-  busta_parsomen: { name: 'Büyük Usta Yetenek Parşömeni', kind: 'scroll', sell: 2000, icon: 'scroll', tint: '#c070ff', desc: 'M10 ustalık aşamasındaki bir beceriyi G1 büyük ustalık aşamasına geçirir. Çantada Kullan → beceri seç.' },
+  // Beceri ustalığı parşömenleri: düşüş / ödül tablosuna bağlı değil. DENEME: Tüccar'da geçici olarak satılık (price; SHOP_LIST)
+  usta_parsomen: { name: 'Usta Yetenek Parşömeni', kind: 'scroll', price: 3000, sell: 500, icon: 'scroll', tint: '#4ad0c0', desc: 'Seviye 5\'e (en yüksek normal seviye) ulaşmış bir beceriyi M1 ustalık aşamasına geçirir. Çantada Kullan → beceri seç.' },
+  busta_parsomen: { name: 'Büyük Usta Yetenek Parşömeni', kind: 'scroll', price: 10000, sell: 2000, icon: 'scroll', tint: '#c070ff', desc: 'M10 ustalık aşamasındaki bir beceriyi G1 büyük ustalık aşamasına geçirir. Çantada Kullan → beceri seç.' },
   // Zindan malzemeleri (eskiden "çöp"): her geliştirmede eşyanın kademesine göre biri istenir (dmatOf). Zindanın
   // canavarlarından düşer; o kademedeki gereksiz eşyayı parçalayınca da çıkar.
   j1: { name: 'Kurt Azısı', kind: 'dmat', sell: 5, icon: 'bone', tint: '#e8dcc0', desc: 'Bez Zırh, Taş Balta ve kademe 0-1 eşya geliştirmede kullanılır. Yosunlu İn\'de düşer.' },
@@ -971,7 +971,7 @@ const STACKS = {
   j6: { name: 'Kara Taş Tozu', kind: 'dmat', sell: 60, icon: 'ore', tint: '#6a4a7a', desc: 'Kademe 6 eşya geliştirmede kullanılır. Kara Taş Tapınağı\'nda düşer.' },
 };
 const STACK_MAX = 200;
-const SHOP_LIST = ['hp1', 'hp2', 'hp3', 'mp1', 'mp2', 'mp3', 'tp', 'ore', 'bless'];
+const SHOP_LIST = ['hp1', 'hp2', 'hp3', 'mp1', 'mp2', 'mp3', 'tp', 'ore', 'bless', 'usta_parsomen', 'busta_parsomen']; // DENEME: ustalık parşömenleri geçici olarak satılık (kaynakları belirlenince kaldırılacak)
 
 // ---------- Taş Mühürler (Bronz Taş Tapınağı 6-10. kat ödülü) ----------
 // Ekipmana takılan, normal geliştirmeden (+0…+9) bağımsız ilerleme katmanı. Her ekipman parçasında 1 yuva (it.seal = mühür
@@ -17030,9 +17030,9 @@ const UI = {
           const cost = s.price * n;
           if (P.gold < cost) { toast('Altın yetersiz'); SFX.play('deny'); return; }
           if (!canStackFit(id)) { toast('Envanter dolu'); SFX.play('deny'); return; }
-          const it = makeStack(id, n);
-          addItem(it);
-          const bought = n - it.n;
+          const before = countStack(id);
+          addItem(makeStack(id, n));
+          const bought = countStack(id) - before; // hata düzeltmesi: eldeki olmayan yığın yeni yuvaya girince eskiden 0 sayılıyordu (bedava alım)
           P.gold -= s.price * bought;
           SFX.play('coin');
           this.render();
