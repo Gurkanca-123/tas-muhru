@@ -10,6 +10,14 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (12) — Çanta sayfaları + Görevler düğmesi + Görev defteri yeniden tasarımı · dal `ozellik/gorev-sistemi`
+- Çanta: 3 sayfa × 40 yuva. 2. ve 3. sayfa sırayla `INV_PAGE_COST` (100.000 altın, onaylı) ile açılır. Kayıt: `P.invPages` (1…3, `applySave` doğrular; eski kayıt = 1 sayfa).
+  `P.inv` tek düz dizi olarak kaldı (uzunluk `invCap()`), yalnız `UI.invGrid` sayfa sekmeleri çizer ve gerçek dizin ofsetiyle çağırır → Depocu, Tüccar, Demirci ve ganimet kodu değişmedi. `Sırala` tüm sayfaları birlikte sıralar.
+- HUD: sol üstte iksirlerin altında parşömen simgeli «Görevler» düğmesi (`#b-quest`, ❗ yeni / ✔ teslim). Üstteki görev satırı (`#qline`) durur.
+- `UI.p_quest` yeniden: hikâye kutusu (konuşan rol) + hedef kartı (sayaç çubuğu) + yol haritası (sıradaki 3 görev, kilitli) + sağ sütunda ödül kartı (altın, EXP, eşya slotları).
+- Düzeltme: «Usta'a git» → yönelme hâli eki (`NPC_DAT`).
+- Testler: Playwright 22/22 (çanta sayfaları, satın alma, kayıt gidiş-dönüş, eski kayıt, sınırlar, Depocu/Tüccar/Demirci panelleri) + görev testleri 40/40; `node --check`. DENENMEDİ: gerçek telefon; ücret (100.000 / sayfa) dengesi.
+
 ## 2026-10-13 (11) — Ana görev zinciri + oyuncu yönlendirmesi (Fener Köyü hikâyesi) · dal `ozellik/gorev-sistemi` (yedek: `yedek/gorev-oncesi`)
 - Yeni: `QUESTS` (23 görev, Sv 1→70) + `Quest` motoru (`index.html`, «Ana görev zinciri» bölümü, Ortak oyun'dan önce). Doğrusal zincir, aynı anda tek aktif görev.
   Hikâye: Kadim Mühür çatlıyor → 3 perde (Sv 1-38 Çatlayan Mühür · 38-45 Mührün Gölgesi · 45-70 Bronz Mühür). NPC'ler yalnız rolle anılır (Bekçi, Demirci, Tüccar, Depocu, Usta, Simyacı).

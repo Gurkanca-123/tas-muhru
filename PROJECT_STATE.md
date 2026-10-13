@@ -43,6 +43,7 @@ her zaman `grep -n` ile doğrula.
   Kayıt: `P.quest = { done, cur: { id, n, ready, brief } }`. Arayüz: `#qline`, `UI.p_quest`, Menü düğmesi, Bekçi listesinde `Quest.star`. Kancalar tek satırlık `Quest.ev(...)`.
   **Yeni zindan** eklenince: `QUESTS`'e `{type:'clear', d:'<id>'}` satırı (sıra + `lv` ile). **Yeni sınıf** (Büyücü / Şaman): `CLASSES[cls].skills` sırası yeterli (metinlerde `sk(i)`);
   sınıfa özel görev gerekirse `cls:['kimlik']` alanı (`Quest.ok`). Günlük görevler (`Daily`) ayrı sistemdir. NPC adları yalnız rol (`NPC_ROLE`).
+- **Çanta sayfaları:** `P.invPages` (1…3), `INV_SIZE` = sayfa boyutu (40), `INV_PAGES_MAX`, `INV_PAGE_COST` (100.000), `invCap()`, `buyInvPage()`. `P.inv` düz dizi; sayfa sekmeleri yalnız `UI.invGrid`'te (dizin = gerçek). Yeni sayfa ücretini / sayısını bu sabitlerden değiştir.
 - **Savaş:** `Combat.calc` (atk, def, kritik) → `hitMob` → `killMob` (EXP seviye farkıyla ölçeklenir, `rollLoot`). Canavar
   gücü `mobBase(Sv) × RANK × MOBS çarpanı × L.mobPow × DIFFS`. Ortak oyunda ek oyuncu başına can +%60 (`COOP_HP`).
 - **Eşya / envanter:** yuvalar `SLOTS`; set sınıfları `GEAR_SETS` (Bez, Kurt Dişi, Nihai, Bronz Taş, Efsanevi…); yığınlar `STACKS`;

@@ -74,6 +74,11 @@ img[src$="#sm"]{image-rendering:auto!important}
 .potbtn img{width:28px;height:28px;display:block;margin:auto}
 .potbtn span{position:absolute;right:1px;bottom:0;font-size:12px;text-shadow:1px 1px 0 var(--ink);font-weight:700}
 #buffs{display:flex;gap:4px;margin-top:2px}
+.qbtn{display:flex;align-items:center;justify-content:center;gap:4px;width:96px;height:30px;margin-top:6px;padding:0 4px;font-size:12px;font-weight:700;position:relative;color:#ffe9b0}
+.qbtn img{width:20px;height:20px;image-rendering:pixelated}
+.qbtn.new::after,.qbtn.rdy::after{position:absolute;right:-5px;top:-9px;font-size:14px;text-shadow:1px 1px 0 var(--ink)}
+.qbtn.new::after{content:'❗'} .qbtn.rdy::after{content:'✔';color:#7dff9a;font-weight:800}
+.qbtn.rdy{color:#b8ffc4}
 .buff{width:22px;height:22px;background:var(--ink);position:relative}
 .buff img{width:22px;height:22px}
 .buff span{position:absolute;right:0;bottom:-2px;font-size:12px;text-shadow:1px 1px 0 #000}
@@ -93,7 +98,19 @@ img[src$="#sm"]{image-rendering:auto!important}
 #qline{position:absolute;left:50%;top:calc(34px + var(--st));transform:translateX(-50%);max-width:min(70vw,520px);font-size:12px;line-height:1.2;padding:3px 10px;background:rgba(40,30,10,.72);box-shadow:0 0 0 2px var(--ink);color:#ffe9b0;text-shadow:1px 1px 0 var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;cursor:pointer}
 #qline.rdy{background:rgba(16,50,24,.78);color:#b8ffc4} #qline.idle{opacity:.7}
 #party:not([hidden]) ~ #qline{top:calc(60px + var(--st))}
-@media (orientation:portrait){#qline{top:calc(8px + var(--st));max-width:60vw}}
+.qstory{padding:9px 11px;background:rgba(0,0,0,.24);box-shadow:inset 3px 0 0 var(--brass-hi);line-height:1.45;font-size:13.5px;color:var(--parch)}
+.qstory b{display:block;color:var(--brass-hi);font-size:12px;letter-spacing:.5px;margin-bottom:2px}
+.qgoal{margin-top:8px;padding:8px 11px;background:var(--slot);box-shadow:inset 0 0 0 2px var(--ink);line-height:1.4;font-size:13px}
+.qgoal.ok{box-shadow:inset 0 0 0 2px var(--good)} .qgoal .qh{font-size:14px;margin-bottom:2px}
+.qgoal .meter{margin:5px 0 3px;height:9px;max-width:none} .qwho{margin-top:3px;font-size:12px;color:var(--parch-dim)} .qwho b{color:var(--parch)}
+.qh{font-weight:700;color:var(--brass-hi)}
+.qrewbox{display:flex;flex-direction:column;gap:6px;padding:8px 10px;background:var(--slot);box-shadow:inset 0 0 0 2px var(--ink)}
+.qchips{display:flex;flex-wrap:wrap;gap:6px}.qchip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(0,0,0,.28);font-size:13px;font-weight:700;color:#ffe9b0}.qchip img{width:16px;height:16px}
+.qrew{display:flex;flex-wrap:wrap;gap:4px}.qrnames{font-size:11px;line-height:1.3}
+.qmap{margin-top:10px}.qmap .qh{font-size:12px;margin-bottom:3px}
+.qrow{display:flex;gap:8px;align-items:baseline;font-size:12.5px;padding:2px 0}.qrow i{flex:none;min-width:38px;font-style:normal;font-weight:700;color:var(--exp)}
+.qrow.lock{color:var(--parch-dim)} .qrow.lock i{color:var(--parch-dim)} .qrow.done{color:var(--parch-dim)} .qrow.done i{color:var(--good)}
+@media (orientation:portrait){#qline,#party:not([hidden]) ~ #qline{left:calc(10px + var(--sl));top:calc(142px + var(--st));transform:none;max-width:52vw;white-space:normal;line-height:1.25}}
 .nlabel.qmark::before{content:'❗ ';color:#ffd54a} .nlabel.qdone::before{content:'✔ ';color:#7dff9a}
 #duelq{position:absolute;left:50%;top:calc(62px + var(--st));transform:translateX(-50%);z-index:30;padding:8px 12px;background:rgba(48,16,14,.92);box-shadow:0 0 0 2px var(--ink),0 0 0 4px #ff7a4a;color:#ffd9c8;text-align:center;font-size:13px;line-height:1.3;text-shadow:1px 1px 0 var(--ink);pointer-events:auto}
 #duelq .dq-b{display:flex;gap:8px;justify-content:center;margin-top:6px}
@@ -233,6 +250,7 @@ body.modal-open #hud,body.modal-open #hud *,body.modal-open #cv,body.modal-open 
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
 .col{display:flex;flex-direction:column;gap:8px}
 .grid{display:grid;grid-template-columns:repeat(5,var(--slot-sz));gap:4px}
+.invtabs{gap:4px;margin-bottom:6px;flex-wrap:wrap}.invtabs .pbtn{flex:1 1 auto;min-height:34px;padding:0 6px;font-size:12px;white-space:nowrap}
 .slot{flex:none;width:var(--slot-sz);height:var(--slot-sz);background:var(--slot);box-shadow:inset 2px 2px 0 rgba(0,0,0,.5),inset -1px -1px 0 rgba(255,255,255,.06);position:relative;cursor:pointer;display:grid;place-items:center;touch-action:manipulation}
 .slot img{width:calc(var(--slot-sz) - 10px);height:calc(var(--slot-sz) - 10px);image-rendering:pixelated}
 .slot.sm{width:36px;height:36px}.slot.sm img{width:28px;height:28px}.slot.sm .lbl{font-size:12px}
@@ -421,6 +439,7 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
           <button class="pbtn potbtn" id="pot-hp" aria-label="Kırmızı iksir iç"><img class="pix" alt=""><span></span></button>
           <button class="pbtn potbtn" id="pot-mp" aria-label="Mavi iksir iç"><img class="pix" alt=""><span></span></button>
         </div>
+        <button class="pbtn qbtn" id="b-quest" aria-label="Görevler" hidden><img class="pix" alt=""><span>Görevler</span></button>
         <div id="buffs"></div>
       </div>
     </div>
@@ -2419,7 +2438,8 @@ function rollGear(tier, rank, dTier, endgame, efs) {
 const SAVE_KEY = 'tasmuhru_save_v1';
 const CHAR_INDEX_KEY = 'tasmuhru_chars_v1', LAST_KEY = 'tasmuhru_last_v1', MAX_CHARS = 4;
 const CHAR_KEY = (id) => 'tasmuhru_char_' + id;
-const INV_SIZE = 40, DEPOT_SIZE = 40;
+const INV_SIZE = 40, DEPOT_SIZE = 40; // INV_SIZE = çanta SAYFA boyutu
+const INV_PAGES_MAX = 3, INV_PAGE_COST = 100000; // ek çanta sayfası (2. ve 3.) altın bedeli; P.invPages = açık sayfa sayısı (1…3)
 let P = null; // kalıcı karakter verisi
 const D = {}; // türetilmiş statlar
 
@@ -2457,7 +2477,7 @@ function newCharacter(cls, name) {
   P = {
     v: 2, id: null, lastPlayed: 0, name: name || c.name, cls, lv: 1, exp: 0, pts: 0,
     stats: Object.assign({}, c.base), gold: 150,
-    inv: new Array(INV_SIZE).fill(null), depot: new Array(DEPOT_SIZE).fill(null),
+    invPages: 1, inv: new Array(INV_SIZE).fill(null), depot: new Array(DEPOT_SIZE).fill(null),
     equip: { weapon: null, head: null, chest: null, feet: null, shield: null, ring: null, neck: null, charm: null },
     skills: {}, mastery: {}, cleared: {}, sealed: false, // mastery: beceri ustalık aşamaları (bkz. MASTERY)
     clearDiff: {}, // zindan → bitirilen en yüksek zorluk (0 Normal, 1 Zor, 2 Kabus); bir sonraki zorluğu açar
@@ -2609,9 +2629,10 @@ function applySave(o) {
   T.pts = Math.floor(_num(o.pts, 0, 0, 999));
   T.gold = Math.floor(_num(o.gold, 0, 0, 1e12));
   if (o.stats && typeof o.stats === 'object') for (const k in T.stats) T.stats[k] = Math.floor(_num(o.stats[k], T.stats[k], 1, 999));
-  if (Array.isArray(o.inv)) T.inv = o.inv.slice(0, INV_SIZE).map(validItem);
+  T.invPages = Math.floor(_num(o.invPages, 1, 1, INV_PAGES_MAX));
+  if (Array.isArray(o.inv)) T.inv = o.inv.slice(0, INV_SIZE * T.invPages).map(validItem);
   if (Array.isArray(o.depot)) T.depot = o.depot.slice(0, DEPOT_SIZE).map(validItem);
-  while (T.inv.length < INV_SIZE) T.inv.push(null);
+  while (T.inv.length < INV_SIZE * T.invPages) T.inv.push(null);
   while (T.depot.length < DEPOT_SIZE) T.depot.push(null);
   if (o.equip && typeof o.equip === 'object') for (const sl of SLOTS) {
     const it = validItem(o.equip[sl]);
@@ -2746,6 +2767,20 @@ function removeStack(id, n) {
   return n <= 0;
 }
 const invFree = () => P.inv.filter((x) => !x).length;
+const invCap = () => INV_SIZE * Math.max(1, Math.min(INV_PAGES_MAX, (P && P.invPages) | 0 || 1));
+// sıradaki çanta sayfasını aç (INV_PAGE_COST altın); açılamazsa false
+function buyInvPage() {
+  const n = (P.invPages | 0) || 1;
+  if (n >= INV_PAGES_MAX) return false;
+  if (P.gold < INV_PAGE_COST) { toast('Altın yetersiz: ' + fmtFull(INV_PAGE_COST) + ' gerekli'); SFX.play('deny'); return false; }
+  P.gold -= INV_PAGE_COST;
+  P.invPages = n + 1;
+  while (P.inv.length < invCap()) P.inv.push(null);
+  SFX.play('coin');
+  toast((n + 1) + '. çanta sayfası açıldı');
+  saveGame();
+  return true;
+}
 // çantadaki gereksiz eşyayı parçala → geliştirme malzemeleri (dismantleYield). Yer yoksa hiçbir şey olmaz.
 function dismantle(i) {
   const it = P.inv[i];
@@ -2813,7 +2848,7 @@ function sortInventory() {
     } else merged.push(it);
   }
   merged.sort((a, b) => order(a) - order(b) || (a.id || '').localeCompare(b.id || ''));
-  P.inv = merged.concat(new Array(INV_SIZE - merged.length).fill(null));
+  P.inv = merged.concat(new Array(invCap() - merged.length).fill(null));
 }
 function canEquip(it) {
   if (it.type !== 'gear') return 'Giyilemez';
@@ -8325,6 +8360,7 @@ const Daily = {
 //     stat · skilluse {sk:[sıra]} · skillgain {sk: sıra} · seal · mastery · talk (veren NPC ile konuş)
 //   need: sayı / eşik (kill, stat, skilluse: adet · level, plus, mastery: hedef değer).
 const NPC_ROLE = { portal: 'Bekçi', smith: 'Demirci', shop: 'Tüccar', depot: 'Depocu', master: 'Usta', alchemist: 'Simyacı' };
+const NPC_DAT = { portal: "Bekçi'ye", smith: "Demirci'ye", shop: "Tüccar'a", depot: "Depocu'ya", master: "Usta'ya", alchemist: "Simyacı'ya" }; // yönelme hâli (…'a git)
 const QUESTS = [
   // ---- 1. perde: Çatlayan Mühür (Sv 1-38) ----
   { id: 'q01', lv: 1, from: 'portal', to: 'portal', title: 'Köyün Altındaki Gürültü', type: 'kill', need: 8, goal: 'Zindanda canavar kes',
@@ -8475,7 +8511,7 @@ const Quest = {
     c.ready = true;
     UI.dirty = true;
     if (q.type === 'talk') { this.complete(q); return; }
-    feed('Görev hazır: ' + q.title + ' · ödül için ' + NPC_ROLE[q.to] + '\'a git', '#9affb0');
+    feed('Görev hazır: ' + q.title + ' · ödül için ' + NPC_DAT[q.to] + ' git', '#9affb0');
     SFX.play('levelup');
     saveGame();
   },
@@ -8526,6 +8562,10 @@ const Quest = {
     this.ensure();
     saveGame();
   },
+  rewardParts(q) {
+    const R = q.reward || {}, fr = R.exp != null ? R.exp : 0.06;
+    return { gold: R.gold != null ? R.gold : Math.round(40 + q.lv * q.lv * 3), exp: fr > 0 && P.lv < MAX_LV ? Math.max(1, Math.round(expNeed0(P.lv) * fr)) : 0, st: R.st || [] };
+  },
   rewardText(q) {
     const R = q.reward || {}, gold = R.gold != null ? R.gold : Math.round(40 + q.lv * q.lv * 3);
     const p = [fmtFull(gold) + ' altın'];
@@ -8562,12 +8602,21 @@ const Quest = {
     const c = this.ensure(), q = c && this.byId(c.id);
     let html = '', cls = '';
     if (q) {
-      if (c.ready) { html = `<b>✔ ${esc(q.title)}</b> · ${NPC_ROLE[q.to]}'a git`; cls = 'rdy'; }
+      if (c.ready) { html = `<b>✔ ${esc(q.title)}</b> · ${NPC_DAT[q.to]} git`; cls = 'rdy'; }
       else html = `<b>${esc(q.title)}</b> · ${esc(this.txt(q.goal))}` + (this.counting(q) && q.need > 1 ? ` (${c.n}/${q.need})` : '');
     } else {
       const nx = this.nextDef();
       html = nx ? `Sonraki görev Sv ${nx.lv}: ${esc(nx.title)}` : 'Ana görev zinciri tamamlandı';
       cls = 'idle';
+    }
+    const qb = $('#b-quest');
+    if (qb) {
+      if (!qb._b) {
+        qb._b = true; qb.querySelector('img').src = spriteIcon('scroll', '#d8a02a'); qb.hidden = false;
+        qb.addEventListener('click', () => { if (UI.panel || G.state !== 'play') return; SFX.play('click'); UI.qNpc = null; UI.open('quest'); });
+      }
+      qb.classList.toggle('rdy', !!(c && c.ready));
+      qb.classList.toggle('new', !!(c && !c.ready && !c.brief && q && q.type !== 'talk'));
     }
     if (qe._h !== html) { qe.innerHTML = html; qe._h = html; }
     qe.className = cls;
@@ -16713,7 +16762,7 @@ const UI = {
   // ---------- Paneller (ModalShell: başlık + sekme + kayan gövde + sabit alt) ----------
   open(name, keepSel) {
     if (G.state !== 'play') return;
-    if (!keepSel) { this.sel = null; this.tab = 0; this.confirm = null; this.lastRes = null; }
+    if (!keepSel) { this.sel = null; this.tab = 0; this.confirm = null; this.lastRes = null; this.invPage = 0; }
     if (name === 'smith' && !keepSel) this.sel = { eq: 'weapon' };
       this.panel = name;
     G.paused = true;
@@ -16810,11 +16859,33 @@ const UI = {
     if (opts.onClick) s.addEventListener('click', () => { SFX.play('click'); opts.onClick(); });
     return s;
   },
+  // eşya ızgarası. Çanta (P.inv) sayfalıdır: üstte sayfa sekmeleri, kilitli sıradaki sayfa INV_PAGE_COST altınla açılır.
+  // onClick / isSel her zaman çantadaki GERÇEK dizin ile çağrılır (sayfa ofseti dahil).
   invGrid(onClick, isSel, list) {
     list = list || P.inv;
+    const isBag = list === P.inv, wrap = el('div', 'invwrap');
+    let off = 0, items = list;
+    if (isBag) {
+      const np = Math.max(1, P.invPages | 0), cur = Math.max(0, Math.min(this.invPage | 0, np - 1));
+      this.invPage = cur; off = cur * INV_SIZE; items = list.slice(off, off + INV_SIZE);
+      const row = el('div', 'tabs invtabs');
+      for (let p = 0; p < INV_PAGES_MAX; p++) {
+        if (p < np) {
+          const cnt = list.slice(p * INV_SIZE, (p + 1) * INV_SIZE).filter(Boolean).length;
+          row.appendChild(this.btn(`Sayfa ${p + 1} · ${cnt}/${INV_SIZE}`, p === cur ? 'on' : '', () => { this.invPage = p; this.render(); }));
+        } else if (p === np) {
+          const on = this.confirm === 'invpage';
+          row.appendChild(this.btn(on ? `${fmtFull(INV_PAGE_COST)} altın öde · Onayla` : `🔒 Sayfa ${p + 1} · ${fmtFull(INV_PAGE_COST)}`, on ? 'red' : 'gold', () => {
+            if (on) { this.confirm = null; if (buyInvPage()) this.invPage = p; this.render(); } else { this.confirm = 'invpage'; this.render(); }
+          }));
+        } else row.appendChild(this.btn(`🔒 Sayfa ${p + 1}`, '', () => {}, true));
+      }
+      wrap.appendChild(row);
+    }
     const g = el('div', 'grid');
-    list.forEach((it, i) => g.appendChild(this.slotEl(it, { sel: isSel(i), onClick: () => onClick(i), checkEquip: list === P.inv })));
-    return g;
+    items.forEach((it, k) => g.appendChild(this.slotEl(it, { sel: isSel(off + k), onClick: () => onClick(off + k), checkEquip: isBag })));
+    wrap.appendChild(g);
+    return wrap;
   },
   btn(text, cls, fn, disabled) {
     const b = el('button', 'pbtn ' + (cls || ''));
@@ -16829,7 +16900,7 @@ const UI = {
   },
 
   p_bag(b, S) {
-    this.title('Envanter', `${P.inv.filter(Boolean).length}/${INV_SIZE}`);
+    this.title('Envanter', `${P.inv.filter(Boolean).length}/${invCap()}`);
     const top = el('div', 'bag-top');
     const eq = el('div', 'equip');
     // orta sütun zırh seti (kask, zırh, ayakkabı) + kalkan; kenarlarda silah ve takı seti (yüzük, kolye, tılsım)
@@ -17073,27 +17144,58 @@ const UI = {
     b.appendChild(col);
   },
 
-  // Görev defteri: aktif ana görev (hikâye, hedef, ödül). NPC ile konuşurken açıldıysa (qNpc) teslim düğmesi de çıkar.
+  // Görev defteri: sol sütun = hikâye + hedef + yol haritası, sağ sütun (foot) = ödül + düğmeler.
+  // NPC ile konuşurken açıldıysa (qNpc) teslim düğmesi de çıkar.
   p_quest(b, S) {
     const c = Quest.ensure(), q = c && Quest.byId(c.id), D = Quest.d(), npc = this.qNpc;
-    this.title(npc ? NPC_ROLE[npc] || 'Görev' : 'Görev defteri', npc ? 'Görev' : 'Ana görev zinciri');
+    const all = QUESTS.filter((x) => Quest.ok(x)), nDone = all.filter((x) => D.done.includes(x.id)).length;
+    this.title(npc ? NPC_ROLE[npc] || 'Görev' : 'Görev defteri', npc ? 'Görev' : `${nDone} / ${all.length} tamamlandı`);
     const atTurn = !!(q && c.ready && npc === q.to);
+    const foot = S.foot;
     if (q) {
-      b.appendChild(el('div', 'muted', esc(Quest.txt(atTurn && q.done ? q.done : q.say))));
-      const r = el('div', 'li quest');
-      const pr = Quest.counting(q) && q.need > 1 ? c.n + ' / ' + q.need : '';
-      const where = c.ready ? 'Ödül için: <b style="color:var(--good)">' + NPC_ROLE[q.to] + '</b>' : 'Veren: ' + NPC_ROLE[q.from];
-      r.innerHTML = `<div class="t"><b>${esc(q.title)}</b><span style="display:block">${esc(Quest.txt(q.goal))}${pr ? ' · ' + pr : ''}</span>`
+      const speaker = NPC_ROLE[atTurn && q.done ? q.to : q.from];
+      b.appendChild(el('div', 'qstory', `<b>${speaker}</b>${esc(Quest.txt(atTurn && q.done ? q.done : q.say))}`));
+      const pr = Quest.counting(q) && q.need > 1;
+      const r = el('div', 'qgoal' + (c.ready ? ' ok' : ''));
+      r.innerHTML = `<div class="qh">${c.ready ? '✔' : '❗'} <b>${esc(q.title)}</b></div><div>${esc(Quest.txt(q.goal))}${pr ? ` <b>${c.n} / ${q.need}</b>` : ''}</div>`
         + (pr ? `<div class="meter"><i style="width:${Math.round((c.n / q.need) * 100)}%;background:var(--exp)"></i></div>` : '')
-        + `<span style="display:block">${where}</span><span style="display:block">Ödül: ${esc(Quest.rewardText(q))}</span></div>`;
+        + `<div class="qwho">${c.ready ? 'Ödül için: <b>' + NPC_ROLE[q.to] + '</b>' : 'Görevi veren: <b>' + NPC_ROLE[q.from] + '</b>'}</div>`;
       b.appendChild(r);
+      // ödül kartı (sağ sütun)
+      const P0 = Quest.rewardParts(q), rw = el('div', 'qrewbox');
+      rw.appendChild(el('div', 'qh', 'Ödül'));
+      const chips = el('div', 'qchips');
+      chips.appendChild(el('span', 'qchip', coinImg() + fmtFull(P0.gold)));
+      if (P0.exp) chips.appendChild(el('span', 'qchip', 'EXP +' + fmtFull(P0.exp)));
+      rw.appendChild(chips);
+      if (P0.st.length) {
+        const row = el('div', 'qrew');
+        for (const [id, n] of P0.st) { const sl = this.slotEl(makeStack(id, n), { small: true }); sl.title = STACKS[id].name; row.appendChild(sl); }
+        rw.appendChild(row);
+        rw.appendChild(el('div', 'muted qrnames', P0.st.map(([id, n]) => n + ' ' + STACKS[id].name).join(' · ')));
+      }
+      foot.appendChild(rw);
     } else {
       const nx = Quest.nextDef();
-      b.appendChild(el('div', 'muted', nx ? `Sıradaki görev <b>Seviye ${nx.lv}</b>'de açılır: ${esc(nx.title)}. Bu arada zindanlarda ilerle, eşyalarını geliştir.` : 'Ana görev zinciri tamamlandı. Yeni zindanlar ve görevler eklendikçe burada belirecek.'));
+      b.appendChild(el('div', 'qstory', nx ? `<b>Sıradaki görev</b>Seviye ${nx.lv} olunca açılır: ${esc(nx.title)}. O zamana dek zindanlarda ilerle, eşyalarını geliştir.` : '<b>Ana görev zinciri tamamlandı</b>Yeni zindanlar ve görevler eklendikçe burada belirecek.'));
+      this.footHint(foot, nx ? 'Şu an aktif görevin yok. Seviye ' + nx.lv + '\'de yeni görev başlar.' : 'Tüm görevler tamamlandı.');
     }
-    const last = D.done.slice(-3).reverse().map((id) => Quest.byId(id)).filter(Boolean);
-    if (last.length) b.appendChild(el('div', 'muted', '<b style="color:var(--parch)">Tamamlananlar (' + D.done.length + ')</b><br>' + last.map((x) => '✔ ' + esc(x.title)).join('<br>')));
-    const acts = el('div', 'facts'); S.foot.appendChild(acts);
+    // yol haritası: sıradaki görevler (kilitli) ve son tamamlananlar
+    const ahead = all.filter((x) => !D.done.includes(x.id) && !(c && c.id === x.id)).slice(0, 3);
+    if (ahead.length) {
+      const m = el('div', 'qmap'); m.appendChild(el('div', 'qh', 'Yol haritası'));
+      for (const x of ahead) m.appendChild(el('div', 'qrow' + (P.lv >= x.lv ? '' : ' lock'), `<i>Sv ${x.lv}</i><span>${esc(x.title)}</span>`));
+      const more = all.length - nDone - ahead.length - (q ? 1 : 0);
+      if (more > 0) m.appendChild(el('div', 'qrow lock', `<i>…</i><span>+${more} görev daha</span>`));
+      b.appendChild(m);
+    }
+    const last = D.done.slice(-2).reverse().map((id) => Quest.byId(id)).filter(Boolean);
+    if (last.length) {
+      const m = el('div', 'qmap'); m.appendChild(el('div', 'qh', 'Son tamamlananlar'));
+      for (const x of last) m.appendChild(el('div', 'qrow done', `<i>✔</i><span>${esc(x.title)}</span>`));
+      b.appendChild(m);
+    }
+    const acts = el('div', 'facts'); foot.appendChild(acts);
     if (atTurn) acts.appendChild(this.btn('Ödülü al', 'gold big', () => { if (Quest.turnIn()) this.render(); }));
     if (npc) acts.appendChild(this.btn('Hizmetler', 'blue big', () => this.open(npc)));
   },
