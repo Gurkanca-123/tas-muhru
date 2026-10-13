@@ -11372,7 +11372,7 @@ float sI = smoothstep(0.37, 0.4, lvR) * (0.45 + 0.55 * clamp((lvR - 0.4) / 0.6, 
 float hh = (transformed.y - uBBy) / uExt;
 float fn = fsNoise(vec3(transformed.x / uExt * 9.0, hh * 7.0 - uT * 2.4, transformed.z / uExt * 9.0));
 vec3 fdir = normalize(normalize(objectNormal) + vec3(0.0, 0.9, 0.0));
-transformed += fdir * uExt * 0.0085 * sI * (0.25 + 3.6 * fn * fn * fn);`)
+transformed += fdir * uExt * 0.006 * sI * (0.2 + 3.2 * fn * fn * fn);`)
       .replace('#include <project_vertex>', `#include <project_vertex>
 vH = hh; vS = sI; vNz = fn; vP = transformed; vN = normalize(normalMatrix * objectNormal); vV = -mvPosition.xyz;`);
     sh.fragmentShader = sh.fragmentShader
@@ -11391,7 +11391,7 @@ float halo = pow(1.0 - ndv, 3.0);
 float tip = smoothstep(0.3, 0.95, vNz);
 vec3 gold = vec3(1.0, 0.68, 0.22), orng = vec3(1.0, 0.3, 0.04);
 vec3 col = mix(gold, orng, clamp(tip * 1.1 + (vS - 0.45) * 1.1, 0.0, 1.0));
-float a = vS * (1.2 * flame * (0.45 + 0.9 * tip) + 0.2 * halo) * (0.9 + 0.1 * sin(uT * 7.0 + vH * 20.0));
+float a = vS * (0.72 * flame * (0.4 + 0.8 * tip) + 0.07 * halo) * (0.9 + 0.1 * sin(uT * 7.0 + vH * 20.0));
 gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));`);
   };
   const shell = new THREE.SkinnedMesh(geo, m);
@@ -11449,7 +11449,7 @@ function gildSparks(pl, dt) {
   if (pl.gildAura.parent !== pl.H.root) pl.H.root.add(pl.gildAura);
   pl.gildAura.visible = want > 0.001;
   const flash = Math.pow(0.5 + 0.5 * Math.sin(GILD_T.value * 1.8), 14);
-  GILD_FX.mat.opacity = Math.min(0.32, 0.4 * (want * (0.8 + 0.2 * Math.sin(GILD_T.value * 2.2)) + want * 0.5 * flash)); // aura yalnız hafif hare: gövdeyi yıkamasın
+  GILD_FX.mat.opacity = Math.min(0.16, 0.2 * (want * (0.8 + 0.2 * Math.sin(GILD_T.value * 2.2)) + want * 0.5 * flash)); // aura yalnız hafif hare: gövdeyi yıkamasın
   // aura rengi: +7'de altın, +9'da alev turuncusu (referans görseller)
   const hot = Math.min(1, (n9 + n8 * 0.5) / 4);
   GILD_FX.mat.color.setRGB(1, 0.78 - 0.36 * hot, 0.38 - 0.26 * hot);

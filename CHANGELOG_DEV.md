@@ -10,6 +10,10 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (5) — Alev haresi azaltıldı · `main`
+- Kullanıcı: "hareler biraz fazla, ışıltı güzel". `makeFlameShell`: kenar şişmesi 0.0085 → 0.006, alev alfası 1.2 → 0.72, geniş hare 0.2 → 0.07; `gildSparks` aura sprite opaklığı üst sınırı 0.32 → 0.16. Isınmış metal / derz çizgileri (`GILD_ARM`) değişmedi.
+- Testler: `node --check` tamam, `t_armorfx` geçti, yakın ekran görüntüsü kontrol edildi. Cihazda denenmedi. Yedek: `yedek/alev-hare-oncesi`.
+
 ## 2026-10-13 (4) — Demirci +7…+9 zorlaştırma ve Sv 45+ EXP 2 kat · dal `ozellik/demirci-exp-zorluk`
 - Dosya: `index.html` (+ bu kayıt, `PROJECT_STATE.md`). `__tm` test kancasına `UPG, expNeed, expNeed0` eklendi. Kullanıcı isteğiyle `UPG.rate` (CLAUDE.md'deki "geliştirme oranlarına dokunma" kuralının istisnası); `UPG.bonus` (eşya gücü) değişmedi.
 - **Demirci:** başarı oranı (+N → +N+1): +6→+7 %50→%42, +7→+8 %35→%25, +8→+9 %25→%12 (+1…+6 aynı). Altın: +7 ×1.5, +8 ×2.2, +9 ×3.2 (`GEL_MULT`). Malzeme: ruh taşı ve yuva cevheri 1.5 kat (yukarı yuvarlanır). Başarısızlık kuralları aynı (+7'ye kadar bir düşer, +8/+9 hedefinde +0; Kutsama korur).
