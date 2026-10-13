@@ -704,6 +704,46 @@ const SKILL_MAX = 5;
 const skillLearnCost = (sk, lvl) => Math.round((lvl === 0 ? 250 : 120) * Math.pow(lvl + 1, 2.1) * (1 + sk.unlock / 8));
 const skillLvlReq = (sk, lvl) => sk.unlock + lvl * 5; // bir sonraki seviye için gereken karakter seviyesi
 const skillPower = (lvl) => 1 + 0.18 * (lvl - 1);
+// ---------- Beceri ustalığı (Aşama 1: yalnız veri yapısı + geçiş altyapısı; güce / bekleme süresine ETKİSİ YOK) ----------
+// Sıra: normal seviye 1…SKILL_MAX → M1…M10 → G1…G5. Kayıt: P.mastery = { [beceriId]: aşama } (yalnız 0'dan büyükler tutulur).
+//   0 = ustalık yok (normal) · 1…10 = M1…M10 · 11…15 = G1…G5. Anahtar beceri kimliği olduğundan her becerinin tek kaydı vardır;
+//   applySave yalnız sınıfın kendi becerilerini ve SKILL_MAX'a ulaşmış becerileri kabul eder.
+// Bu aşamada yalnız iki geçiş var: Usta Yetenek Parşömeni (normal SKILL_MAX → M1) ve Büyük Usta Yetenek Parşömeni (M10 → G1).
+// M1→M10 ve G1→G5 arası yükseltmeler, güç artışı, maliyet ve başarı oranı sonraki aşamada tasarlanacak.
+const MASTERY = { M: 10, G: 5, MAX: 15 };
+const masteryOf = (id) => (P && P.mastery ? P.mastery[id] | 0 : 0);
+const masteryLabel = (st) => (st <= 0 ? '' : st <= MASTERY.M ? 'M' + st : 'G' + (st - MASTERY.M));
+// beceri seviyesi metni (arayüz): ustalıkta 'M3' / 'G1', normal en yüksekte 'Seviye 5 (tam)'
+const skillLvText = (id) => { const lv = P.skills[id] || 0, st = masteryOf(id); return st ? masteryLabel(st) : lv >= SKILL_MAX ? 'Seviye ' + SKILL_MAX + ' (tam)' : 'Seviye ' + lv; };
+const MASTERY_SCROLLS = {
+  usta_parsomen: { to: 1, need: 'normal' },          // normal SKILL_MAX → M1
+  busta_parsomen: { to: MASTERY.M + 1, need: 'M10' }, // M10 → G1
+};
+// uygunluk: boş metin = kullanılabilir; değilse oyuncuya gösterilecek neden (parşömen bu durumda TÜKETİLMEZ)
+function masteryCheck(scrollId, skillId) {
+  const R = MASTERY_SCROLLS[scrollId];
+  if (!R) return 'Geçersiz parşömen';
+  if (!P || !CLASSES[P.cls] || !CLASSES[P.cls].skills.includes(skillId) || !SKILLS[skillId]) return 'Bu beceri sınıfına ait değil';
+  if (countStack(scrollId) < 1) return 'Parşömen yok';
+  const lv = P.skills[skillId] || 0, st = masteryOf(skillId);
+  if (R.need === 'normal') {
+    if (st > 0) return 'Zaten ' + masteryLabel(st);
+    if (lv <= 0) return 'Öğrenilmedi';
+    if (lv < SKILL_MAX) return 'Önce Seviye ' + SKILL_MAX + ' gerekli (şu an ' + lv + ')';
+    return '';
+  }
+  if (st === MASTERY.M) return '';
+  return st > MASTERY.M ? 'Zaten ' + masteryLabel(st) : 'M10 gerekli (şu an ' + (st ? masteryLabel(st) : 'normal') + ')';
+}
+// parşömeni kullan: önce kontrol, sonra tek adımda 1 parşömen düş + aşamayı yaz (senkron; ikinci çağrı kontrolde reddedilir)
+function useMasteryScroll(scrollId, skillId) {
+  const why = masteryCheck(scrollId, skillId);
+  if (why) return { ok: false, why };
+  if (!removeStack(scrollId, 1)) return { ok: false, why: 'Parşömen yok' };
+  if (!P.mastery) P.mastery = {};
+  P.mastery[skillId] = MASTERY_SCROLLS[scrollId].to;
+  return { ok: true, stage: P.mastery[skillId] };
+}
 
 // ---------- Zindanlar ----------
 const DUNGEONS = [
@@ -916,6 +956,9 @@ const STACKS = {
   ess_neck: { name: 'Gölge İncisi', kind: 'ess', icon: 'soul', tint: '#7a7aff', sell: 480, desc: '+7 … +9 kolye geliştirmede kullanılır. Bosslardan, Kadim Metin\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
   bless: { name: 'Kutsama Kağıdı', kind: 'scroll', price: 2500, sell: 300, icon: 'scroll', tint: '#d8a02a', desc: 'Geliştirme başarısız olursa eşya seviyesi düşmez.' },
   tp: { name: 'Dönüş Parşömeni', kind: 'scroll', price: 30, icon: 'scroll', tint: '#3a8ae0', desc: 'Zindandan anında köye ışınlar.' },
+  // Beceri ustalığı parşömenleri (henüz hiçbir düşüş / ödül tablosuna bağlı değil; satış fiyatı geçici)
+  usta_parsomen: { name: 'Usta Yetenek Parşömeni', kind: 'scroll', sell: 500, icon: 'scroll', tint: '#4ad0c0', desc: 'Seviye 5\'e (en yüksek normal seviye) ulaşmış bir beceriyi M1 ustalık aşamasına geçirir. Çantada Kullan → beceri seç.' },
+  busta_parsomen: { name: 'Büyük Usta Yetenek Parşömeni', kind: 'scroll', sell: 2000, icon: 'scroll', tint: '#c070ff', desc: 'M10 ustalık aşamasındaki bir beceriyi G1 büyük ustalık aşamasına geçirir. Çantada Kullan → beceri seç.' },
   // Zindan malzemeleri (eskiden "çöp"): her geliştirmede eşyanın kademesine göre biri istenir (dmatOf). Zindanın
   // canavarlarından düşer; o kademedeki gereksiz eşyayı parçalayınca da çıkar.
   j1: { name: 'Kurt Azısı', kind: 'dmat', sell: 5, icon: 'bone', tint: '#e8dcc0', desc: 'Bez Zırh, Taş Balta ve kademe 0-1 eşya geliştirmede kullanılır. Yosunlu İn\'de düşer.' },
@@ -2392,7 +2435,7 @@ function newCharacter(cls, name) {
     stats: Object.assign({}, c.base), gold: 150,
     inv: new Array(INV_SIZE).fill(null), depot: new Array(DEPOT_SIZE).fill(null),
     equip: { weapon: null, head: null, chest: null, feet: null, shield: null, ring: null, neck: null, charm: null },
-    skills: {}, cleared: {}, sealed: false,
+    skills: {}, mastery: {}, cleared: {}, sealed: false, // mastery: beceri ustalık aşamaları (bkz. MASTERY)
     clearDiff: {}, // zindan → bitirilen en yüksek zorluk (0 Normal, 1 Zor, 2 Kabus); bir sonraki zorluğu açar
     daily: null, // günlük görevler (Bekçi): { day, q: [{ k, need, n, claimed }], chest }
     kills: 0, deaths: 0, bosses: 0, playTime: 0, bestPlus: 0, upgrades: 0,
@@ -2550,6 +2593,12 @@ function applySave(o) {
     T.equip[sl] = it && it.type === 'gear' && it.slot === sl && (sl !== 'weapon' || it.cls === o.cls) ? it : (sl === 'weapon' || sl === 'chest' ? T.equip[sl] : null);
   }
   if (o.skills && typeof o.skills === 'object') for (const id in T.skills) T.skills[id] = Math.floor(_num(o.skills[id], T.skills[id], 0, SKILL_MAX));
+  // beceri ustalığı: eski kayıtta yok → boş ({}); yalnız sınıfın becerileri, 1…MASTERY.MAX ve normal seviyesi tam olanlar
+  T.mastery = {};
+  if (o.mastery && typeof o.mastery === 'object') for (const id in T.skills) {
+    const st = Math.floor(_num(o.mastery[id], 0, 0, MASTERY.MAX));
+    if (st > 0 && T.skills[id] >= SKILL_MAX) T.mastery[id] = st;
+  }
   T.cleared = {};
   if (o.cleared && typeof o.cleared === 'object') for (const d of DUNGEONS) { const v = _num(o.cleared[d.id], 0, 0, 1e9); if (v > 0) T.cleared[d.id] = Math.floor(v); }
   // eski yuva düzeninden taşınanlar: boş yuvaya giyilir, yoksa çanta → depo → altın
@@ -16515,6 +16564,7 @@ const UI = {
       if (it.type === 'stack') {
         const s = STACKS[it.id];
         if (s.kind === 'pot') acts.appendChild(this.btn('Kullan', 'green', () => { Combat.drinkPotion(s.hp ? 'hp' : 'mp'); this.render(); }));
+        if (MASTERY_SCROLLS[it.id]) this.masteryActs(acts, it);
         if (it.id === 'tp') acts.appendChild(this.btn('Kullan', 'blue', () => { if (G.level.type !== 'dungeon') { toast('Zaten köydesin'); return; } if (G.transitioning || P.hp <= 0 || (G.player && G.player.dead)) return; if (!removeStack('tp', 1)) return; this.close(); goVillage(true); }));
       }
       if (it.type === 'gear') {
@@ -16524,6 +16574,25 @@ const UI = {
       } else acts.appendChild(this.confirmBtn('drop' + it.uid, 'Yok et', 'Emin misin?', '', () => { P.inv[i] = null; this.sel = null; this.render(); }));
     }
     this.sealActs(acts, it);
+  },
+  // Ustalık parşömeni: Kullan → sınıfın becerileri listelenir; uygun olan onaylanınca 1 parşömen düşer, uygun olmayan kilitli (nedeniyle)
+  masteryActs(acts, it) {
+    const open = this.mastMenu === it.uid, R = MASTERY_SCROLLS[it.id];
+    acts.appendChild(this.btn(open ? 'Beceri seç ▲' : 'Kullan', 'blue', () => { this.mastMenu = open ? null : it.uid; this.confirm = null; this.render(); }));
+    if (!open) return;
+    for (const id of CLASSES[P.cls].skills) {
+      const s = SKILLS[id], why = masteryCheck(it.id, id);
+      if (why) { acts.appendChild(this.btn(`${s.name} · ${why}`, '', () => {}, true)); continue; }
+      const from = masteryOf(id) ? masteryLabel(masteryOf(id)) : 'Seviye ' + SKILL_MAX;
+      acts.appendChild(this.confirmBtn('mst' + it.uid + id, `${s.name} · ${from} → ${masteryLabel(R.to)}`, `${s.name} → ${masteryLabel(R.to)} · Onayla`, 'gold', () => {
+        const r = useMasteryScroll(it.id, id);
+        if (!r.ok) { toast(r.why); SFX.play('deny'); this.render(); return; }
+        SFX.play('levelup'); toast(`${s.name}: ${masteryLabel(r.stage)} ustalık aşaması!`);
+        this.mastMenu = null;
+        if (!countStack(it.id)) this.sel = null;
+        saveGame(); this.render();
+      }));
+    }
   },
   // Taş Mühür: giyili ya da çantadaki eşyaya tak / sök; çantadaki mührü üst kademeye birleştir
   sealActs(acts, it) {
@@ -16597,7 +16666,7 @@ const UI = {
     for (const id of c.skills) {
       const s = SKILLS[id], lv = P.skills[id] || 0;
       const li = el('div', 'li' + (lv ? '' : ' locked'));
-      li.innerHTML = `<img src="${skillIcon(s.icon)}" alt=""><div class="t"><b>${s.name} ${lv ? '· ' + (lv >= SKILL_MAX ? 'M' : lv) : '· kilitli (Sv ' + s.unlock + ')'}</b><span>${s.desc} · ${s.mp} mana · ${s.cd} sn</span></div>`;
+      li.innerHTML = `<img src="${skillIcon(s.icon)}" alt=""><div class="t"><b>${s.name} ${lv ? '· ' + skillLvText(id) : '· kilitli (Sv ' + s.unlock + ')'}</b><span>${s.desc} · ${s.mp} mana · ${s.cd} sn</span></div>`;
       sk.appendChild(li);
     }
     b.appendChild(sk);
@@ -16816,14 +16885,14 @@ const UI = {
 
   p_master(b) {
     this.title('Usta', 'Yetenek hocası');
-    b.appendChild(el('div', 'muted', 'Yetenekleri altınla öğren ve M (usta) seviyesine kadar geliştir. Her seviye gücü %18 artırır.'));
+    b.appendChild(el('div', 'muted', 'Yetenekleri altınla öğren ve Seviye ' + SKILL_MAX + '\'e kadar geliştir. Her seviye gücü %18 artırır. Seviye ' + SKILL_MAX + '\'ten sonra ustalık (M1…) için Usta Yetenek Parşömeni gerekir.'));
     const list = el('div', 'list'); list.style.marginTop = '8px';
     for (const id of CLASSES[P.cls].skills) {
       const s = SKILLS[id], lv = P.skills[id] || 0;
       const r = el('div', 'li');
       const max = lv >= SKILL_MAX;
       const cost = skillLearnCost(s, lv), req = lv === 0 ? s.unlock : skillLvlReq(s, lv);
-      r.innerHTML = `<img src="${skillIcon(s.icon)}" alt=""><div class="t"><b>${s.name} · ${lv === 0 ? 'öğrenilmedi' : max ? 'M (usta)' : 'Seviye ' + lv}</b><span>${s.desc}</span>${max ? '' : `<span>Sonraki: Sv ${req} · <span class="price">${coinImg()}${fmtFull(cost)}</span></span>`}</div>`;
+      r.innerHTML = `<img src="${skillIcon(s.icon)}" alt=""><div class="t"><b>${s.name} · ${lv === 0 ? 'öğrenilmedi' : skillLvText(id)}</b><span>${s.desc}</span>${max ? '' : `<span>Sonraki: Sv ${req} · <span class="price">${coinImg()}${fmtFull(cost)}</span></span>`}</div>`;
       if (!max) r.appendChild(this.btn(lv === 0 ? 'Öğren' : 'Geliştir', 'gold', () => {
         if (P.lv < req) { toast('Seviye ' + req + ' gerekli'); SFX.play('deny'); return; }
         if (P.gold < cost) { toast('Altın yetersiz'); SFX.play('deny'); return; }
@@ -17711,7 +17780,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { UPG, expNeed, expNeed0, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;

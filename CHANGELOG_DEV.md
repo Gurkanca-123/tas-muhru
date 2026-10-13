@@ -10,6 +10,16 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (6) — Beceri Ustalığı Aşama 1: veri yapısı + iki parşömen · dal `ozellik/beceri-ustalik` (main'e alınmadı)
+- Dosya: `index.html` (+ bu kayıt, `PROJECT_STATE.md`). Yedek: `yedek/beceri-ustalik-oncesi` (= `b208b14`).
+- Veri: `P.mastery = { [beceriId]: aşama }` — 0 normal, 1…10 M1…M10, 11…15 G1…G5 (`MASTERY`, `masteryOf`, `masteryLabel`). Anahtar beceri kimliği → beceri başına tek kayıt; yalnız 0'dan büyük aşamalar saklanır. Güce / bekleme süresine / maliyete etkisi YOK (sonraki aşama).
+- Kayıt: `newCharacter` şablonuna `mastery: {}`; `applySave` beyaz listesi: yalnız sınıfın becerileri, 1…15 aralığı ve normal seviyesi `SKILL_MAX` olan beceriler kabul edilir; eski kayıtta alan yoksa `{}`.
+- Parşömenler (`STACKS`, `kind: 'scroll'`, `MASTERY_SCROLLS`): `usta_parsomen` Usta Yetenek Parşömeni (normal Seviye 5 → M1), `busta_parsomen` Büyük Usta Yetenek Parşömeni (M10 → G1). `masteryCheck` uygun değilse nedeni döndürür ve parşömen tüketilmez; `useMasteryScroll` kontrol → 1 parşömen düş → aşamayı yaz (senkron, ikinci çağrı reddedilir). Hiçbir düşüş / ödül / dükkân tablosuna bağlı değil; satış fiyatı (500 / 2000) geçici.
+- Arayüz: çantada parşömen seçilince `Kullan` → sınıfın becerileri listelenir (`UI.masteryActs`); uygun olan iki dokunuşla onaylanır, uygun olmayan nedeniyle kilitli görünür. Karakter ve Usta (hoca) panellerinde seviye metni `skillLvText`: eski "M (usta)" etiketi M1 ile karışmasın diye "Seviye 5 (tam)" oldu; ustalıkta "M1" / "G1".
+- `__tm` test kancasına ustalık sembolleri eklendi.
+- Testler: `node --check` tamam; yeni `t_mastery.mjs` 21/21 (yeni karakter / eski kayıt varsayılanı, Usta ve Büyük Usta uygun / uygunsuz durumlar, tüketilmeme, çift kullanım, kayıt-yükleme, bozuk veri temizliği, çanta seçim akışı, Baltacı); regresyon `t_logic` 21/21, `t_temple` 34/34, `t_reg` temiz. Masaüstündeki `run.mjs` / `movetest.mjs` bu ortamda yok → çalıştırılmadı.
+- Açık: M1→M10 ve G1→G5 yükseltme akışı, güç etkisi, düşüş kaynakları; ortak oyunda başka oyuncunun ustalık aşaması gösterilmiyor (gerekmiyor).
+
 ## 2026-10-13 (5) — Alev haresi azaltıldı · `main`
 - Kullanıcı: "hareler biraz fazla, ışıltı güzel". `makeFlameShell`: kenar şişmesi 0.0085 → 0.006, alev alfası 1.2 → 0.72, geniş hare 0.2 → 0.07; `gildSparks` aura sprite opaklığı üst sınırı 0.32 → 0.16. Isınmış metal / derz çizgileri (`GILD_ARM`) değişmedi.
 - Testler: `node --check` tamam, `t_armorfx` geçti, yakın ekran görüntüsü kontrol edildi. Cihazda denenmedi. Yedek: `yedek/alev-hare-oncesi`.
