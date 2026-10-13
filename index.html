@@ -715,8 +715,8 @@ const skillPower = (lvl) => 1 + 0.18 * (lvl - 1);
 const MASTERY = { M: 10, G: 5, MAX: 15 };
 // Hedef kademeye geçiş başarı şansı (%): dizin = hedef kademe - 1 (normal→M1 … M9→M10). Denge verisi: yalnız bu tablodan değiştir.
 const MASTERY_RATE = [100, 100, 100, 95, 92, 88, 84, 80, 75, 70];
-// kademe başına beceri çarpanı artışı (mevcut skalada Sv5 = 1.72): M10 = 1.72 + 0.80 = 2.52, G1 = 2.64
-const MASTERY_STEP = { M: 0.08, G: 0.12 };
+// kademe başına beceri çarpanı artışı (Sv5 = 1.72): M1 1.76 · M5 1.92 · M10 2.12 · G1 2.18 · G3 2.30 · G5 2.42
+const MASTERY_STEP = { M: 0.04, G: 0.06 };
 const masteryBonus = (st) => (st <= 0 ? 0 : Math.min(st, MASTERY.M) * MASTERY_STEP.M + Math.max(0, st - MASTERY.M) * MASTERY_STEP.G);
 const masteryOf = (id) => (P && P.mastery ? P.mastery[id] | 0 : 0);
 const skillPowerOf = (id) => skillPower(P.skills[id] || 1) + masteryBonus(masteryOf(id));
