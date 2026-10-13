@@ -10214,8 +10214,150 @@ const SAVASCI_SKILL_T = {
   w3: { dur: 1.12, hits: [0.26, 0.75], lock: 0.88 }, // Kılıç Çevirme: hızlanan iki tur
   w4: { dur: 1.82, plant: 0.38, rise: 1.12, lock: 1.24 }, // Mühür Yemini: kılıcı yere sapla → kalk, kılıç göğe
 };
+// ---- Savaşçı silahlı duruş / yürüme / koşma klipleri ----
+// Dosyalara gömülü klipler (hareket yakalama) silah elde olunca kılıcı yana-geriye savuruyor, zindan beklemesi (idleReady)
+// çömelmiş duruyordu. Bu bölüm iskeletin dinlenme pozundan "yön tabanlı" klipler üretir (gövde başına bir kez, yükleme anında):
+//   idleReady  → zindan beklemesi (Metin2 savaşçısı: geniş basış, dik gövde, kılıç sağ elde yukarı-yana, sol yumruk belde)
+//   walkReady / runReady → silahlı yürüme / koşma (kalça + bacaklar özgün klipten; gövde, baş ve kollar yeni, kılıç kolu sabit)
+// Köydeki (kınlı) yürüme/koşma/bekleme klipleri DEĞİŞMEDİ. Kapatmak için SV_READY = false (eski klipler kalır).
+const SV_READY = true;
+const SV_PAR = { Spine: 'Hips', Spine1: 'Spine', Spine2: 'Spine1', Neck: 'Spine2', Head: 'Neck', LeftShoulder: 'Spine2', LeftArm: 'LeftShoulder', LeftForeArm: 'LeftArm', LeftHand: 'LeftForeArm',
+  RightShoulder: 'Spine2', RightArm: 'RightShoulder', RightForeArm: 'RightArm', RightHand: 'RightForeArm', LeftUpLeg: 'Hips', LeftLeg: 'LeftUpLeg', LeftFoot: 'LeftLeg', LeftToeBase: 'LeftFoot',
+  RightUpLeg: 'Hips', RightLeg: 'RightUpLeg', RightFoot: 'RightLeg', RightToeBase: 'RightFoot' };
+const SV_BONES = ['Hips'].concat(Object.keys(SV_PAR)); // ebeveyn önce
+const SV_TIP = [0, 0, 1]; // kılıç modelinin yerel uç yönü (buildGearSword)
+// İskelet uzayı: +Z ileri, +X sol, +Y yukarı. Dinlenme (bağlama) pozundan kemik dünya dönüşleri / konumları.
+function svRig(skel, mountQ) {
+  skel.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(skel.matrixWorld).invert();
+  const R = { bone: {}, lq: {}, lp: {}, wq: {}, wp: {} };
+  for (const n of SV_BONES) {
+    const b = skel.getObjectByName('mixamorig' + n);
+    if (!b) return null;
+    R.bone[n] = b; R.lq[n] = b.quaternion.clone(); R.lp[n] = b.position.clone();
+    const p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+    new THREE.Matrix4().multiplyMatrices(inv, b.matrixWorld).decompose(p, q, s);
+    R.wq[n] = q; R.wp[n] = p;
+  }
+  R.ankleH = Math.min(R.wp.LeftFoot.y, R.wp.RightFoot.y);
+  R.hips = R.lp.Hips.clone();
+  // kılıcın dinlenme pozundaki ucu yönü (el kemiği · tutma dönüşü · kılıç yerel ekseni)
+  R.blade = new THREE.Vector3().fromArray(SV_TIP).applyQuaternion(new THREE.Quaternion().fromArray(mountQ)).applyQuaternion(R.wq.RightHand);
+  return R;
+}
+// Poz çözücü: kemik başına {dir, tw} (Y ekseni dünya yönüne), {d} (dünya dönüşü ekle), {q} (yerel ekle), {l} (yerel mutlak); yoksa dinlenme
+function svSolve(R, spec) {
+  const wq = {}, wp = {}, lq = {}, ctx = { wq };
+  for (const n of SV_BONES) {
+    const par = SV_PAR[n], pq = par ? wq[par] : new THREE.Quaternion();
+    let sp = spec[n]; if (typeof sp === 'function') sp = sp(ctx);
+    let w;
+    if (sp && sp.dir) {
+      const y0 = new THREE.Vector3(0, 1, 0).applyQuaternion(R.wq[n]);
+      w = new THREE.Quaternion().setFromUnitVectors(y0, sp.dir.clone().normalize()).multiply(R.wq[n]);
+      if (sp.tw) w = new THREE.Quaternion().setFromAxisAngle(sp.dir.clone().normalize(), sp.tw).multiply(w);
+    } else if (sp && sp.d) w = sp.d.clone().multiply(R.wq[n]);
+    else if (sp && sp.q) w = pq.clone().multiply(R.lq[n]).multiply(sp.q);
+    else if (sp && sp.l) w = pq.clone().multiply(sp.l);
+    else w = pq.clone().multiply(R.lq[n]);
+    wq[n] = w; lq[n] = pq.clone().invert().multiply(w);
+    wp[n] = par ? wp[par].clone().add(R.lp[n].clone().applyQuaternion(pq)) : new THREE.Vector3();
+  }
+  return { lq, wq, wp };
+}
+function svClip(R, name, T, times, frames, hips) {
+  const tr = [];
+  for (const n of SV_BONES) {
+    const v = [];
+    for (const f of frames) { const q = f.lq[n]; v.push(q.x, q.y, q.z, q.w); }
+    tr.push(new THREE.QuaternionKeyframeTrack('mixamorig' + n + '.quaternion', times, v));
+  }
+  const hv = []; for (const p of hips) hv.push(p.x, p.y, p.z);
+  tr.push(new THREE.VectorKeyframeTrack('mixamorigHips.position', times, hv));
+  return new THREE.AnimationClip(name, T, tr);
+}
+function svBuildClips(gl, mountQ) {
+  const R = svRig(gl.scene, mountQ);
+  if (!R) return;
+  const V3 = (x, y, z) => new THREE.Vector3(x, y, z), QA = (ax, a) => new THREE.Quaternion().setFromAxisAngle(ax, a);
+  const X = V3(1, 0, 0), Y = V3(0, 1, 0);
+  const rotX = (a) => QA(X, a), rotY = (a) => QA(Y, a);
+  const inv = (q) => q.clone().invert();
+  const chest = (c) => c.wq.Spine2.clone().multiply(inv(R.wq.Spine2)); // gövde çerçevesi: kollar gövdeyle birlikte hareket eder
+  const pelvis = (c) => c.wq.Hips.clone().multiply(inv(R.wq.Hips));
+  const arc = (to) => new THREE.Quaternion().setFromUnitVectors(R.blade.clone().normalize(), to.clone().normalize());
+  // 1) idleReady: 2.6 sn döngü (nefes + hafif ağırlık kayması)
+  const T = 2.6, N = 26, times = [], frames = [], hips = [];
+  for (let i = 0; i <= N; i++) {
+    const t = (i / N) * T, br = Math.sin((t / T) * TAU), sh = Math.sin((t / T) * TAU + 1.1);
+    const sp = {};
+    sp.Hips = { d: rotY(0.06 + 0.012 * sh) };
+    sp.Spine = { q: rotX(0.03 + 0.008 * br) };
+    sp.Spine1 = { q: rotX(0.02 + 0.006 * br) };
+    sp.Spine2 = { q: rotX(0.02).multiply(rotY(-0.10)) };
+    sp.Head = { q: rotX(-0.10) };
+    for (const s of [1, -1]) {
+      const nm = s > 0 ? 'Left' : 'Right', fw = s > 0 ? 0.12 : -0.02;
+      sp[nm + 'UpLeg'] = (c) => ({ dir: V3(s * 0.34, -0.92, fw + 0.30).applyQuaternion(pelvis(c)) });
+      sp[nm + 'Leg'] = (c) => ({ dir: V3(s * 0.19, -0.93, fw - 0.16).applyQuaternion(pelvis(c)) });
+      sp[nm + 'Foot'] = () => ({ dir: V3(0, 1, 0).applyQuaternion(R.wq[nm + 'Foot']).applyQuaternion(rotY(s * 0.28)) });
+    }
+    sp.LeftArm = (c) => ({ dir: V3(0.34, -0.92, 0.10).applyQuaternion(chest(c)) });
+    sp.LeftForeArm = (c) => ({ dir: V3(-0.12, -0.40, 0.90).applyQuaternion(chest(c)) });
+    sp.LeftHand = (c) => ({ dir: V3(-0.30, -0.50, 0.80).applyQuaternion(chest(c)) });
+    sp.RightArm = (c) => ({ dir: V3(-0.30, -0.90, 0.30).applyQuaternion(chest(c)) });
+    sp.RightForeArm = (c) => ({ dir: V3(-0.10, -0.45, 0.88).applyQuaternion(chest(c)) });
+    sp.RightHand = (c) => ({ d: arc(V3(-0.30, 0.92, 0.22).applyQuaternion(chest(c))) }); // kılıç: yukarı, hafif yana-ileri
+    const c = svSolve(R, sp);
+    times.push(t); frames.push(c);
+    hips.push(V3(R.hips.x, R.ankleH - Math.min(c.wp.LeftFoot.y, c.wp.RightFoot.y) + 0.004 * br, R.hips.z)); // ayaklar yerde
+  }
+  const clips = [svClip(R, 'idleReady', T, times, frames, hips)];
+  // 2) walkReady / runReady: kalça + bacaklar özgün klipten
+  for (const [src, name, run] of [['walk', 'walkReady', false], ['run', 'runReady', true]]) {
+    const orig = gl.animations.find((a) => a.name === src);
+    if (!orig) continue;
+    const get = (n, p) => orig.tracks.find((t) => t.name === 'mixamorig' + n + '.' + p);
+    const LOW = ['Hips', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'LeftToeBase', 'RightUpLeg', 'RightLeg', 'RightFoot', 'RightToeBase'];
+    if (LOW.some((n) => !get(n, 'quaternion')) || !get('Hips', 'position')) continue;
+    const ip = {}; for (const n of LOW) ip[n] = get(n, 'quaternion').createInterpolant();
+    const ih = get('Hips', 'position').createInterpolant();
+    const D = orig.duration, M = Math.max(8, Math.round(D * 30)), tt = [], low = [], hp = [];
+    for (let i = 0; i <= M; i++) {
+      const t = (i / M) * D; tt.push(t);
+      const q = {}; for (const n of LOW) { const a = ip[n].evaluate(t); q[n] = { l: new THREE.Quaternion(a[0], a[1], a[2], a[3]) }; }
+      low.push(q);
+      const h = ih.evaluate(t); hp.push(V3(h[0], h[1], h[2]));
+    }
+    // sol uyluğun ileri-geri salınımı → faz s(t) ∈ [-1,1] (sol bacak ileri = +)
+    const zs = low.map((q) => V3(0, 1, 0).applyQuaternion(svSolve(R, q).wq.LeftUpLeg).z);
+    const mean = zs.reduce((a, b) => a + b, 0) / zs.length, amp = Math.max(...zs.map((z) => Math.abs(z - mean))) || 1;
+    const Ul = run ? 0.85 : 0.5, Ur = run ? 0.22 : 0.16, el = run ? 1.25 : 0.45, er = run ? 1.0 : 0.65, lean = run ? 0.13 : 0.04, tw = run ? 0.16 : 0.07;
+    const blade = V3(-0.32, run ? 0.62 : 0.74, run ? 0.68 : 0.50);
+    const fr = [];
+    for (let i = 0; i <= M; i++) {
+      const s = (zs[i] - mean) / amp, sp = Object.assign({}, low[i]);
+      sp.Spine = { q: rotX(lean * 0.4) };
+      sp.Spine1 = { q: rotX(lean * 0.3) };
+      sp.Spine2 = { q: rotX(lean * 0.3).multiply(rotY(tw * s)) };
+      sp.Head = { q: rotX(-lean * 1.1).multiply(rotY(-tw * s * 0.6)) };
+      const pl = -s * Ul, pr = s * Ur; // sol kol karşı bacakla, kılıç kolu az sallanır
+      sp.LeftArm = (c) => ({ dir: V3(0.2, -Math.cos(pl), Math.sin(pl)).applyQuaternion(chest(c)) });
+      sp.LeftForeArm = (c) => ({ dir: V3(0.08, -Math.cos(pl + el), Math.sin(pl + el)).applyQuaternion(chest(c)) });
+      sp.LeftHand = (c) => ({ dir: V3(-0.1, -Math.cos(pl + el + 0.3), Math.sin(pl + el + 0.3)).applyQuaternion(chest(c)) });
+      sp.RightArm = (c) => ({ dir: V3(-0.26, -Math.cos(pr), Math.sin(pr)).applyQuaternion(chest(c)) });
+      sp.RightForeArm = (c) => ({ dir: V3(-0.06, -Math.cos(pr + er), Math.sin(pr + er)).applyQuaternion(chest(c)) });
+      sp.RightHand = (c) => ({ d: arc(blade.clone().applyQuaternion(chest(c))) });
+      fr.push(svSolve(R, sp));
+    }
+    clips.push(svClip(R, name, D, tt, fr, hp));
+  }
+  // idleReady özgün klibin yerine geçer; walkReady / runReady eklenir
+  gl.animations = gl.animations.filter((a) => a.name !== 'idleReady').concat(clips);
+}
 function buildSavasciModel(key) {
   const gl = SAVASCI_BODIES[key], info = gl.scene.userData.savasci || {};
+  if (SV_READY && !gl.svDone) { gl.svDone = true; try { if (info.handMount) svBuildClips(gl, info.handMount.q); } catch (e) { console.warn('savaşçı klipleri', e); } }
   const root = new THREE.Group();
   const body = pivot(root, 0, 0, 0);
   const scene = THREE.SkeletonUtils.clone(gl.scene);
@@ -10253,7 +10395,7 @@ function buildSavasciModel(key) {
     gltf: true, mixer, actions, curAnim: null, skel: scene, gearSlots: true, gearMeshes: [],
     bodyKey: key, costume: true, gild, shell, cls: 'warrior',
     // üçlü kombo (atkA yükselen çapraz kesiş, atkB iki elle tepeden çapraz iniş, atkC dönerek ters savuruş); atkDur: klip süresi, kesiş ~0.24 sn (CLASSES.warrior.hitDelay)
-    clips: ok ? { idle: 'idleA', idleCombat: 'idleReady', look: 'idleLook', run: 'run', walk: actions.walk ? 'walk' : null, attack: ['atkA', 'atkB', 'atkC'], atkDur: info.atkDur || 0.7,
+    clips: ok ? { idle: 'idleA', idleCombat: 'idleReady', look: 'idleLook', run: 'run', walk: actions.walk ? 'walk' : null, runCombat: actions.runReady ? 'runReady' : null, walkCombat: actions.walkReady ? 'walkReady' : null, attack: ['atkA', 'atkB', 'atkC'], atkDur: info.atkDur || 0.7,
       skills: { w1: ['skW1', S.w1.dur], w2: ['skW2', S.w2.dur], w3: ['skW3', S.w3.dur], w4: ['skW4', S.w4.dur] } } : { idle: actions.idleA ? 'idleA' : 'run', run: 'run', attack: [] },
     runSpeed: (info.runSpeed || 2.1) * SAVASCI_SCALE, walkSpeed: (info.walkSpeed || 0.75) * SAVASCI_SCALE,
     idleT: 0, lookAt: 6 + Math.random() * 4, spd: 0,
@@ -15663,6 +15805,9 @@ class PlayerEnt {
     // gerçek yer hızı (joystick şiddeti, yavaşlama, saldırırken yavaş yürüme dahil), yumuşatılmış
     if (H.px != null && dt > 0) H.spd += (Math.hypot(this.x - H.px, this.z - H.pz) / dt - H.spd) * Math.min(1, dt * 10);
     H.px = this.x; H.pz = this.z;
+    // silah elde (zindan / düello): silahlı yürüme-koşma klipleri (varsa); köyde kınlı klipler
+    const armed = !!(C.runCombat && G.level && (G.level.type === 'dungeon' || Duel.armed));
+    const RUN = armed ? C.runCombat : C.run, WALK = armed ? (C.walkCombat || C.walk) : C.walk;
     let want, restart = false;
     // yetenek klibi (Baltacı: H.clips.skills[id] = [klip, süre]); joystickle yürüyünce (atılma hariç) kesilir
     if (this.skillCast) {
@@ -15685,7 +15830,7 @@ class PlayerEnt {
     else if (this.moving) {
       // yürüme klibi olan modelde (Savaşçı): yavaşken — joystick az itilmiş, yavaşlatılmış ya da harekete yeni
       // başlarken — yürür, hızlanınca koşar (eşik aralığı: iki klip arasında titreşmesin)
-      if (C.walk) { const r = H.spd / Math.max(0.1, H.runSpeed); H.walking = H.walking ? r < 0.72 : r < 0.55; want = H.walking ? C.walk : C.run; } else want = C.run;
+      if (WALK) { const r = H.spd / Math.max(0.1, H.runSpeed); H.walking = H.walking ? r < 0.72 : r < 0.55; want = H.walking ? WALK : RUN; } else want = RUN;
       H.idleT = 0;
     }
     else {
@@ -15700,7 +15845,7 @@ class PlayerEnt {
     if (want !== H.curAnim || restart) {
       const next = H.actions[want];
       const prev = H.curAnim && H.actions[H.curAnim];
-      const isSk = want === H.skillClip, isAtk = isSk || C.attack.includes(want), fast = isAtk || want === C.run || (!!C.walk && want === C.walk);
+      const isSk = want === H.skillClip, isAtk = isSk || C.attack.includes(want), fast = isAtk || want === RUN || (!!WALK && want === WALK);
       if (next) {
         next.reset();
         if (isAtk || want === C.look) {
@@ -15724,8 +15869,8 @@ class PlayerEnt {
       H.curAnim = want;
     }
     // koşu adımı gerçek hıza uysun (ayak kaymasın)
-    if (H.curAnim === C.run) H.actions[C.run].timeScale = Math.max(0.6, Math.min(1.8, H.spd / Math.max(0.1, H.runSpeed)));
-    else if (C.walk && H.curAnim === C.walk) H.actions[C.walk].timeScale = Math.max(0.6, Math.min(1.7, H.spd / Math.max(0.1, H.walkSpeed)));
+    if (H.curAnim === RUN) H.actions[RUN].timeScale = Math.max(0.6, Math.min(1.8, H.spd / Math.max(0.1, H.runSpeed)));
+    else if (WALK && H.curAnim === WALK) H.actions[WALK].timeScale = Math.max(0.6, Math.min(1.7, H.spd / Math.max(0.1, H.walkSpeed)));
     // Kılıç Çevirme vb.: kök etrafında tam tur (prosedürel modellerdeki gibi)
     if (this.spin > 0) { this.spin -= dt; if (!H.skillClip) H.root.rotation.y = this.rot + (1 - this.spin / 0.4) * TAU; } // klip kendisi dönüyorsa kök dönmez
     H.mixer.update(dt);

@@ -10,6 +10,17 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-14 (15) — Savaşçı silahlı duruş / yürüme / koşma animasyonları · dal `ozellik/savasci-durus` (yedek: `yedek/savasci-durus-oncesi`)
+- Sorun: zindan beklemesi (`idleReady`) çömelmiş duruyordu; silah elde yürüme/koşmada kılıç yana-geriye savruluyordu.
+- Çözüm (GLB dosyalarına dokunulmadı): `buildSavasciModel` içinde gövde başına bir kez `svBuildClips` çalışır; iskeletin dinlenme pozundan
+  yön tabanlı klipler üretir: `idleReady` (özgün klibin yerine; 2,6 sn, Metin2 savaşçısı: geniş basış, dik gövde, kılıç sağ elde yukarı-yana, sol yumruk belde),
+  `walkReady` / `runReady` (kalça + bacaklar özgün yürüme/koşudan, gövde-baş-kollar yeni; kılıç kolu sabit, sol kol sallanır).
+- `PlayerEnt.animateGltf`: zindanda / düelloda (`armed`) `C.runCombat` / `C.walkCombat` kullanılır; köydeki kınlı yürüme/koşma/bekleme DEĞİŞMEDİ.
+- Kapatma: `SV_READY = false` → eski klipler.
+- Testler: 5 gövdeden 4'ü (bez, kurt, nihai, efsane) + fantazi bekleme/koşu görüntüleri elle incelendi; geçişler (bekle→koş→yürü→dur→saldırı→yetenek) başsız tarayıcıda doğrulandı;
+  qtest 40/40, qtest3 22/22, qtest4 32/32, qtest5 26/26. Gerçek telefonda DENENMEDİ.
+- Açık: saldırı/yetenek klipleri değişmedi (silah elde klipler arası geçişte kısa karışma olabilir); kılıç açısı gözle ayarlandı, beğenilmezse `svBuildClips` içindeki `blade` / kol yönleri.
+
 ## 2026-10-13 (13) — Minimal fantastik arayüz yenilemesi (Aşama 1 HUD + Aşama 2 Çanta/Görev defteri) · dal `ozellik/arayuz-minimal` (yedek: `yedek/arayuz-oncesi`)
 - Taban: `ozellik/gorev-sistemi` ucu `6b9e2d4` (HUD'daki Görevler düğmesi ve çanta sayfaları `main`'de yok; `main` = `10f7a92`, değişmedi).
 - **Aşama 1 (HUD):** yalnız CSS, stil sayfasının SONUNDAKİ «HUD: minimal fantastik» bloğu (eski kuralları ezer, geri almak = bloğu silmek). Koyu yarı saydam panel + 1px pirinç çizgi (`#hud` kapsamı).
