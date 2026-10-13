@@ -125,6 +125,7 @@ img[src$="#sm"]{image-rendering:auto!important}
 #goldline{font-size:12px;color:var(--exp);text-shadow:1px 1px 0 var(--ink);display:flex;gap:4px;align-items:center}
 #goldline img{width:14px;height:14px}
 
+
 #target{position:absolute;left:50%;top:calc(40px + var(--st));transform:translateX(-50%);width:min(220px,34vw);padding:5px 8px 7px;text-align:center}
 #target .tn{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #target .tn em{font-style:normal;color:var(--exp);margin-right:4px}
@@ -419,6 +420,54 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
 }
 @media (orientation:landscape) and (max-height:380px){ #pbody{padding:8px 10px} #ptabs{padding:6px 10px 4px} #phead{padding:4px 6px 4px 10px} }
 @media (prefers-reduced-motion:reduce){ .anvil.strike img,.anvil.bad,.fimg.strike img,.fimg.bad,.slot.up2,.slot.up3,.slot.up3::after,.fimg.up2,.fimg.up3,.fimg.up3::after,.anvil.burst,.anvil.burst::after,#lowhp.on{animation:none;opacity:.6} }
+/* ---------- HUD: minimal fantastik (arayüz yenilemesi, Aşama 1) ----------
+   Yalnız görünüm: koyu yarı saydam panel + 1px pirinç çizgi; görsel boyut ~%15–20 küçük.
+   Dokunma alanı görselden ayrı: ::before ile her düğme ~44px'e genişletilir (düğme boyutu değişse de parmak alanı küçülmez).
+   Savaş düğmeleri (saldırı, yetenek, joystick) boyutça aynı; yalnız yetenek çerçevesi inceltildi. Eski kurallar yukarıda; bu blok üzerine yazar. */
+#hud{--hud-bg:rgba(18,13,22,.74);--hud-line:rgba(200,155,90,.55);--hud-inner:rgba(0,0,0,.5)}
+#hud .px,#hud .ibtn,#hud .potbtn,#hud .qbtn,#hud .skbtn{background:var(--hud-bg);box-shadow:0 0 0 1px var(--hud-line),inset 0 0 0 1px var(--hud-inner);border-radius:3px}
+#hud .pbtn:active{box-shadow:0 0 0 1px var(--lantern),inset 0 0 0 1px var(--hud-inner)}
+#hud .ibtn.on{background:rgba(47,106,50,.85)} #hud #b-zoom.on{background:rgba(106,74,30,.88)}
+#hud .ibtn,#hud .potbtn,#hud .qbtn{position:relative}
+#hud .ibtn::before,#hud .potbtn::before,#hud .qbtn::before{content:"";position:absolute;inset:-4px}
+#tl{left:calc(8px + var(--sl));top:calc(8px + var(--st));gap:6px}
+#portrait{width:36px;height:36px}
+#portrait img,#hud #portrait img[src$="#sm"]{width:28px;height:28px}
+#hud #plv{font-size:11px!important;padding:0 6px!important;bottom:-8px!important;border-radius:8px;box-shadow:0 0 0 1px var(--hud-inner),0 0 0 2px var(--hud-line)}
+#bars{gap:4px;width:min(140px,30vw)}
+#bars .bar{height:11px;border-radius:2px;box-shadow:0 0 0 1px var(--hud-line)}
+#bars .bar b{font-size:11px;line-height:11px}
+#pots{margin-top:4px}
+#hud .potbtn{width:36px;height:36px}
+#hud .potbtn img{width:23px;height:23px}
+#hud .potbtn span{font-size:11px;right:2px}
+#hud .qbtn{width:80px;height:26px;margin-top:8px;gap:3px;padding:0 3px;font-size:11px}
+#hud .qbtn img{width:17px;height:17px}
+#hud .qbtn.new::after,#hud .qbtn.rdy::after{font-size:12px;right:-15px;top:50%;transform:translateY(-50%)}
+#buffs{margin-top:3px}.buff{width:20px;height:20px}.buff img{width:20px;height:20px}
+#tr{right:calc(8px + var(--sr));top:calc(8px + var(--st));gap:8px}
+#topbtns{gap:8px}
+#hud .ibtn{width:36px;height:36px}
+#hud .ibtn img{width:22px;height:22px}
+#hud .ibtn img[src$="#sm"]{width:28px;height:28px}
+#mapwrap{gap:5px}
+#minimap{width:88px;height:88px}
+#hud #goldline img[src$="#sm"]{width:15px;height:15px}
+#zone,#party,#qline{background:var(--hud-bg);box-shadow:0 0 0 1px var(--hud-line);border-radius:3px}
+#zone{top:calc(6px + var(--st));font-size:12px;padding:2px 10px}
+#party{top:calc(30px + var(--st));font-size:11px;padding:2px 9px}
+#qline{top:calc(30px + var(--st));font-size:11px;padding:2px 9px;box-shadow:0 0 0 1px rgba(233,198,138,.6);max-width:min(520px,calc(100vw - 412px));white-space:normal;text-align:center;line-height:1.25}
+#qline.rdy{background:rgba(14,40,22,.82);box-shadow:0 0 0 1px rgba(98,209,106,.75)}
+#party:not([hidden]) ~ #qline{top:calc(54px + var(--st))}
+#target{top:calc(60px + var(--st));width:min(190px,30vw);padding:4px 8px 6px;border-radius:3px}
+#hud:has(#party:not([hidden])) #target{top:calc(84px + var(--st))}
+#target .tn{font-size:12px}
+@media (orientation:portrait){
+  #zone{top:auto}
+  #target{top:calc(132px + var(--st));left:calc(8px + var(--sl));transform:none;width:min(170px,46vw)}
+  #qline,#party:not([hidden]) ~ #qline{left:calc(8px + var(--sl));top:calc(176px + var(--st));transform:none;max-width:calc(100vw - 214px);white-space:normal;line-height:1.25}
+  #hud:has(#party:not([hidden])) #target{top:calc(132px + var(--st))}
+}
 </style>
 
 <div id="game">
