@@ -10,6 +10,14 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (4) — Demirci +7…+9 zorlaştırma ve Sv 45+ EXP 2 kat · dal `ozellik/demirci-exp-zorluk`
+- Dosya: `index.html` (+ bu kayıt, `PROJECT_STATE.md`). `__tm` test kancasına `UPG, expNeed, expNeed0` eklendi. Kullanıcı isteğiyle `UPG.rate` (CLAUDE.md'deki "geliştirme oranlarına dokunma" kuralının istisnası); `UPG.bonus` (eşya gücü) değişmedi.
+- **Demirci:** başarı oranı (+N → +N+1): +6→+7 %50→%42, +7→+8 %35→%25, +8→+9 %25→%12 (+1…+6 aynı). Altın: +7 ×1.5, +8 ×2.2, +9 ×3.2 (`GEL_MULT`). Malzeme: ruh taşı ve yuva cevheri 1.5 kat (yukarı yuvarlanır). Başarısızlık kuralları aynı (+7'ye kadar bir düşer, +8/+9 hedefinde +0; Kutsama korur).
+  - Örnek (kademe 5 göğüs): +7 6.695 altın · 5 ruh taşı · 2 yuva cevheri; +8 12.240 · 6 · 3; +9 21.623 · 8 · 5. +6'dan +9'a Kutsama'lı beklenen deneme ~8.9 → ~14.7.
+- **EXP:** `expNeed` artık Sv ≥ 45 için `expNeed0` (eski eğri) × 2 (`EXP_X2_LV`, `EXP_X2`). Görev / tapınak / ilk temizleme ödülleri ve tek-kill sınırı eski eğriyi (`expNeed0`) kullanır: ödüller mutlak değerde aynı, seviye gerçekten 2 kat yavaş. Sv 1–44 aynı. Örnek: Sv 45 30.294 → 60.588, Sv 50 38.078 → 76.156, Sv 60 377.634 → 755.268.
+- Testler: `node --check` tamam; `t_logic` 21/21 (3 EXP kontrolü yeni 2 kat kurala göre güncellendi: Sv 1–44 aynı, 51–60 ve 61–69 maliyet oranları ×2), `t_temple` 34/34, `t_reg` temiz, `t_armorfx` 7/7 (zaman zaman "aura 0" ile takılır: testin 600 ms'lik bekleme aralığı yavaş başsız çizimde yetmiyor, oyun hatası değil). Yeni kontrol betiği `t_dem.mjs` oranları, maliyetleri ve EXP katlarını doğruladı.
+- Açık: mevcut karakterlerin EXP çubuğu Sv 45+'da yarıya iner (EXP değeri aynı, gereken 2 kat); denge cihazda oynanarak ayarlanmalı.
+
 ## 2026-10-13 (3) — Zırh +7…+9 alev kabuğu ve ısınmış metal · dal `ozellik/zirh-alev-kabugu` (main'e alınmadı)
 - Dosya: `index.html` (+ bu kayıt). Neden: kullanıcı +7/+8/+9'da referanstaki "yanıyormuş gibi" hare ve alev dillerini istedi (sarmal şerit gerekmiyor, kare parçacık yok).
 - `makeFlameShell`: gövde kemikli mesh'inin aynı geometri / iskeletle `SkinnedMesh` kopyası (toplamalı, depthWrite kapalı). Köşeler normal + yukarı yönde 3B gürültüyle uzar (dalgalanan alev dilleri), yalnız silüete yakın pikseller parlar; renk altın → turuncu (uçlarda ve +9'da daha turuncu). Parçacık yok.

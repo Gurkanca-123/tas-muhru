@@ -42,7 +42,7 @@ her zaman `grep -n` ile doğrula.
 - **Eşya / envanter:** yuvalar `SLOTS`; set sınıfları `GEAR_SETS` (Bez, Kurt Dişi, Nihai, Bronz Taş, Efsanevi…); yığınlar `STACKS`;
   **Taş Mühür:** eşya başına 1 yuva (`it.seal`), 5 tür × 3 kademe, tür üst sınırı; `recalc` ekler, UI `UI.sealActs` (çanta);
   geliştirme `UPG` + `upgradeCost` (+7…+9 için yuva özü `RAREMAT`); Simyacı (`p_alchemist`).
-- **Seviye / ödül:** `expNeed`: Sv ≤50 eski formül; 51+ `EXP_PLAN` (canavar EXP'si × gereken öldürme, merkezi tablo), tek kill EXP'si `EXP_KILL_CAP` (%35) ile sınırlı, günlük görevler `Daily`, zindan ilk temizleme ödülü `killMob` içinde.
+- **Seviye / ödül:** `expNeed` = `expNeed0` × 2 (Sv ≥ 45, `EXP_X2_LV`; ödüller `expNeed0` kullanır); `expNeed0`: Sv ≤50 eski formül; 51+ `EXP_PLAN` (canavar EXP'si × gereken öldürme, merkezi tablo), tek kill EXP'si `EXP_KILL_CAP` (%35) ile sınırlı, günlük görevler `Daily`, zindan ilk temizleme ödülü `killMob` içinde.
 - **Zindanlar:** `DUNGEONS` d1–d7 ızgara tabanlı (`buildDungeonInner`, oda + koridor, tohumlu düzen); d6 son katı Kadim Metin
   arenası; d7 Kemik Taht (Kemik Kral, kod-animasyonlu GLB). Zorluk Normal / Zor / Kabus (`DIFFS`).
 - **d8 Bronz Taş Tapınağı (dIdx 7):**
@@ -77,6 +77,8 @@ her zaman `grep -n` ile doğrula.
 - Yerel `src/` projesi bu depoyla eşitli değil.
 
 ## Son tamamlanan büyük özellikler
+- 2026-10-13 Demirci +7…+9 daha zor (`UPG.rate`, `GEL_MULT`, malzeme ×1.5) ve Sv 45+ EXP 2 kat (`expNeed`/`expNeed0`) — dal `ozellik/demirci-exp-zorluk`.
+- 2026-10-13 Zırh +7…+9 alev kabuğu (`makeFlameShell`, `H.shell`) — main.
 - 2026-10-13 Zırh parlaması: doku tabanlı derz çizgileri (`GILD_ARM`, albedo bulanık karşılaştırması), kare parçacıklar kaldırıldı (`gildSparks` yalnız aura) — dal `ozellik/zirh-parlama-duzeltme`.
 - 2026-10-13 Zırh +1…+9 efekti referans görsellere göre sıcak altın→alev paletiyle yeniden yazıldı (rünik çizgiler `uLatA`, sarmal şerit parçacıkları) — dal `ozellik/zirh-efekt-referans` (main'e alınmadı).
 - 2026-10-12 Görsel: zırh +1…+9 kademeli efekt (`ARMOR_LV`, `GILD_ARM`) ve tapınak renk paleti — dal `ozellik/gorsel-zirh-tapinak` (main'e alınmadı).

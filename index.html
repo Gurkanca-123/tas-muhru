@@ -648,7 +648,11 @@ const expKills = (lv) => {
   }
   return A[A.length - 1][1];
 };
-const expNeed = (lv) => (lv < 50 ? expBase(lv) : lv === 50 ? Math.floor(expBase(50) * 1.04) : Math.round(mobBase(lv).exp * expKills(lv)));
+const expNeed0 = (lv) => (lv < 50 ? expBase(lv) : lv === 50 ? Math.floor(expBase(50) * 1.04) : Math.round(mobBase(lv).exp * expKills(lv)));
+// Sv 45 ve sonrası: seviye atlamak için gereken EXP 2 katı (kullanıcı isteği). Görev / tapınak / ilk temizleme ödülleri ve tek-kill sınırı
+// eski eğriyi (expNeed0) kullanır: ödüller mutlak değerde aynı kalır, yani seviye gerçekten 2 kat yavaşlar.
+const EXP_X2_LV = 45, EXP_X2 = 2;
+const expNeed = (lv) => expNeed0(lv) * (lv >= EXP_X2_LV ? EXP_X2 : 1);
 
 // Sınıflar: Baltacı ve Savaşçı (kılıç; kullanıcının 5 Tripo gövdesi: Fantazi → Bez → Kurt Dişi → Nihai → Efsanevi).
 // weapons: adlı silah setleri (GEAR_SETS) — base: başlangıç / setsiz düşüş, drops: kademeli nadir düşüşler,
@@ -965,7 +969,7 @@ function sealBonusOf(equip) {
 
 // ---------- Geliştirme (Demirci ocağı) ----------
 const UPG = {
-  rate: [100, 95, 90, 80, 70, 60, 50, 35, 25], // mevcut + seviyesine göre (0 → +1 = %100)
+  rate: [100, 95, 90, 80, 70, 60, 42, 25, 12], // mevcut + seviyesine göre (0 → +1 = %100); +6'dan sonra kademeli çok daha zor (eski: 50 / 35 / 25)
   bonus: [0, 0.07, 0.14, 0.22, 0.31, 0.41, 0.53, 0.67, 0.84, 1.05],
 };
 // Her ekipman yuvasının +7…+9 geliştirmesinde gereken kendine özel nadir cevheri
@@ -983,14 +987,15 @@ function efsunCost(it) {
 // eşyanın geliştirme/parçalama zindan malzemesi: adlı eşyada setin, diğerlerinde kademenin zindanı
 const DMAT_BY_TIER = ['j1', 'j1', 'j2', 'j3', 'j4', 'j5', 'j6', 'j7'];
 const dmatOf = (it) => (setOf(it) && setOf(it).mat) || DMAT_BY_TIER[clamp(it.tier | 0, 0, 7)];
+const GEL_MULT = [1.5, 2.2, 3.2]; // +7, +8, +9 altın çarpanı
 function upgradeCost(item) {
   const p = item.plus; // mevcut seviye; hedef p+1
   // +1…+4 altını ucuz (eskisinin %55'i): oyuncu erken seviyelerde parayla setini geliştirsin
-  const gold = Math.round((item.tier + 1) * 30 * Math.pow(p + 1, 1.65) * (p < 4 ? 0.55 : 1));
+  const gold = Math.round((item.tier + 1) * 30 * Math.pow(p + 1, 1.65) * (p < 4 ? 0.55 : 1) * (p >= 6 ? GEL_MULT[p - 6] : 1)); // +7…+9 altını kademeli pahalı
   let mats;
   if (p < 4) mats = { ore: p + 1 }; // +1…+4: ortak, bulunması kolay
   else if (p < 6) mats = { soul: p - 3 }; // +5…+6: ortak ama nadir
-  else mats = { soul: p - 3, [RAREMAT[item.slot]]: p - 5 }; // +7…+9: yuvaya özel nadir cevher de gerekir
+  else mats = { soul: Math.ceil((p - 3) * 1.5), [RAREMAT[item.slot]]: Math.ceil((p - 5) * 1.5) }; // +7…+9: yuvaya özel nadir cevher de gerekir (eskisinin 1.5 katı)
   mats[dmatOf(item)] = Math.ceil((p + 1) / 2); // her seviyede zindan malzemesi: 1,1,2,2,3,3,4,4,5
   if (p >= 6 && item.tier >= 5) mats.j7 = (mats.j7 || 0) + p - 5; // geç oyun +7…+9: Kemik Taht'ın Ruh Kemiği de
   return { gold, mats };
@@ -8199,7 +8204,7 @@ const Daily = {
     x.claimed = true;
     P.gold += R.gold;
     for (const [id, n] of st) addStack(id, n);
-    addExp(expNeed(P.lv) * R.exp);
+    addExp(expNeed0(P.lv) * R.exp);
     feed('Görev ödülü: +' + fmtFull(R.gold) + ' altın, ' + st.map(([id, n]) => n + ' ' + STACKS[id].name).join(', '), '#e8c547');
     SFX.play('coin');
     saveGame();
@@ -14602,7 +14607,7 @@ const Temple = {
     const stack = (id, c) => { if (c > 0) { const w = give(makeStack(id, c)); got.push(c + ' ' + STACKS[id].name + (w === 'depo' ? ' (depoya)' : w === 'altın' ? ' (çanta dolu → altın)' : '')); } };
     const gold = Math.round(R.gold * rand(0.95, 1.1));
     P.gold += gold; got.push(fmtFull(gold) + ' altın');
-    const ex = Math.max(1, Math.round(expNeed(P.lv) * R.exp)); addExp(ex); got.push(fmtFull(ex) + ' EXP');
+    const ex = Math.max(1, Math.round(expNeed0(P.lv) * R.exp)); addExp(ex); got.push(fmtFull(ex) + ' EXP');
     for (const [id, a, b, p] of R.mats || []) if (Math.random() < p) stack(id, n(a, b));
     if (R.ess && Math.random() < R.ess) stack(RAREMAT[pick(SLOTS)], 1);
     if (R.ess2 && Math.random() < R.ess2) stack(RAREMAT[pick(SLOTS)], 1);
@@ -15361,7 +15366,7 @@ const Combat = {
     const diff = P.lv - m.lv;
     if (diff > 6) exp *= Math.max(0.15, 1 - (diff - 6) * 0.15);
     if (diff < -3) exp *= 1.15;
-    if (P.lv >= 50 && P.lv < MAX_LV) exp = Math.min(exp, expNeed(P.lv) * EXP_KILL_CAP); // tek kill ile çoklu seviye atlama olmasın
+    if (P.lv >= 50 && P.lv < MAX_LV) exp = Math.min(exp, expNeed0(P.lv) * EXP_KILL_CAP); // tek kill ile çoklu seviye atlama olmasın
     exp = Math.max(1, Math.round(exp));
     addExp(exp);
     FX.num(m.x, (m.barH || 2) + 0.4, m.z, '+' + exp + ' EXP', 'exp');
@@ -15389,7 +15394,7 @@ const Combat = {
         const bonus = 150 * (L.dIdx + 1) * (L.dIdx + 1);
         P.gold += bonus;
         feed('İlk temizleme: +' + fmtFull(bonus) + ' altın', '#e8c547');
-        addExp(expNeed(P.lv) * 0.25);
+        addExp(expNeed0(P.lv) * 0.25);
       }
       this.openExit(m.x, m.z + 3);
       saveGame();
@@ -17706,7 +17711,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { UPG, expNeed, expNeed0, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
