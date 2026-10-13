@@ -10,6 +10,14 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-13 (10) — Beceri Ustalığı Aşama 2: M1→M10 yükseltme + kademe başına hasar artışı · dal `ozellik/ustalik-asama2`
+- Usta Yetenek Parşömeni artık M1→M2→…→M10 yükseltir (aynı parşömen). Şans tablosu `MASTERY_RATE` (M1–M3 %100, M4 %95, M5 %92, M6 %88, M7 %84,
+  M8 %80, M9 %75, M10 %70). Başarısızlıkta parşömen yanar, kademe aynı kalır (düşmez) — «Demirci gibi» düşüş seçeneği kullanıcıya sorulmadı, güvenli varsayım.
+- Güç: `skillPowerOf` = seviye çarpanı + M kademesi × 0.08 (+ G × 0.12). M10 = 2.52, G1 = 2.64 (Sv5 = 1.72). Normal seviye skalası değişmedi.
+  Hasar, iyileştirme (`useSkill` `pw`) ve `skillMult` bu çarpanı kullanır. Çanta düğmesi şansı gösterir: «Hamle · M3 → M4 (%95)».
+- Yapılmadı (sonraki aşama): becerilerin güç skalasını baştan dengeleme, G2…G5, ustalık görsel efektleri, kaynak/düşme, Tüccar denemesinin kaldırılması.
+- Testler: `t_mastery` 29/29 (başarısızlık oranı 6000 denemeyle ölçüldü), `t_logic` 21/21, `t_temple` 34/34, `t_reg`, `node --check`. Cihazda denenmedi.
+
 ## 2026-10-13 (9) — Boss adı kısaltıldı: «Kadim Mühür» · dal `ozellik/kadim-muhur`
 - Kullanıcı isteği: «Kadim mühür yeterli». Son zindan boss'u `Kadim Kırık Taş Mühür` → `Kadim Mühür` (banner `KADİM MÜHÜR`, tüm metinler). Küçük taş «Kırık Taş Mühür» kaldı.
 - Kod kimlikleri ve kayıt alanları değişmedi. Testler: `node --check`, `t_logic`, `t_temple`.

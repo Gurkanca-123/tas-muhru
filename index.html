@@ -704,19 +704,27 @@ const SKILL_MAX = 5;
 const skillLearnCost = (sk, lvl) => Math.round((lvl === 0 ? 250 : 120) * Math.pow(lvl + 1, 2.1) * (1 + sk.unlock / 8));
 const skillLvlReq = (sk, lvl) => sk.unlock + lvl * 5; // bir sonraki seviye için gereken karakter seviyesi
 const skillPower = (lvl) => 1 + 0.18 * (lvl - 1);
-// ---------- Beceri ustalığı (Aşama 1: yalnız veri yapısı + geçiş altyapısı; güce / bekleme süresine ETKİSİ YOK) ----------
+// ---------- Beceri ustalığı (Aşama 1: veri yapısı · Aşama 2: M1→M10 yükseltme + kademe başına hasar artışı) ----------
 // Sıra: normal seviye 1…SKILL_MAX → M1…M10 → G1…G5. Kayıt: P.mastery = { [beceriId]: aşama } (yalnız 0'dan büyükler tutulur).
 //   0 = ustalık yok (normal) · 1…10 = M1…M10 · 11…15 = G1…G5. Anahtar beceri kimliği olduğundan her becerinin tek kaydı vardır;
 //   applySave yalnız sınıfın kendi becerilerini ve SKILL_MAX'a ulaşmış becerileri kabul eder.
-// Bu aşamada yalnız iki geçiş var: Usta Yetenek Parşömeni (normal SKILL_MAX → M1) ve Büyük Usta Yetenek Parşömeni (M10 → G1).
-// M1→M10 ve G1→G5 arası yükseltmeler, güç artışı, maliyet ve başarı oranı sonraki aşamada tasarlanacak.
+// Usta Yetenek Parşömeni: normal SKILL_MAX → M1 (kesin), M1 → … → M10 (her kademe MASTERY_RATE şansıyla; başarısızlıkta parşömen yanar,
+//   kademe DÜŞMEZ). Büyük Usta Yetenek Parşömeni: M10 → G1 (kesin). G1→G5 yükseltmeleri sonraki aşama.
+// Güç: her M kademesi MASTERY_STEP.M, her G kademesi MASTERY_STEP.G kadar beceri çarpanı ekler (skillPowerOf). Becerilerin güç skalasının
+//   (normal seviye + ustalık) baştan dengelenmesi ve görsel efektler sonraki aşamada; veri yalnız bu tablolardan değişir.
 const MASTERY = { M: 10, G: 5, MAX: 15 };
+// Hedef kademeye geçiş başarı şansı (%): dizin = hedef kademe - 1 (normal→M1 … M9→M10). Denge verisi: yalnız bu tablodan değiştir.
+const MASTERY_RATE = [100, 100, 100, 95, 92, 88, 84, 80, 75, 70];
+// kademe başına beceri çarpanı artışı (mevcut skalada Sv5 = 1.72): M10 = 1.72 + 0.80 = 2.52, G1 = 2.64
+const MASTERY_STEP = { M: 0.08, G: 0.12 };
+const masteryBonus = (st) => (st <= 0 ? 0 : Math.min(st, MASTERY.M) * MASTERY_STEP.M + Math.max(0, st - MASTERY.M) * MASTERY_STEP.G);
 const masteryOf = (id) => (P && P.mastery ? P.mastery[id] | 0 : 0);
+const skillPowerOf = (id) => skillPower(P.skills[id] || 1) + masteryBonus(masteryOf(id));
 const masteryLabel = (st) => (st <= 0 ? '' : st <= MASTERY.M ? 'M' + st : 'G' + (st - MASTERY.M));
 // beceri seviyesi metni (arayüz): ustalıkta 'M3' / 'G1', normal en yüksekte 'Seviye 5 (tam)'
 const skillLvText = (id) => { const lv = P.skills[id] || 0, st = masteryOf(id); return st ? masteryLabel(st) : lv >= SKILL_MAX ? 'Seviye ' + SKILL_MAX + ' (tam)' : 'Seviye ' + lv; };
 const MASTERY_SCROLLS = {
-  usta_parsomen: { to: 1, need: 'normal' },          // normal SKILL_MAX → M1
+  usta_parsomen: { to: 1, need: 'normal' },          // normal SKILL_MAX → M1, sonra M1 → M10 (to: sonraki kademe, kullanımda hesaplanır)
   busta_parsomen: { to: MASTERY.M + 1, need: 'M10' }, // M10 → G1
 };
 // uygunluk: boş metin = kullanılabilir; değilse oyuncuya gösterilecek neden (parşömen bu durumda TÜKETİLMEZ)
@@ -727,22 +735,32 @@ function masteryCheck(scrollId, skillId) {
   if (countStack(scrollId) < 1) return 'Parşömen yok';
   const lv = P.skills[skillId] || 0, st = masteryOf(skillId);
   if (R.need === 'normal') {
-    if (st > 0) return 'Zaten ' + masteryLabel(st);
     if (lv <= 0) return 'Öğrenilmedi';
-    if (lv < SKILL_MAX) return 'Önce Seviye ' + SKILL_MAX + ' gerekli (şu an ' + lv + ')';
+    if (st >= MASTERY.M) return st === MASTERY.M ? 'M10 · Büyük Usta gerekli' : 'Zaten ' + masteryLabel(st);
+    if (st === 0 && lv < SKILL_MAX) return 'Önce Seviye ' + SKILL_MAX + ' gerekli (şu an ' + lv + ')';
     return '';
   }
   if (st === MASTERY.M) return '';
   return st > MASTERY.M ? 'Zaten ' + masteryLabel(st) : 'M10 gerekli (şu an ' + (st ? masteryLabel(st) : 'normal') + ')';
 }
-// parşömeni kullan: önce kontrol, sonra tek adımda 1 parşömen düş + aşamayı yaz (senkron; ikinci çağrı kontrolde reddedilir)
-function useMasteryScroll(scrollId, skillId) {
+// bir sonraki aşama ve başarı şansı (%): arayüz ve useMasteryScroll aynı kaynağı kullanır
+function masteryNext(scrollId, skillId) {
+  const R = MASTERY_SCROLLS[scrollId], st = masteryOf(skillId);
+  if (!R) return null;
+  if (R.need === 'normal') { const to = st + 1; return { to, rate: MASTERY_RATE[to - 1] }; }
+  return { to: R.to, rate: 100 };
+}
+// parşömeni kullan: önce kontrol, sonra tek adımda 1 parşömen düş; şansa göre aşamayı yaz (senkron; ikinci çağrı kontrolde reddedilir)
+// dönüş: { ok:false, why } reddedildi (parşömen kalır) · { ok:true, success, stage, from, to, rate } (başarısızlıkta parşömen yanar, kademe aynı)
+function useMasteryScroll(scrollId, skillId, rnd) {
   const why = masteryCheck(scrollId, skillId);
   if (why) return { ok: false, why };
+  const nx = masteryNext(scrollId, skillId), from = masteryOf(skillId);
   if (!removeStack(scrollId, 1)) return { ok: false, why: 'Parşömen yok' };
   if (!P.mastery) P.mastery = {};
-  P.mastery[skillId] = MASTERY_SCROLLS[scrollId].to;
-  return { ok: true, stage: P.mastery[skillId] };
+  const success = (rnd == null ? Math.random() : rnd) * 100 < nx.rate;
+  if (success) P.mastery[skillId] = nx.to;
+  return { ok: true, success, stage: masteryOf(skillId), from, to: nx.to, rate: nx.rate };
 }
 
 // ---------- Zindanlar ----------
@@ -15566,7 +15584,7 @@ const Combat = {
       });
     }
   },
-  skillMult(id) { return skillPower(P.skills[id] || 1) * (1 + (D.skillPct || 0)); },
+  skillMult(id) { return skillPowerOf(id) * (1 + (D.skillPct || 0)); },
   // canavarı (dx, dz) yönünde d birim kaydır (0.18 sn); metin taşları, ortak oyun kopyaları ve boss etkilenmez
   shove(m, dx, dz, d) {
     if (!m || m.dead || m.static || m.puppet || m.rank === 'boss' || !(d > 0)) return;
@@ -15583,7 +15601,7 @@ const Combat = {
     if (G.level.type === 'village' && sk.type !== 'buff' && sk.type !== 'heal' && Duel.phase !== 'fight') { toast('Köyde saldırı yeteneği kullanılamaz'); return; }
     if ((pl.cds[id] || 0) > 0) return;
     if (P.mp < sk.mp) { toast('Mana yetersiz'); SFX.play('deny'); return; }
-    const pw = skillPower(lvl) * (1 + (D.skillPct || 0)); // Taş Mühür: beceri hasarı bonusu
+    const pw = skillPowerOf(id) * (1 + (D.skillPct || 0)); // seviye + ustalık çarpanı · Taş Mühür: beceri hasarı bonusu
     const needsTarget = ['single', 'dash', 'projectile', 'axe_throw', 'leap'].includes(sk.type);
     let t = pl.target && !pl.target.dead ? pl.target : null;
     if (needsTarget || sk.type === 'aoe_target') {
@@ -16583,11 +16601,13 @@ const UI = {
     for (const id of CLASSES[P.cls].skills) {
       const s = SKILLS[id], why = masteryCheck(it.id, id);
       if (why) { acts.appendChild(this.btn(`${s.name} · ${why}`, '', () => {}, true)); continue; }
-      const from = masteryOf(id) ? masteryLabel(masteryOf(id)) : 'Seviye ' + SKILL_MAX;
-      acts.appendChild(this.confirmBtn('mst' + it.uid + id, `${s.name} · ${from} → ${masteryLabel(R.to)}`, `${s.name} → ${masteryLabel(R.to)} · Onayla`, 'gold', () => {
+      const from = masteryOf(id) ? masteryLabel(masteryOf(id)) : 'Seviye ' + SKILL_MAX, nx = masteryNext(it.id, id);
+      const rt = nx.rate < 100 ? ` (%${nx.rate})` : '';
+      acts.appendChild(this.confirmBtn('mst' + it.uid + id, `${s.name} · ${from} → ${masteryLabel(nx.to)}${rt}`, `${s.name} → ${masteryLabel(nx.to)}${rt} · Onayla`, 'gold', () => {
         const r = useMasteryScroll(it.id, id);
         if (!r.ok) { toast(r.why); SFX.play('deny'); this.render(); return; }
-        SFX.play('levelup'); toast(`${s.name}: ${masteryLabel(r.stage)} ustalık aşaması!`);
+        if (r.success) { SFX.play('levelup'); toast(`${s.name}: ${masteryLabel(r.stage)} ustalık aşaması!`); }
+        else { SFX.play('fail'); toast(`${s.name}: yükseltme başarısız, parşömen yandı (${masteryLabel(r.stage) || 'Seviye ' + SKILL_MAX} korundu)`); }
         this.mastMenu = null;
         if (!countStack(it.id)) this.sel = null;
         saveGame(); this.render();
@@ -17780,7 +17800,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
