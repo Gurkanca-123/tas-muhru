@@ -10,6 +10,20 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-14 (16) — Savaşçı Combat Idle + doğal kılıçlı koşu (kullanıcının görev metni) · dal `ozellik/savasci-durus`
+- Analiz: özgün `run`/`walk` klipleri iki kolu doğal sallıyor, gövde karşılıklı dönüyor; sorun yalnız bilek — kılıç aşağı-geri dönüp
+  bacaktan geçiyordu (namlu–bacak ekseni en az 0,28). (15)'teki ilk sürüm kolları gövdeye kilitlediği için koşu mekanikti; idle'da kılıç yukarıdaydı.
+- `svBuildClips` yeniden yazıldı (yine yükleme anında üretilen AnimationClip, Mixer ile normal oynar):
+  - `idleReady` 3,2 sn: omuz genişliği, sol ayak önde, ayaklar 2 kemikli IK ile yere sabit (`svLegIK`), dizler bükük, kalça bacaktan bacağa kayar,
+    gövde hafif önde, kılıç çapraz aşağı-ileri-dışa, dirsekler bükük; nefes, omuz, baş ve kılıçta küçük hareketler. Tüm salınımlar döngünün tam katı (kesintisiz).
+  - `walkReady` / `runReady`: özgün klibin tüm kemikleri korunur; kılıç kolu gövde çerçevesinde dışa açılır (koşu −0,20, yürüme −0,16 rad),
+    bilek salınımın ortasında hedef yöne bakan sabit yerel dönüşe alınır → kılıç önkolla ritme katılır; %35 sabit yöne çekilir ve kalça çerçevesinde sınırlanır (y ≥ 0,42, −0,40 ≤ x ≤ −0,12, z ≥ 0,2).
+  - `svSolve`: kalça konumu parametresi, `ctx.wp`, `{w}` ve `{l, pre}` spec türleri.
+- Ölçüm (fantazi, dünya birimi): koşu namlu–bacak en az 0,28 → 0,60, namlu en alçak 0,35 → 1,20; yürüme 0,29 → 0,48. El ileri-geri genliği özgünle aynı
+  (sol −0,32…0,48, sağ −0,17…0,35). Bekleme: ayak hızı 0 (kayma yok), namlu ucu yerden 0,41. Koşu ayak kayması özgün klipteki gibi (değişmedi).
+- Testler: 5 kostüm önden/yandan görüntü, geçişler (bekle→koş→yürü→koş→dur→saldırı→yetenek, köyde kınlı klipler), qtest 40/40, qtest3 22/22, qtest4 32/32, qtest5 26/26.
+  Gerçek telefonda DENENMEDİ; ölçüm kemik eksenine göre (zırh kalınlığı hesaba katılmadı).
+
 ## 2026-10-14 (15) — Savaşçı silahlı duruş / yürüme / koşma animasyonları · dal `ozellik/savasci-durus` (yedek: `yedek/savasci-durus-oncesi`)
 - Sorun: zindan beklemesi (`idleReady`) çömelmiş duruyordu; silah elde yürüme/koşmada kılıç yana-geriye savruluyordu.
 - Çözüm (GLB dosyalarına dokunulmadı): `buildSavasciModel` içinde gövde başına bir kez `svBuildClips` çalışır; iskeletin dinlenme pozundan
