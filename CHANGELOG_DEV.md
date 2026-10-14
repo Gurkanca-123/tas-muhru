@@ -10,7 +10,7 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
-## 2026-10-14 (21) — Görsel kalite geçişi: tüm zindan canavarları, NPC'ler, köy yapıları · dal `ozellik/koy-modeller`
+## 2026-10-14 (21) — Görsel kalite geçişi: tüm zindan canavarları, NPC'ler, köy yapıları · dal `ozellik/koy-modeller` → main'e alındı (kullanıcı onayı; yedek `yedek/main-koy-kalite-oncesi`)
 - Dosya: yalnız `index.html`. Bronz Taş Tapınağı (GLB) ve Kemik Kral (GLB) dokunulmadı; Metin taşı aynı kaldı.
 - Canavarlar (`buildMobModelRaw`, 8 prosedürel tür, tüm seçkin/patron renk varyantları): kurt (yele, çene/diş, iki bölüm bacak + pati, kuyruk, seçkinde dikenli tasma), yarasa (parmak kemikli zar kanat), örümcek (diz eklemli 8 bacak, 8 göz, keliser, karın deseni),
   iskelet (göz çukuru + ışık, çene/diş, omurga, bez; zırhlıda dikenli omuzluk, bel plakası, yırtık pelerin, boynuz; okçuda sadak), ifrit (boynuz, kanat, kuyruk, pençe, kor çatlakları), lav kaplumbağası (plakalar arası lav, volkan dikenleri),
