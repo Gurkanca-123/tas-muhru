@@ -10334,10 +10334,10 @@ function svBuildClips(gl, mountQ) {
       sp.LeftForeArm = (c) => ({ dir: V3(-0.18, -0.28 + 0.02 * br2, 0.94).applyQuaternion(chest(c)) });
       sp.LeftHand = (c) => ({ dir: V3(-0.22, -0.42, 0.88).applyQuaternion(chest(c)) });
       // sağ kol: dirsek ~50° bükük, el kalça önünde; kılıç çapraz aşağı-ileri-dışa, çok hafif oynar
-      sp.RightArm = (c) => ({ dir: V3(-0.27, -0.92, 0.24 + 0.015 * br2).applyQuaternion(chest(c)) });
-      sp.RightForeArm = (c) => ({ dir: V3(-0.10, -0.40 + 0.015 * br2, 0.91).applyQuaternion(chest(c)) });
+      sp.RightArm = (c) => ({ dir: V3(-0.30, -0.88, 0.36 + 0.015 * br2).applyQuaternion(chest(c)) });
+      sp.RightForeArm = (c) => ({ dir: V3(-0.20, -0.10 + 0.015 * br2, 0.97).applyQuaternion(chest(c)) });
       sp.RightHand = (c) => {
-        const want = V3(-0.36 + 0.02 * lk, -0.50 + 0.025 * br2, 0.79).applyQuaternion(chest(c));
+        const want = V3(-0.66 + 0.02 * lk, 0.62 + 0.025 * br2, 0.42).applyQuaternion(chest(c));
         return { w: arc(R.blade, want).multiply(R.wq.RightHand) };
       };
       times.push(t); frames.push(svSolve(R, sp, hp));

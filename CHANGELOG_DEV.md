@@ -10,6 +10,13 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-14 (17) — Bekleme: kılıç tutuşu Metin 2'ye yaklaştırıldı (bilek düzeltmesi) · dal `ozellik/savasci-durus`
+- Kullanıcı geri bildirimi: bekleme (idleReady) kılıç aşağı tutuyor, bilek doğal görünmüyor; Metin 2 tutuşu daha doğal.
+- `idleReady`: sağ kol öne alındı (dirsek ~90° bükük, önkol ileri-hafif içe), kılıç yana-yukarı-ileri açık (kalça çerçevesi ~ (-0,66, 0,62, 0,42)); bilek önkolla ~45° (kavrama açısı), kırık değil.
+  Ölçüm: namlu–bacak 0,69, namlu–gövde 0,71, uç yerden 1,15 (eskiden 0,41). Walk/runReady değişmedi.
+- Testler: qtest 40/40, geçişler (bekle→koş→yürü→koş→dur) doğru; görüntü 4 açıdan. Gerçek telefonda DENENMEDİ.
+- Blender: kullanıcının bilgisayarında Blender MCP bağlandı, `savasci_fantazi.glb` aktarıldı; bağlantı ağır görüntü isteğinde koptu. Poz iyileştirmesi şimdilik oyun içi görüntüyle yapıldı.
+
 ## 2026-10-14 (16) — Savaşçı Combat Idle + doğal kılıçlı koşu (kullanıcının görev metni) · dal `ozellik/savasci-durus`
 - Analiz: özgün `run`/`walk` klipleri iki kolu doğal sallıyor, gövde karşılıklı dönüyor; sorun yalnız bilek — kılıç aşağı-geri dönüp
   bacaktan geçiyordu (namlu–bacak ekseni en az 0,28). (15)'teki ilk sürüm kolları gövdeye kilitlediği için koşu mekanikti; idle'da kılıç yukarıdaydı.
