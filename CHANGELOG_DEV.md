@@ -10,6 +10,12 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-14 (18) — Bekleme kılıç açısı + ince kılıçlar · dal `ozellik/savasci-durus`
+- Kullanıcı: tutuş başarılı, bilek kırılması yok; ama kılıç fazla yana bakıyor, kılıçlar fazla kalın.
+- `idleReady`: kılıç hedefi kalça çerçevesinde (-0,66, 0,62, 0,42) → (-0,40, 0,66, 0,64) (daha ileri-yukarı, daha az yana); önkol hafif az içe.
+- `buildGearSword`: `SWORD_W = 0,76` (genişlik) ve `SWORD_T = 0,62` (kalınlık) ile namlu inceltildi; uzunluk, tutma ve siper konumu aynı. 1,0 yapılırsa eski kalınlık.
+- Testler: qtest 40/40, qtest3 22/22; görüntü 6 açı. Gerçek telefonda DENENMEDİ; diğer kılıç kademeleri (Hurda/Lonca/Magma…) tek tek bakılmadı.
+
 ## 2026-10-14 (17) — Bekleme: kılıç tutuşu Metin 2'ye yaklaştırıldı (bilek düzeltmesi) · dal `ozellik/savasci-durus`
 - Kullanıcı geri bildirimi: bekleme (idleReady) kılıç aşağı tutuyor, bilek doğal görünmüyor; Metin 2 tutuşu daha doğal.
 - `idleReady`: sağ kol öne alındı (dirsek ~90° bükük, önkol ileri-hafif içe), kılıç yana-yukarı-ileri açık (kalça çerçevesi ~ (-0,66, 0,62, 0,42)); bilek önkolla ~45° (kavrama açısı), kırık değil.

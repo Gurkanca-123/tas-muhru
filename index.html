@@ -10335,9 +10335,9 @@ function svBuildClips(gl, mountQ) {
       sp.LeftHand = (c) => ({ dir: V3(-0.22, -0.42, 0.88).applyQuaternion(chest(c)) });
       // sağ kol: dirsek ~50° bükük, el kalça önünde; kılıç çapraz aşağı-ileri-dışa, çok hafif oynar
       sp.RightArm = (c) => ({ dir: V3(-0.30, -0.88, 0.36 + 0.015 * br2).applyQuaternion(chest(c)) });
-      sp.RightForeArm = (c) => ({ dir: V3(-0.20, -0.10 + 0.015 * br2, 0.97).applyQuaternion(chest(c)) });
+      sp.RightForeArm = (c) => ({ dir: V3(-0.13, -0.10 + 0.015 * br2, 0.98).applyQuaternion(chest(c)) });
       sp.RightHand = (c) => {
-        const want = V3(-0.66 + 0.02 * lk, 0.62 + 0.025 * br2, 0.42).applyQuaternion(chest(c));
+        const want = V3(-0.40 + 0.02 * lk, 0.66 + 0.025 * br2, 0.64).applyQuaternion(chest(c));
         return { w: arc(R.blade, want).multiply(R.wq.RightHand) };
       };
       times.push(t); frames.push(svSolve(R, sp, hp));
@@ -10768,6 +10768,8 @@ function upgEmbers(w, dt, sheathed) {
     const v = pt(0.2 + Math.random() * 0.8); for (let i = 0; i < 3; i++) FX.spawn(v.x, v.y, v.z, rand(-1.6, 1.6), rand(0.4, 2), rand(-1.6, 1.6), 0xff5a3a, rand(0.25, 0.45), 0.035, 5);
   }
 }
+// Kılıçlar fazla kalın görünüyordu: genişlik ve kalınlık küçültülür (uzunluk, tutma ve siper konumu aynı). 1 = eski.
+const SWORD_W = 0.76, SWORD_T = 0.62;
 function buildGearSword(part, glow, plus) {
   if (!part) return null;
   const key = part.model + (part.tint ? '#' + part.tint : ''), cfg = { tipUp: part.tipUp !== false, len: part.len || 1.3 };
@@ -10806,8 +10808,8 @@ function buildGearSword(part, glow, plus) {
     } else for (const i of T.index) {
       const x = T.P[i * 3], y = T.P[i * 3 + 1], z = T.P[i * 3 + 2];
       // eşya: x genişlik, y namlu ekseni, z kalınlık → silah: x, z (namlu), -y
-      P.push(x * s, -z * s * dir, (y - gripY) * s * dir);
-      N.push(T.N[i * 3], -T.N[i * 3 + 2] * dir, T.N[i * 3 + 1] * dir);
+      P.push(x * s * SWORD_W, -z * s * dir * SWORD_T, (y - gripY) * s * dir); // ince namlu: genişlik / kalınlık ölçeği (uzunluk aynı)
+      N.push(T.N[i * 3] / SWORD_W, -T.N[i * 3 + 2] * dir / SWORD_T, T.N[i * 3 + 1] * dir);
       U.push(T.U[i * 2], T.U[i * 2 + 1]);
     }
     geo = new THREE.BufferGeometry();
