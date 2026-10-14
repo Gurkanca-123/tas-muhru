@@ -10,6 +10,20 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-14 (21) — Görsel kalite geçişi: tüm zindan canavarları, NPC'ler, köy yapıları · dal `ozellik/koy-modeller`
+- Dosya: yalnız `index.html`. Bronz Taş Tapınağı (GLB) ve Kemik Kral (GLB) dokunulmadı; Metin taşı aynı kaldı.
+- Canavarlar (`buildMobModelRaw`, 8 prosedürel tür, tüm seçkin/patron renk varyantları): kurt (yele, çene/diş, iki bölüm bacak + pati, kuyruk, seçkinde dikenli tasma), yarasa (parmak kemikli zar kanat), örümcek (diz eklemli 8 bacak, 8 göz, keliser, karın deseni),
+  iskelet (göz çukuru + ışık, çene/diş, omurga, bez; zırhlıda dikenli omuzluk, bel plakası, yırtık pelerin, boynuz; okçuda sadak), ifrit (boynuz, kanat, kuyruk, pençe, kor çatlakları), lav kaplumbağası (plakalar arası lav, volkan dikenleri),
+  golem (kaya kütleleri, ışıyan çekirdek + çatlaklar, boğumlu yumruk; buzda kristal, taşta yosun + rün), cadı / gölge / ruh büyücüsü (çan cüppe + yırtık etek, kuşak, pelerin, türüne göre kukuleta / buz tacı / kafatası, elde ışık küresi).
+- NPC'ler (`buildNPC` + `humanoidDetail` `o.hq`): boyun, yaka, yüz (burun, kaş, kulak, ağız), dolgun sakal/bıyık, kemer tokası, kese, manşet, çizme konçu. Kişiye özel: Demirci alet kemeri, Tüccar şapka + yelek + defter,
+  Bekçi göğüs plakası + armalı kalkan + pelerin + siperlik, Usta uzun sakal + topuz + şal + tespih, Simyacı kukuleta + iksirler + ışık küresi + gözlük, Depocu anahtar + defter.
+- Köy: `roofGable` kademeli iki tonlu kiremit, uç tahtası, yuvarlak mahya + süs, alınlık ahşabı; `stoneBase` düzensiz taş kaide; `propWindow` eşik/lento/kepenk çıtası/çiçek; kulübeler yarım ahşap çerçeve, kemerli kapı + menteşe, sarmaşık, saksı, fıçı;
+  bacalarda duman (`addSmoke`, 3 sprite); Depocu ambarı yeniden (`buildShed`: tahta duvar, raflar, kiremit sıralı çatı, anahtar tabelası).
+- Performans: `mergePivotMeshes` (canavar/NPC pivotu başına birleştirme) + `cachedMobModel` (tür başına şablon, doğuşta klon) + ışımasız düz renkleri KÖŞE RENGİYLE tek malzemede birleştirme (`vcMat`); `mergeStatic` de aynı yöntemle (tüm düzeyler).
+  Ölçüm (SwiftShader, ~30–40 canavarlı zindan girişi): çizim çağrısı main 106/184/229/173 → 138/118/181/174 (zindan 1/3/4/5), üçgen ~+%3–7. Köy: 149 → 87 çağrı, ~170k → 188k üçgen.
+- Testler: `vtest` 23/23, `qtest` 40/40, `qtest3` 22/22, `qtest4` 32/32, `qtest5` 26/26 (ilk denemede sayfa yükleme zaman aşımı, tekrarında geçti). Gerçek telefonda FPS / görünüm **denenmedi**.
+- Açık: zindan ortamları (duvar/zemin/dekor) bu geçişte değişmedi; canavar animasyonları eski basit salınım (yeni parçalar aynı pivotlarda).
+
 ## 2026-10-14 (20) — Köy: küçük özgün yapılar (Demirci, Tüccar, Usta sundurması, kulübeler) + yerleşim · dal `ozellik/koy-modeller` (köy yeniden tasarımı dalı + main birleşik; yedek: `yedek/koy-modeller-oncesi`)
 - Dosya: yalnız `index.html` (köy). Önce kullanıcının iki GLB'si (Demirci / Tüccar) denendi; diğer yapılarla uyumsuz bulunduğu için KALDIRILDI (`koy_*.js`, `VillageAssets` yok). Referans görseller ve modeller esas alınıp yapılar oyunun kutu-tabanlı diliyle yeniden yazıldı.
 - Yeni yapılar (`WP`, `roofGable`, `propWindow`, `propHangLantern`, `buildCottage`, `buildSmithy`, `buildMerchant`, `propDummy`, `buildPavilion`): eski evlerin ~%60'ı boyutunda (≈7×6 birim, duvar 2.5–3 yükseklik). Demirci: arduvaz çatı, taş baca, ÖNDE parlayan ocak + kırmızı gölgelik, örs, odun yığını, tabela. Tüccar: kırmızı kiremit çatı, çizgili + mavi gölgelik, tezgâh/mallar, para kesesi tabelası.

@@ -9765,6 +9765,147 @@ function buildChestArmor(tier, rarity, glow) {
 }
 
 // ---------- İnsansı ----------
+// ---------- Ayrıntı yardımcıları (canavar / NPC kalite geçişi) ----------
+const shadeC = (c, k) => new THREE.Color(c).multiplyScalar(k).getHex();
+const liftC = (c, k) => new THREE.Color(c).lerp(new THREE.Color(0xffffff), k).getHex();
+const _UP = new THREE.Vector3(0, 1, 0), _DIR = new THREE.Vector3();
+const r2 = (v) => Math.round(v * 100) / 100;
+// a → b arası kutu (uzuv / kemik): kesit w × d
+function limb(p, a, b, w, d, m) {
+  _DIR.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+  const len = r2(_DIR.length()); _DIR.normalize();
+  const o = part(p, boxGeo(w, len, d), m, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
+  o.quaternion.setFromUnitVectors(_UP, _DIR);
+  return o;
+}
+// taban a → uç b koni (diken, kürk tutamı, boynuz, diş)
+function spike(p, a, b, r, m, seg) {
+  _DIR.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+  const len = r2(_DIR.length()); _DIR.normalize();
+  const o = part(p, coneGeo(r, len, seg || 5), m, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
+  o.quaternion.setFromUnitVectors(_UP, _DIR);
+  return o;
+}
+// yatay zar (kanat): pts = [[x, z], ...] yerel düzlemde
+function membrane(p, key, pts, m, y) {
+  let g = GEO['mem' + key];
+  if (!g) {
+    const sh = new THREE.Shape();
+    pts.forEach(([x, z], i) => (i ? sh.lineTo(x, z) : sh.moveTo(x, z)));
+    g = GEO['mem' + key] = new THREE.ShapeGeometry(sh);
+    g.rotateX(Math.PI / 2);
+  }
+  return part(p, g, m, 0, y || 0, 0);
+}
+// Model birleştirme: her pivotun doğrudan mesh çocuklarını tek mesh'e indirger (çizim çağrısı ↓). Işımasız düz renkli
+// parçalar köşe rengiyle TEK malzemede (yumuşak / köşeli / çift yüz ayrı) birleşir; ışımalı malzemeler kendi aralarında.
+// Haritalı / saydam / referanslı (userData.keep) / alt çocuklu meshler olduğu gibi kalır.
+const VC_MAT = {};
+function vcMat(flat, side) { const k = (flat ? 'f' : 's') + (side ? 'd' : ''); return VC_MAT[k] || (VC_MAT[k] = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: !!flat, side: side ? THREE.DoubleSide : THREE.FrontSide })); }
+function mergePivotMeshes(root) {
+  const pivots = [];
+  root.traverse((o) => { if (!o.isMesh) pivots.push(o); });
+  for (const p of pivots) {
+    const groups = new Map();
+    for (const c of p.children) {
+      if (!c.isMesh || c.isSkinnedMesh || c.children.length || c.userData.keep) continue;
+      const m = c.material;
+      if (Array.isArray(m) || m.map || m.transparent || m.vertexColors || !c.geometry.attributes.normal || !m.isMeshLambertMaterial) continue;
+      const glow = m.emissive && m.emissiveIntensity > 0 && (m.emissive.r + m.emissive.g + m.emissive.b) > 0;
+      const key = glow ? m : 'vc' + (m.flatShading ? 'f' : 's') + (m.side === THREE.DoubleSide ? 'd' : '');
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(c);
+    }
+    for (const [key, list] of groups) {
+      const vc = typeof key === 'string';
+      if (list.length < 2 && !vc) continue;
+      let n = 0;
+      const gs = list.map((c) => { c.updateMatrix(); const g = c.geometry.index ? c.geometry.toNonIndexed() : c.geometry.clone(); g.applyMatrix4(c.matrix); n += g.attributes.position.count; return g; });
+      const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = vc ? new Float32Array(n * 3) : null;
+      let o = 0;
+      gs.forEach((g, gi) => {
+        const cnt = g.attributes.position.count;
+        pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3);
+        if (vc) { const cc = list[gi].material.color; for (let i = 0; i < cnt; i++) { col[(o + i) * 3] = cc.r; col[(o + i) * 3 + 1] = cc.g; col[(o + i) * 3 + 2] = cc.b; } }
+        o += cnt; g.dispose();
+      });
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+      if (vc) geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      geo.computeBoundingSphere();
+      const mesh = new THREE.Mesh(geo, vc ? vcMat(key[2] === 'f', key.length > 3) : key);
+      mesh.castShadow = list.some((c) => c.castShadow);
+      p.add(mesh);
+      for (const c of list) p.remove(c);
+    }
+  }
+}
+// Canavar şablon önbelleği: tür başına bir kez kurulur + birleştirilir, her doğuşta klonlanır (geometri/malzeme paylaşılır).
+// M içindeki Object3D referansları kökten çocuk-sırası yoluyla klona taşınır.
+const MOB_TPL = {};
+function _pathOf(root, o) { const p = []; while (o && o !== root) { p.unshift(o.parent.children.indexOf(o)); o = o.parent; } return p; }
+function _resolve(root, p) { let o = root; for (const i of p) o = o.children[i]; return o; }
+function cachedMobModel(t, build) {
+  const key = [t.model, t.color, t.eye, t.armor, t.weapon, t.crown ? 1 : 0, t.poison ? 1 : 0, t.proj, t.name, t.rank].join('|');
+  let T = MOB_TPL[key];
+  if (!T) {
+    const M = build(t);
+    for (const v of Object.values(M)) { if (v && v.isMesh) v.userData.keep = true; }
+    mergePivotMeshes(M.root);
+    const refs = {};
+    for (const [k, v] of Object.entries(M)) {
+      if (k === 'root') continue;
+      if (v && v.isObject3D) refs[k] = { p: _pathOf(M.root, v) };
+      else if (Array.isArray(v) && (v.length === 0 || v[0].isObject3D)) refs[k] = { arr: v.map((o) => _pathOf(M.root, o)) };
+    }
+    T = MOB_TPL[key] = { M, refs };
+  }
+  const root = T.M.root.clone(true);
+  const M = Object.assign({}, T.M, { root });
+  for (const [k, r] of Object.entries(T.refs)) M[k] = r.arr ? r.arr.map((p) => _resolve(root, p)) : _resolve(root, r.p);
+  return M;
+}
+// Ayrıntılı insansı (o.hq): boyun, yaka, yüz (burun / kaş / kulak / ağız), dolgun sakal + bıyık, yan saç, kemer tokası,
+// kese, dirsek manşeti, çizme konçu, omuz yuvarlağı. NPC'ler ve insansı canavarlar kullanır; oyuncu yedeği etkilenmez.
+function humanoidDetail(h, o) {
+  const { torso, head, armL, armR, legL, legR } = h;
+  const slim = o.slim ? 0.75 : 1;
+  const skC = o.skin || 0xe8b890, sk = mat(skC), shirtC = o.shirt || 0x7a4a2a;
+  box(torso, 0.18, 0.12, 0.18, sk, 0, 0.8, 0);
+  if (!o.ribs) {
+    box(torso, 0.46 * slim, 0.08, 0.32 * slim, mat(shadeC(shirtC, 0.7)), 0, 0.72, 0.01);
+    for (const sx of [-1, 1]) { const s = part(torso, sphGeo(0.13, 5, 4), mat(o.sleeve || shirtC), sx * 0.36 * slim, 0.66, 0); s.scale.set(1, 0.8, 1.05); }
+  }
+  if (!o.skull && !o.mask) {
+    box(head, 0.07, 0.1, 0.08, mat(shadeC(skC, 0.92)), 0, -0.03, 0.215);
+    const brow = mat(o.brow || o.hair || o.beard || 0x3a2a1a);
+    for (const sx of [-1, 1]) {
+      box(head, 0.11, 0.035, 0.035, brow, sx * 0.09, 0.095, 0.205).rotation.z = sx * -0.12;
+      box(head, 0.05, 0.11, 0.08, sk, sx * 0.215, 0, 0);
+      box(head, 0.035, 0.035, 0.01, mat(0xf4f0e8), sx * 0.09, 0.02, 0.2);
+    }
+    if (!o.beard) box(head, 0.12, 0.025, 0.02, mat(shadeC(skC, 0.6)), 0, -0.11, 0.205);
+  }
+  if (o.beard) {
+    const bm = mat(o.beard);
+    box(head, 0.42, 0.14, 0.14, bm, 0, -0.15, 0.15);
+    spike(head, [0, -0.2, 0.2], [0, o.longBeard ? -0.62 : -0.38, 0.25], o.longBeard ? 0.15 : 0.13, bm, 6);
+    box(head, 0.26, 0.05, 0.05, bm, 0, -0.07, 0.225);
+    for (const sx of [-1, 1]) box(head, 0.05, 0.2, 0.2, bm, sx * 0.2, -0.04, 0.06);
+  }
+  if (o.hair && o.hat !== 'helm' && o.hat !== 'hood') {
+    const hm = mat(o.hair);
+    for (const sx of [-1, 1]) box(head, 0.06, 0.2, 0.34, hm, sx * 0.215, 0.08, -0.04);
+    if (o.topknot) { part(head, sphGeo(0.09, 5, 4), hm, 0, 0.3, -0.08); part(head, cylGeo(0.04, 0.05, 0.05, 6), mat(o.belt || 0xa83a2a), 0, 0.25, -0.08); }
+  }
+  if (!o.ribs) {
+    box(torso, 0.12, 0.1, 0.05, mat(o.buckle || 0xc8a040), 0, 0.04, 0.19 * slim + 0.01);
+    box(torso, 0.13, 0.16, 0.1, mat(o.pouch || 0x5a3a22), 0.26 * slim, -0.05, 0.12);
+  }
+  for (const A of [armL, armR]) box(A, 0.2 * slim, 0.06, 0.22 * slim, mat(shadeC(o.sleeve || shirtC, 0.72)), 0, -0.52, 0);
+  for (const L of [legL, legR]) box(L, 0.28 * slim, 0.08, 0.34, mat(liftC(o.boots || 0x2a1a14, 0.15)), 0, -0.57, 0.02);
+}
 function buildHumanoid(o) {
   const root = new THREE.Group();
   const body = pivot(root, 0, 0, 0);
@@ -9877,7 +10018,9 @@ function buildHumanoid(o) {
   const hand = pivot(armR, 0, -0.62, 0);
   const handL = pivot(armL, 0, -0.62, 0);
   root.add(blobShadow(0.5));
-  return { root, body, torso, head, legL, legR, armL, armR, hand, handL, back, chest, height: 2.0 };
+  const res = { root, body, torso, head, legL, legR, armL, armR, hand, handL, back, chest, height: 2.0 };
+  if (o.hq) humanoidDetail(res, o);
+  return res;
 }
 
 // Koşu klibinin model ölçeğindeki yer hızı: basan ayağın geriye kayma hızının medyanı
@@ -10843,13 +10986,14 @@ const CLASS_WEAPON = { baltaci: 'axe', warrior: 'sword' };
 // ---------- NPC ----------
 function buildNPC(id) {
   const o = {
-    depot: { shirt: 0x6a5a3a, pants: 0x3a3024, hat: 'cap', hatC: 0x4a5a3a, beard: 0x6a5040, apron: 0x8a6a4a },
-    smith: { skin: 0xc8906a, shirt: 0x8a5a3a, apron: 0x3a2a20, pants: 0x2a221c, beard: 0x2a1a14, glove: 0x3a2a20 },
-    shop: { skin: 0xf0c8a0, shirt: 0x3a7a5a, robe: 0x3a7a5a, hat: 'cap', hatC: 0xc8a040, hair: 0x5a2a1a, hairBack: true },
-    portal: { shirt: 0x5a6a7a, shoulder: 0x7a8a9a, tabard: 0x2a4a8a, hat: 'helm', hatC: 0x6a7a8a, plume: 0x2a6ad8, pants: 0x2a2a34 },
-    alchemist: { skin: 0xe8c0a0, shirt: 0x5a3a7a, robe: 0x5a3a7a, hat: 'cap', hatC: 0x2a1a3a, hair: 0x8a3a2a, hairBack: true, apron: 0x3a2a4a, glove: 0x2a1a3a, belt: 0x8a6a2a },
-    master: { skin: 0xe0b890, shirt: 0xe8e0d0, robe: 0xe8e0d0, beard: 0xf0f0f0, hair: 0xf0f0f0, belt: 0xa83a2a },
+    depot: { skin: 0xe0b088, shirt: 0x6a5a3a, pants: 0x3a3024, hat: 'cap', hatC: 0x4a5a3a, beard: 0x6a5040, apron: 0x8a6a4a, boots: 0x3a2a1c },
+    smith: { skin: 0xc8906a, shirt: 0x8a5a3a, sleeve: 0xc8906a, apron: 0x3a2a20, pants: 0x2a221c, beard: 0x2a1a14, brow: 0x2a1a14, glove: 0x3a2a20, belt: 0x4a3020 },
+    shop: { skin: 0xf0c8a0, shirt: 0x3a7a5a, robe: 0x3a7a5a, hair: 0x5a2a1a, hairBack: true, belt: 0x6a4a20, pouch: 0xc8a040 },
+    portal: { skin: 0xd8a880, shirt: 0x5a6a7a, shoulder: 0x7a8a9a, tabard: 0x2a4a8a, hat: 'helm', hatC: 0x6a7a8a, plume: 0x2a6ad8, pants: 0x2a2a34, boots: 0x3a3a44 },
+    alchemist: { skin: 0xe8c0a0, shirt: 0x5a3a7a, robe: 0x5a3a7a, hair: 0x8a3a2a, hairBack: true, apron: 0x3a2a4a, glove: 0x2a1a3a, belt: 0x8a6a2a },
+    master: { skin: 0xe0b890, shirt: 0xe8e0d0, robe: 0xe8e0d0, beard: 0xf0f0f0, longBeard: true, hair: 0xf0f0f0, topknot: true, belt: 0xa83a2a },
   }[id];
+  o.hq = true;
   const h = buildHumanoid(o);
   const weap = { smith: 'hammer', portal: 'spear', master: 'staff', alchemist: 'staff' }[id];
   if (weap) {
@@ -10857,11 +11001,73 @@ function buildNPC(id) {
     w.rotation.x = -1.2;
     h.hand.add(w);
   }
+  const T = h.torso, H = h.head;
+  if (id === 'smith') {
+    // kel kafa + kalın kollar (kıvrık yen), deri kalça önlüğü, alet kemeri (maşa), omuzda bez
+    box(T, 0.66, 0.08, 0.3, mat(0x4a3020), 0, 0.02, 0.06);
+    limb(T, [0.22, 0.06, 0.2], [0.3, -0.36, 0.22], 0.04, 0.02, mat(0x3a3a42));
+    limb(T, [0.26, 0.06, 0.2], [0.34, -0.34, 0.2], 0.04, 0.02, mat(0x3a3a42));
+    box(T, 0.18, 0.06, 0.4, mat(0xb8a888), -0.36, 0.74, 0).rotation.z = 0.3;
+    for (const A of [h.armL, h.armR]) box(A, 0.22, 0.1, 0.24, mat(0x8a5a3a), 0, -0.04, 0);
+  } else if (id === 'shop') {
+    // geniş kenarlı şapka + tüy, altın işlemeli yelek, boyunda eşarp, elde hesap defteri
+    part(H, cylGeo(0.36, 0.36, 0.04, 12), mat(0x5a3a22), 0, 0.2, 0);
+    part(H, cylGeo(0.2, 0.22, 0.2, 10), mat(0x5a3a22), 0, 0.3, 0);
+    part(H, cylGeo(0.225, 0.225, 0.05, 10), mat(0xc8a040), 0, 0.24, 0);
+    spike(H, [0.16, 0.3, -0.06], [0.36, 0.56, -0.24], 0.04, mat(0xd84a3a), 4);
+    for (const sx of [-1, 1]) box(T, 0.2, 0.62, 0.05, mat(0x2a4a3a), sx * 0.17, 0.36, 0.19);
+    box(T, 0.03, 0.62, 0.06, mat(0xc8a040), -0.07, 0.36, 0.2); box(T, 0.03, 0.62, 0.06, mat(0xc8a040), 0.07, 0.36, 0.2);
+    box(T, 0.3, 0.12, 0.3, mat(0xc8a040), 0, 0.72, 0.03);
+    const book = box(h.handL, 0.22, 0.28, 0.06, mat(0x7a2a22), 0, -0.04, 0.12); book.rotation.x = 0.4;
+  } else if (id === 'portal') {
+    // ön plakalı göğüs, armalı kalkan (sol kol), sırtta pelerin, siperlikli miğfer
+    box(T, 0.6, 0.5, 0.06, mat(0x8a96a6), 0, 0.46, 0.17);
+    box(T, 0.14, 0.14, 0.03, mat(0xc8a040), 0, 0.5, 0.21);
+    const cape = pivot(T, 0, 0.72, -0.2); cape.rotation.x = 0.1;
+    box(cape, 0.62, 1.2, 0.05, mat(0x22386a), 0, -0.6, 0);
+    box(cape, 0.64, 0.08, 0.06, mat(0xc8a040), 0, -1.18, 0);
+    const sh = pivot(h.armL, -0.1, -0.36, 0.02); sh.rotation.y = -Math.PI / 2;
+    box(sh, 0.56, 0.72, 0.06, mat(0x22386a), 0, 0, 0);
+    box(sh, 0.6, 0.06, 0.08, mat(0xc8a040), 0, 0.36, 0); box(sh, 0.6, 0.06, 0.08, mat(0xc8a040), 0, -0.36, 0);
+    box(sh, 0.06, 0.72, 0.08, mat(0xc8a040), 0, 0, 0);
+    box(sh, 0.18, 0.18, 0.08, mat(0xe8c547, { e: 0x8a6a10, ei: 0.4 }), 0, 0.06, 0.03);
+    box(H, 0.34, 0.05, 0.05, mat(0x1a1a22), 0, 0.04, 0.235);
+    box(H, 0.04, 0.2, 0.05, mat(0x6a7a8a), 0, -0.04, 0.24);
+  } else if (id === 'alchemist') {
+    const hood = mat(0x3a2258);
+    box(H, 0.5, 0.46, 0.4, hood, 0, 0.08, -0.08);
+    spike(H, [0, 0.28, -0.12], [0, 0.5, -0.4], 0.15, hood, 5);
+    for (const sx of [-1, 1]) box(H, 0.06, 0.4, 0.3, hood, sx * 0.25, 0.0, 0.02);
+    // kemerde parlayan iksir şişeleri, sol elde ışık küresi, alında pirinç gözlük, boyunda muska
+    [[0x7aff7a, -0.2], [0x6ab0ff, -0.08], [0xff6ad8, 0.06]].forEach(([c, x]) => {
+      part(T, sphGeo(0.06, 5, 4), mat(c, { e: c, ei: 0.9 }), x, -0.06, 0.2);
+      box(T, 0.03, 0.05, 0.03, mat(0xd8c8a0), x, 0.01, 0.2);
+    });
+    part(h.handL, sphGeo(0.1, 6, 4), mat(0xb06aff, { e: 0x9a4aff, ei: 1.6 }), 0, -0.06, 0.12);
+    for (const sx of [-1, 1]) part(H, cylGeo(0.06, 0.06, 0.04, 8), mat(0xc8a040), sx * 0.08, 0.16, 0.22, Math.PI / 2, 0, 0);
+    box(T, 0.08, 0.1, 0.04, mat(0x6ad8c8, { e: 0x2a8a7a, ei: 0.8 }), 0, 0.56, 0.2);
+  } else if (id === 'master') {
+    // kırmızı kuşak uçları, omuz şalı, boyunda tespih
+    box(T, 0.1, 0.4, 0.04, mat(0xa83a2a), 0.18, -0.2, 0.2).rotation.z = 0.12;
+    box(T, 0.66, 0.16, 0.42, mat(0x8a2a22), 0, 0.68, 0);
+    for (let i = 0; i < 9; i++) { const a = -1.2 + i * 0.3; part(T, sphGeo(0.03, 4, 3), mat(0x4a2a1a), Math.sin(a) * 0.2, 0.5 - Math.cos(a) * 0.14 + 0.14, 0.2); }
+  } else if (id === 'depot') {
+    // anahtar halkası, koltukta kayıt defteri, kalem kulakta
+    part(T, new THREE.TorusGeometry(0.06, 0.012, 4, 10), mat(0x9a9aa4), -0.24, -0.08, 0.16);
+    for (let i = 0; i < 3; i++) box(T, 0.02, 0.09, 0.01, mat(0xc8a040), -0.27 + i * 0.03, -0.15, 0.17);
+    box(h.handL, 0.18, 0.24, 0.05, mat(0x5a3a22), 0, -0.02, 0.1).rotation.x = 0.3;
+    limb(H, [0.2, 0.1, 0.0], [0.24, 0.04, 0.14], 0.02, 0.02, mat(0xe8d8a0));
+  }
+  mergePivotMeshes(h.root); // ~150 parça → pivot başına birkaç çizim
   return h;
 }
 
 // ---------- Canavar modelleri ----------
 function buildMobModel(t) {
+  if (t.model !== 'tapinak' && t.model !== 'boneking' && t.model !== 'metin') return cachedMobModel(t, buildMobModelRaw);
+  return buildMobModelRaw(t);
+}
+function buildMobModelRaw(t) {
   if (t.model === 'tapinak') return buildTempleMob(t) || buildMobModel(Object.assign({}, t, { model: t.fb || 'golem' }));
   if (t.model === 'boneking') {
     const k = buildBoneKing(t);
@@ -10876,62 +11082,121 @@ function buildMobModel(t) {
   const M = { root, body, legs: [], wings: [], kind: t.model, height: 1.2 };
   switch (t.model) {
     case 'wolf': {
-      const bm = mat(C), dk = mat(new THREE.Color(C).multiplyScalar(0.7).getHex());
-      box(body, 0.5, 0.46, 1.0, bm, 0, 0.66, 0);
-      box(body, 0.54, 0.5, 0.4, bm, 0, 0.72, 0.28);
-      const head = pivot(body, 0, 0.86, 0.58);
-      box(head, 0.36, 0.34, 0.38, bm, 0, 0, 0.05);
-      box(head, 0.2, 0.16, 0.26, dk, 0, -0.07, 0.3);
-      part(head, coneGeo(0.07, 0.2, 4), dk, -0.12, 0.24, -0.02);
-      part(head, coneGeo(0.07, 0.2, 4), dk, 0.12, 0.24, -0.02);
-      box(head, 0.06, 0.05, 0.03, eyeM, -0.1, 0.05, 0.24);
-      box(head, 0.06, 0.05, 0.03, eyeM, 0.1, 0.05, 0.24);
+      const bm = mat(C), dk = mat(shadeC(C, 0.6)), lt = mat(liftC(C, 0.35)), nose = mat(0x1a1416), tooth = mat(0xf2ead8);
+      // gövde: göğüs, bel, kalça, açık karın, sırt şeridi
+      box(body, 0.56, 0.58, 0.5, bm, 0, 0.76, 0.26);
+      box(body, 0.46, 0.44, 0.62, bm, 0, 0.72, -0.14);
+      box(body, 0.48, 0.48, 0.38, bm, 0, 0.72, -0.44);
+      box(body, 0.42, 0.2, 0.62, lt, 0, 0.52, 0.02);
+      box(body, 0.18, 0.08, 0.92, dk, 0, 0.98, -0.1);
+      // yele (boyunda geriye yatık kürk) + sırt tutamları
+      for (let i = 0; i < 9; i++) {
+        const a = -1.25 + i * 0.31;
+        spike(body, [Math.sin(a) * 0.24, 0.84 + Math.cos(a) * 0.15, 0.4], [Math.sin(a) * 0.44, 0.98 + Math.cos(a) * 0.24, 0.04], 0.1, i % 2 ? dk : bm);
+      }
+      for (let i = 0; i < 4; i++) spike(body, [0, 0.98, 0.02 - i * 0.2], [0, 1.1 - i * 0.03, -0.18 - i * 0.2], 0.07, dk);
+      for (const sx of [-1, 1]) spike(body, [sx * 0.22, 0.6, -0.2], [sx * 0.28, 0.46, -0.32], 0.07, lt); // böğür kürkü
+      // baş: kafatası, burun köprüsü, burun, alt çene, dişler, kulak, yanak kürkü, kaş
+      const head = pivot(body, 0, 0.94, 0.6);
+      box(head, 0.36, 0.32, 0.34, bm, 0, 0, 0);
+      box(head, 0.22, 0.17, 0.3, bm, 0, -0.05, 0.28);
+      box(head, 0.12, 0.08, 0.08, nose, 0, -0.01, 0.44);
+      box(head, 0.18, 0.07, 0.24, dk, 0, -0.17, 0.24);
+      for (const sx of [-1, 1]) {
+        spike(head, [sx * 0.06, -0.12, 0.38], [sx * 0.06, -0.22, 0.39], 0.025, tooth, 4);
+        spike(head, [sx * 0.12, 0.14, -0.04], [sx * 0.17, 0.38, -0.09], 0.085, dk, 4);
+        box(head, 0.04, 0.12, 0.02, mat(0x8a5a5a), sx * 0.13, 0.22, -0.01);
+        spike(head, [sx * 0.16, -0.05, 0.0], [sx * 0.28, -0.12, -0.13], 0.07, lt);
+        box(head, 0.08, 0.05, 0.03, eyeM, sx * 0.1, 0.05, 0.17);
+        box(head, 0.13, 0.04, 0.07, dk, sx * 0.1, 0.1, 0.15).rotation.z = -sx * 0.25;
+      }
       M.head = head;
-      for (const [x, z] of [[-0.17, 0.33], [0.17, 0.33], [-0.17, -0.33], [0.17, -0.33]]) {
-        const L = pivot(body, x, 0.5, z);
-        box(L, 0.13, 0.5, 0.14, dk, 0, -0.24, 0);
+      // bacaklar: üst / alt bölüm + pati (arka bacak kalın uyluk)
+      for (const [x, z, fr] of [[-0.18, 0.36, 1], [0.18, 0.36, 1], [-0.17, -0.42, 0], [0.17, -0.42, 0]]) {
+        const L = pivot(body, x, 0.62, z);
+        if (fr) { box(L, 0.15, 0.3, 0.17, bm, 0, -0.08, 0); box(L, 0.11, 0.32, 0.12, dk, 0, -0.36, 0.02); }
+        else { box(L, 0.2, 0.34, 0.27, bm, 0, -0.04, -0.03); box(L, 0.11, 0.34, 0.12, dk, 0, -0.36, -0.07); }
+        box(L, 0.15, 0.07, 0.2, dk, 0, -0.56, 0.04);
+        for (const cx of [-0.04, 0.04]) spike(L, [cx, -0.57, 0.13], [cx, -0.6, 0.2], 0.02, tooth, 4);
         M.legs.push(L);
       }
-      const tail = pivot(body, 0, 0.78, -0.5);
-      box(tail, 0.1, 0.1, 0.45, bm, 0, 0.05, -0.2).rotation.x = 0.5;
+      // kuyruk: iki bölüm + açık uç
+      const tail = pivot(body, 0, 0.86, -0.6);
+      limb(tail, [0, 0, 0], [0, 0.04, -0.3], 0.15, 0.15, bm);
+      limb(tail, [0, 0.04, -0.3], [0, -0.06, -0.56], 0.13, 0.13, bm);
+      spike(tail, [0, -0.05, -0.52], [0, -0.16, -0.8], 0.09, lt);
       M.tail = tail;
+      if (t.rank) { // seçkin / patron: dikenli demir tasma + yara izi
+        part(body, cylGeo(0.3, 0.32, 0.09, 10), mat(0x3a3a42), 0, 0.86, 0.36, 1.35, 0, 0);
+        for (let i = 0; i < 5; i++) { const a = -1 + i * 0.5; spike(body, [Math.sin(a) * 0.3, 0.9 + Math.cos(a) * 0.12, 0.36], [Math.sin(a) * 0.42, 0.98 + Math.cos(a) * 0.18, 0.4], 0.04, mat(0xb8b8c0), 4); }
+        box(head, 0.03, 0.16, 0.02, mat(0x8a3a32), 0.1, 0.06, 0.175).rotation.z = 0.4;
+      }
       if (t.crown) {
         const cm = mat(0xe8c547, { e: 0x8a6a10, ei: 0.5 });
-        for (let i = 0; i < 4; i++) part(head, coneGeo(0.05, 0.16, 4), cm, -0.12 + i * 0.08, 0.26, 0.05);
+        part(head, cylGeo(0.2, 0.21, 0.07, 10), cm, 0, 0.19, -0.01);
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; spike(head, [Math.cos(a) * 0.19, 0.22, Math.sin(a) * 0.19 - 0.01], [Math.cos(a) * 0.2, 0.36, Math.sin(a) * 0.2 - 0.01], 0.04, cm, 4); }
       }
-      M.height = 1.1;
+      M.height = 1.2;
       break;
     }
     case 'bat': {
-      const bm = mat(C);
+      const bm = mat(C), dk = mat(shadeC(C, 0.55)), mem = mat(shadeC(C, 0.85), { side: 1 }), pink = mat(0x9a5a6a), tooth = mat(0xf2ead8);
       body.position.y = 1.3;
-      part(body, sphGeo(0.22, 6, 4), bm, 0, 0, 0);
-      box(body, 0.2, 0.18, 0.18, bm, 0, 0.12, 0.14);
-      part(body, coneGeo(0.05, 0.14, 4), bm, -0.07, 0.26, 0.12);
-      part(body, coneGeo(0.05, 0.14, 4), bm, 0.07, 0.26, 0.12);
-      box(body, 0.05, 0.04, 0.02, eyeM, -0.05, 0.14, 0.24);
-      box(body, 0.05, 0.04, 0.02, eyeM, 0.05, 0.14, 0.24);
-      const wm = mat(new THREE.Color(C).multiplyScalar(0.7).getHex(), { side: 1 });
-      const wl = pivot(body, -0.15, 0.05, 0), wr = pivot(body, 0.15, 0.05, 0);
-      box(wl, 0.7, 0.03, 0.4, wm, -0.35, 0, 0);
-      box(wr, 0.7, 0.03, 0.4, wm, 0.35, 0, 0);
-      M.wings = [wl, wr];
+      const tor = part(body, sphGeo(0.2, 6, 4), bm, 0, 0, -0.02); tor.scale.set(1, 1.1, 1.25);
+      part(body, sphGeo(0.12, 6, 4), mat(liftC(C, 0.2)), 0, -0.04, 0.1);
+      part(body, sphGeo(0.15, 6, 4), bm, 0, 0.13, 0.17);
+      box(body, 0.11, 0.07, 0.08, dk, 0, 0.09, 0.31);
+      for (const sx of [-1, 1]) {
+        spike(body, [sx * 0.07, 0.22, 0.14], [sx * 0.17, 0.46, 0.08], 0.065, bm, 4);
+        box(body, 0.04, 0.13, 0.02, pink, sx * 0.11, 0.31, 0.14).rotation.z = -sx * 0.4;
+        box(body, 0.055, 0.05, 0.03, eyeM, sx * 0.065, 0.17, 0.3);
+        spike(body, [sx * 0.03, 0.05, 0.32], [sx * 0.03, -0.04, 0.33], 0.018, tooth, 4);
+        spike(body, [sx * 0.07, -0.2, -0.08], [sx * 0.1, -0.36, -0.12], 0.03, dk, 4);
+      }
+      const mkWing = (sx) => {
+        const w = pivot(body, sx * 0.15, 0.06, 0);
+        const el = [sx * 0.42, 0.06, 0.08];
+        limb(w, [0, 0, 0], el, 0.05, 0.05, dk);
+        for (const f of [[sx * 0.88, 0.1, 0.14], [sx * 0.8, 0.02, -0.2], [sx * 0.52, 0, -0.36]]) limb(w, el, f, 0.03, 0.03, dk);
+        spike(w, el, [sx * 0.44, 0.16, 0.16], 0.025, dk, 4);
+        membrane(w, 'bat' + sx, [[0, 0.02], [sx * 0.42, 0.08], [sx * 0.88, 0.14], [sx * 0.72, -0.06], [sx * 0.8, -0.2], [sx * 0.62, -0.22], [sx * 0.52, -0.36], [sx * 0.32, -0.22], [0, -0.18]], mem, 0.0);
+        return w;
+      };
+      M.wings = [mkWing(-1), mkWing(1)];
+      if (t.crown) { const cm = mat(0xe8c547, { e: 0x8a6a10, ei: 0.5 }); for (let i = 0; i < 4; i++) spike(body, [-0.08 + i * 0.055, 0.26, 0.18], [-0.08 + i * 0.055, 0.36, 0.18], 0.03, cm, 4); }
       M.fly = true;
-      M.height = 1.7;
+      M.height = 1.75;
       break;
     }
     case 'spider': {
-      const bm = mat(C), dk = mat(new THREE.Color(C).multiplyScalar(0.6).getHex());
-      const ab = part(body, sphGeo(0.42, 7, 5), bm, 0, 0.55, -0.35);
-      ab.scale.set(1, 0.85, 1.15);
-      box(body, 0.16, 0.1, 0.3, t.poison ? mat(0x9aff4a, { e: 0x4a8a1a, ei: 0.6 }) : mat(0xa83a2a), 0, 0.88, -0.35);
-      part(body, sphGeo(0.26, 6, 4), dk, 0, 0.45, 0.18);
-      for (let i = 0; i < 4; i++) box(body, 0.05, 0.05, 0.03, eyeM, -0.09 + i * 0.06, 0.52 + (i % 2) * 0.05, 0.42);
+      const bm = mat(C), dk = mat(shadeC(C, 0.55)), lt = mat(liftC(C, 0.22)), fang = mat(0x1a1214);
+      const mark = t.poison ? mat(0x9aff4a, { e: 0x4a8a1a, ei: 0.8 }) : mat(0xb83a2a, { e: 0x5a0a04, ei: 0.4 });
+      const ceph = part(body, sphGeo(0.3, 7, 5), bm, 0, 0.5, 0.14); ceph.scale.set(1, 0.72, 1.1);
+      const ab = part(body, sphGeo(0.46, 8, 6), bm, 0, 0.66, -0.46); ab.scale.set(1, 0.86, 1.2);
+      part(body, cylGeo(0.11, 0.13, 0.18, 8), dk, 0, 0.56, -0.1, Math.PI / 2, 0, 0);
+      // karın sırtı deseni (elipsoid yüzeyine oturtulur) + yan kıllar
+      const abY = (z) => 0.66 + 0.396 * Math.sqrt(Math.max(0, 1 - ((z + 0.46) / 0.552) ** 2));
+      for (const [z, w] of [[-0.18, 0.18], [-0.34, 0.34], [-0.52, 0.3], [-0.7, 0.18]]) box(body, w, 0.05, 0.08, mark, 0, abY(z) - 0.01, z).rotation.x = -(z + 0.46) * 1.2;
+      box(body, 0.1, 0.05, 0.5, mark, 0, abY(-0.44), -0.44);
+      for (let i = 0; i < 7; i++) { const a = (i / 7) * TAU; spike(body, [Math.cos(a) * 0.4, 0.66 + Math.sin(a) * 0.3, -0.5 + Math.sin(a * 2) * 0.12], [Math.cos(a) * 0.52, 0.72 + Math.sin(a) * 0.4, -0.58], 0.025, dk, 4); }
+      // gözler (2 büyük + 6 küçük), keliserler + dişler, palpler
+      for (const sx of [-1, 1]) {
+        box(body, 0.075, 0.075, 0.04, eyeM, sx * 0.06, 0.6, 0.45);
+        box(body, 0.045, 0.045, 0.03, eyeM, sx * 0.15, 0.62, 0.4);
+        box(body, 0.04, 0.04, 0.03, eyeM, sx * 0.05, 0.68, 0.42);
+        box(body, 0.035, 0.035, 0.03, eyeM, sx * 0.13, 0.55, 0.43);
+        box(body, 0.1, 0.15, 0.11, dk, sx * 0.07, 0.43, 0.43);
+        spike(body, [sx * 0.07, 0.38, 0.47], [sx * 0.04, 0.22, 0.54], 0.04, fang, 4);
+        limb(body, [sx * 0.12, 0.44, 0.38], [sx * 0.2, 0.34, 0.58], 0.05, 0.05, dk);
+      }
+      // 8 bacak: uyluk (yukarı-dışa) + diz eklemi + baldır (aşağı)
       for (let s = -1; s <= 1; s += 2) {
         for (let i = 0; i < 4; i++) {
-          const L = pivot(body, s * 0.18, 0.5, 0.25 - i * 0.18);
-          const seg = box(L, 0.7, 0.06, 0.06, dk, s * 0.32, -0.12, 0);
-          seg.rotation.z = s * -0.45;
+          const L = pivot(body, s * 0.2, 0.5, 0.3 - i * 0.17);
+          const kn = [s * 0.45, 0.27, 0];
+          limb(L, [0, 0, 0], kn, 0.075, 0.075, i % 2 ? dk : bm);
+          part(L, sphGeo(0.05, 4, 3), lt, kn[0], kn[1], kn[2]);
+          limb(L, kn, [s * 0.8, -0.48, 0], 0.06, 0.06, dk);
           L.rotation.y = s * (0.5 - i * 0.33);
           L.userData.base = L.rotation.y;
           M.legs.push(L);
@@ -10939,105 +11204,220 @@ function buildMobModel(t) {
       }
       if (t.crown) {
         const cm = mat(0xe8c547, { e: 0x8a6a10, ei: 0.5 });
-        for (let i = 0; i < 3; i++) part(body, coneGeo(0.05, 0.14, 4), cm, -0.08 + i * 0.08, 0.72, 0.18);
+        for (let i = 0; i < 5; i++) spike(body, [-0.12 + i * 0.06, 0.68, 0.2], [-0.12 + i * 0.06, 0.82 + (i % 2) * 0.05, 0.18], 0.035, cm, 4);
       }
-      M.height = 1.1;
+      M.height = 1.2;
       break;
     }
     case 'skeleton': {
-      const h = buildHumanoid({ skin: C, shirt: t.armor || C, sleeve: C, pants: C, boots: 0x5a5048, belt: 0x4a3a2a, slim: !t.armor, ribs: !t.armor, eyeE: t.eye || 0x60a0ff, hat: t.armor ? 'helm' : null, hatC: t.armor, plume: 0x2a2a2a, crown: t.crown, shoulder: t.armor ? t.armor : null });
+      const bone = C, armorC = t.armor;
+      const h = buildHumanoid({ skin: bone, shirt: armorC || bone, sleeve: bone, pants: armorC ? shadeC(armorC, 0.8) : bone, boots: 0x5a5048, belt: 0x4a3a2a, slim: !armorC, ribs: !armorC, eyeE: t.eye || 0x60a0ff, hat: armorC ? 'helm' : null, hatC: armorC, plume: 0x2a2a30, crown: t.crown, hq: true, skull: true });
       root.remove(body); root.add(h.body);
       root.children.filter((c) => c !== h.body).forEach((c) => root.remove(c));
+      const bD = mat(shadeC(bone, 0.72)), black = mat(0x14100e), tooth = mat(liftC(bone, 0.3));
+      // kafatası: göz çukurları, burun boşluğu, çene + dişler, elmacık
+      const eyeG = mat(t.eye || 0x60a0ff, { e: t.eye || 0x60a0ff, ei: 1.6 });
+      for (const sx of [-1, 1]) { box(h.head, 0.13, 0.12, 0.02, black, sx * 0.09, 0.02, 0.207); box(h.head, 0.04, 0.04, 0.02, eyeG, sx * 0.09, 0.01, 0.214); box(h.head, 0.08, 0.05, 0.06, bD, sx * 0.15, -0.07, 0.17); }
+      box(h.head, 0.05, 0.07, 0.02, black, 0, -0.06, 0.203);
+      box(h.head, 0.3, 0.09, 0.24, bD, 0, -0.25, 0.05);
+      for (let i = 0; i < 5; i++) box(h.head, 0.035, 0.05, 0.02, tooth, -0.08 + i * 0.04, -0.16, 0.2);
+      if (!armorC) {
+        // omurga, leğen, sternum, yırtık bez
+        for (let i = 0; i < 4; i++) box(h.torso, 0.08, 0.1, 0.07, bD, 0, 0.12 + i * 0.16, -0.17);
+        box(h.torso, 0.06, 0.5, 0.03, tooth, 0, 0.38, 0.19);
+        box(h.torso, 0.4, 0.12, 0.24, bD, 0, -0.06, 0);
+        const cl = mat(0x4a3a2a);
+        box(h.torso, 0.28, 0.32, 0.03, cl, 0, -0.24, 0.13).rotation.x = -0.12;
+        box(h.torso, 0.14, 0.2, 0.03, cl, 0.08, -0.46, 0.15).rotation.z = 0.2;
+        for (const sx of [-1, 1]) part(h.torso, sphGeo(0.08, 4, 3), mat(bone), sx * 0.36, 0.7, 0);
+      } else {
+        // zırh: dikenli omuzluk, göğüs kenarı, bel plakaları, yırtık pelerin
+        const am = mat(armorC), aL = mat(liftC(armorC, 0.25)), trim = mat(t.rank === 'boss' ? 0xc8a040 : 0x8a8a94);
+        for (const sx of [-1, 1]) {
+          const sp = part(h.torso, sphGeo(0.18, 6, 4), aL, sx * 0.4, 0.74, 0); sp.scale.set(1.1, 0.7, 1.1);
+          spike(h.torso, [sx * 0.44, 0.84, 0], [sx * 0.56, 1.06, -0.02], 0.06, trim, 4);
+        }
+        box(h.torso, 0.66, 0.06, 0.4, trim, 0, 0.7, 0);
+        box(h.torso, 0.2, 0.36, 0.05, trim, 0, 0.38, 0.2);
+        for (const [x, rz] of [[-0.2, 0.08], [0, 0], [0.2, -0.08]]) box(h.torso, 0.2, 0.3, 0.05, am, x, -0.14, 0.19).rotation.z = rz;
+        const cape = pivot(h.torso, 0, 0.72, -0.2); cape.rotation.x = 0.14;
+        const cm = mat(t.rank === 'boss' ? 0x5a1a2a : 0x3a1a1a);
+        box(cape, 0.6, 1.05, 0.05, cm, 0, -0.52, 0);
+        for (let i = 0; i < 4; i++) spike(cape, [-0.22 + i * 0.15, -1.02, 0], [-0.22 + i * 0.15, -1.2, 0.02], 0.07, cm, 4);
+        for (const sx of [-1, 1]) spike(h.head, [sx * 0.2, 0.22, 0], [sx * 0.38, 0.42, -0.06], 0.06, mat(0xd8d0bc), 5);
+      }
       Object.assign(M, { body: h.body, legL: h.legL, legR: h.legR, armL: h.armL, armR: h.armR, hand: h.hand, humanoid: true, height: 2.0 });
       const w = t.weapon === 'bow' ? buildWeapon('bow') : buildWeapon('bonesword', 0xc8c0a8);
-      if (t.weapon === 'bow') { h.handL.add(w); w.rotation.set(0, 0, 0); h.armL.rotation.x = -1.2; M.bow = true; }
-      else { h.hand.add(w); w.rotation.x = -0.4; }
+      if (t.weapon === 'bow') {
+        h.handL.add(w); w.rotation.set(0, 0, 0); h.armL.rotation.x = -1.2; M.bow = true;
+        part(h.torso, cylGeo(0.08, 0.07, 0.6, 8), mat(0x5a3a22), 0.12, 0.4, -0.24, 0.3, 0, -0.3);
+        for (let i = 0; i < 3; i++) box(h.torso, 0.03, 0.2, 0.03, mat(0xe8e0c8), 0.08 + i * 0.04, 0.78, -0.3);
+      } else { h.hand.add(w); w.rotation.x = -0.4; }
       break;
     }
     case 'imp': {
-      const h = buildHumanoid({ skin: C, shirt: new THREE.Color(C).multiplyScalar(0.7).getHex(), shirtE: 0x6a1a00, pants: 0x3a1a10, boots: 0x2a0a06, belt: 0x1a0a06, eyeE: 0xffe060, hat: 'flame', crown: t.crown, slim: true });
+      const h = buildHumanoid({ skin: C, shirt: shadeC(C, 0.7), shirtE: 0x6a1a00, pants: 0x3a1a10, boots: 0x2a0a06, belt: 0x1a0a06, eyeE: 0xffe060, hat: 'flame', crown: t.crown, slim: true, hq: true, brow: 0x2a0a06 });
       root.remove(body); root.add(h.body);
       root.children.filter((c) => c !== h.body).forEach((c) => root.remove(c));
-      part(h.head, coneGeo(0.06, 0.25, 4), mat(0x2a1a14), -0.16, 0.25, 0, 0, 0, 0.5);
-      part(h.head, coneGeo(0.06, 0.25, 4), mat(0x2a1a14), 0.16, 0.25, 0, 0, 0, -0.5);
+      const horn = mat(0x2a1a14), sk = mat(C), dk = mat(shadeC(C, 0.55)), glow = mat(0xffa030, { e: 0xff6a10, ei: 1.3 }), mem = mat(shadeC(C, 0.45), { side: 1 });
+      for (const sx of [-1, 1]) {
+        spike(h.head, [sx * 0.15, 0.18, 0], [sx * 0.3, 0.42, -0.1], 0.065, horn, 5);
+        spike(h.head, [sx * 0.2, 0.02, -0.02], [sx * 0.36, 0.1, -0.08], 0.045, sk, 4);
+      }
+      // göğüste kor çatlakları
+      for (const [x, y, rz] of [[-0.1, 0.42, 0.5], [0.08, 0.5, -0.4], [0, 0.28, 0.1], [0.14, 0.3, 0.9]]) box(h.torso, 0.03, 0.22, 0.02, glow, x, y, 0.19).rotation.z = rz;
+      // kuyruk
+      const tail = pivot(h.torso, 0, 0.02, -0.18);
+      limb(tail, [0, 0, 0], [0, -0.2, -0.3], 0.07, 0.07, sk);
+      limb(tail, [0, -0.2, -0.3], [0, -0.2, -0.6], 0.06, 0.06, sk);
+      limb(tail, [0, -0.2, -0.6], [0, -0.02, -0.8], 0.05, 0.05, sk);
+      spike(tail, [0, -0.04, -0.78], [0, 0.12, -0.94], 0.08, dk, 4);
+      // küçük yarasa kanatları (sırt)
+      for (const sx of [-1, 1]) {
+        const w = pivot(h.torso, sx * 0.14, 0.6, -0.2); w.rotation.set(-1.25, 0, sx * 0.35);
+        limb(w, [0, 0, 0], [sx * 0.42, 0, 0.12], 0.04, 0.04, dk);
+        membrane(w, 'imp' + sx, [[0, 0], [sx * 0.42, 0.12], [sx * 0.56, 0.0], [sx * 0.4, -0.12], [sx * 0.36, -0.28], [sx * 0.18, -0.16], [0, -0.22]], mem, 0);
+      }
+      // pençeler
+      for (const hd of [h.hand, h.handL]) for (const cx of [-0.05, 0, 0.05]) spike(hd, [cx, -0.04, 0.05], [cx, -0.14, 0.12], 0.025, horn, 4);
       Object.assign(M, { body: h.body, legL: h.legL, legR: h.legR, armL: h.armL, armR: h.armR, hand: h.hand, humanoid: true, flame: h.root.userData.flame, height: 2.0 });
       break;
     }
     case 'turtle': {
-      const shell = part(body, GEO.turtleShell || (GEO.turtleShell = new THREE.SphereGeometry(0.62, 14, 6, 0, TAU, 0, Math.PI / 2)), mat(C), 0, 0.28, 0);
+      const rock = mat(C, { flat: 1 }), rockD = mat(shadeC(C, 0.7), { flat: 1 }), lava = mat(0xff5a14, { e: 0xff3a00, ei: 1.1 });
+      const skin = mat(0x6a4a32), skinD = mat(0x4a3222);
+      const shell = part(body, GEO.turtleShell || (GEO.turtleShell = new THREE.SphereGeometry(0.62, 14, 6, 0, TAU, 0, Math.PI / 2)), lava, 0, 0.3, 0);
       shell.scale.set(1, 0.85, 1.2);
-      const cr = mat(0xff6a20, { e: 0xff4a10, ei: 1.2 });
-      for (let i = 0; i < 5; i++) {
-        const a = (i / 5) * TAU;
-        box(body, 0.08, 0.3, 0.08, cr, Math.cos(a) * 0.4, 0.55, Math.sin(a) * 0.48).rotation.set(Math.sin(a) * 0.6, 0, -Math.cos(a) * 0.6);
+      // kabuk plakaları: aralarından lav parlar
+      const plates = [[0, 0, 0.25]];
+      for (let k = 0; k < 6; k++) plates.push([0.66, (k / 6) * TAU, 0.21]);
+      for (let k = 0; k < 9; k++) plates.push([1.15, (k / 9) * TAU + 0.3, 0.18]);
+      const q = new THREE.Vector3();
+      for (const [ph, th, r] of plates) {
+        q.set(Math.sin(ph) * Math.cos(th), Math.cos(ph), Math.sin(ph) * Math.sin(th));
+        const pl = part(body, cylGeo(r, r + 0.03, 0.1, 6), (ph > 1 ? rockD : rock), q.x * 0.6, 0.3 + q.y * 0.52, q.z * 0.73);
+        pl.quaternion.setFromUnitVectors(_UP, q);
       }
-      box(body, 1.1, 0.16, 1.3, mat(0x5a3a2a), 0, 0.26, 0);
-      const head = pivot(body, 0, 0.36, 0.72);
-      box(head, 0.3, 0.26, 0.34, mat(0x7a5a3a), 0, 0, 0.1);
-      box(head, 0.05, 0.05, 0.03, eyeM, -0.09, 0.05, 0.27);
-      box(head, 0.05, 0.05, 0.03, eyeM, 0.09, 0.05, 0.27);
-      for (const [x, z] of [[-0.42, 0.4], [0.42, 0.4], [-0.42, -0.4], [0.42, -0.4]]) {
-        const L = pivot(body, x, 0.28, z);
-        box(L, 0.2, 0.3, 0.22, mat(0x7a5a3a), 0, -0.12, 0);
+      for (const [x, z] of [[0, 0], [0.22, -0.2], [-0.24, 0.12]]) { spike(body, [x, 0.75, z], [x * 1.2, 1.12, z * 1.2], 0.1, rockD, 5); part(body, sphGeo(0.05, 4, 3), lava, x * 1.2, 1.1, z * 1.2); }
+      for (let k = 0; k < 12; k++) { const a = (k / 12) * TAU; box(body, 0.22, 0.12, 0.14, rockD, Math.cos(a) * 0.6, 0.3, Math.sin(a) * 0.72).rotation.y = -a; }
+      box(body, 1.0, 0.16, 1.24, skinD, 0, 0.24, 0);
+      const head = pivot(body, 0, 0.38, 0.76);
+      limb(head, [0, -0.04, -0.24], [0, 0, 0], 0.18, 0.18, skin);
+      box(head, 0.3, 0.24, 0.3, skin, 0, 0.02, 0.08);
+      box(head, 0.2, 0.1, 0.14, skinD, 0, -0.06, 0.24);
+      for (const sx of [-1, 1]) { box(head, 0.05, 0.05, 0.03, eyeM, sx * 0.09, 0.07, 0.23); spike(head, [sx * 0.1, 0.12, 0.02], [sx * 0.16, 0.28, -0.12], 0.05, rockD, 4); }
+      for (const [x, z] of [[-0.44, 0.42], [0.44, 0.42], [-0.44, -0.42], [0.44, -0.42]]) {
+        const L = pivot(body, x, 0.3, z);
+        box(L, 0.24, 0.3, 0.26, skin, 0, -0.12, 0);
+        box(L, 0.28, 0.08, 0.3, rock, 0, 0.0, 0);
+        for (const cx of [-0.07, 0, 0.07]) spike(L, [cx, -0.26, 0.1], [cx, -0.28, 0.2], 0.03, skinD, 4);
         M.legs.push(L);
       }
-      M.height = 1.1;
+      spike(body, [0, 0.28, -0.72], [0, 0.2, -0.98], 0.08, skin, 4);
+      M.head = head;
+      M.height = 1.2;
       break;
     }
     case 'golem': {
-      const bm = mat(C), dk = mat(new THREE.Color(C).multiplyScalar(0.72).getHex());
-      const legL = pivot(body, -0.25, 0.7, 0), legR = pivot(body, 0.25, 0.7, 0);
-      box(legL, 0.32, 0.7, 0.36, dk, 0, -0.35, 0);
-      box(legR, 0.32, 0.7, 0.36, dk, 0, -0.35, 0);
-      const torso = pivot(body, 0, 0.7, 0);
-      box(torso, 0.95, 0.85, 0.6, bm, 0, 0.45, 0);
-      box(torso, 0.5, 0.36, 0.42, bm, 0, 1.05, 0.08);
-      box(torso, 0.08, 0.06, 0.03, eyeM, -0.1, 1.08, 0.3);
-      box(torso, 0.08, 0.06, 0.03, eyeM, 0.1, 1.08, 0.3);
-      if (t.color > 0x999999) {
-        const ic = mat(0xcff0ff, { e: 0x4ab0e0, ei: 0.4 });
-        part(torso, coneGeo(0.1, 0.4, 4), ic, -0.4, 0.95, -0.1, 0, 0, 0.4);
-        part(torso, coneGeo(0.1, 0.4, 4), ic, 0.4, 0.95, -0.1, 0, 0, -0.4);
+      const icy = t.color > 0x999999;
+      const bm = mat(C, { flat: 1 }), dk = mat(shadeC(C, 0.7), { flat: 1 }), lt = mat(liftC(C, 0.18), { flat: 1 });
+      const core = mat(eyeC, { e: eyeC, ei: 1.4 });
+      const legL = pivot(body, -0.28, 0.72, 0), legR = pivot(body, 0.28, 0.72, 0);
+      for (const L of [legL, legR]) {
+        box(L, 0.34, 0.4, 0.38, dk, 0, -0.16, 0);
+        box(L, 0.38, 0.34, 0.42, bm, 0, -0.5, 0.02);
+        box(L, 0.44, 0.14, 0.52, dk, 0, -0.66, 0.06);
+        part(L, icoGeo(0.13, 0), lt, 0, -0.32, 0.18);
+      }
+      const torso = pivot(body, 0, 0.72, 0);
+      box(torso, 0.7, 0.26, 0.46, dk, 0, 0.08, 0);
+      box(torso, 0.96, 0.62, 0.64, bm, 0, 0.5, 0);
+      box(torso, 1.14, 0.36, 0.7, bm, 0, 0.84, -0.02);
+      for (const [x, y, z, r] of [[0, 1.0, -0.32, 0.3], [-0.3, 0.7, -0.34, 0.22], [0.32, 0.62, -0.32, 0.2], [0.18, 1.06, -0.2, 0.18]]) part(torso, icoGeo(r, 0), dk, x, y, z, x * 3, y, z);
+      part(torso, icoGeo(0.15, 0), core, 0, 0.55, 0.33);
+      for (const [x, y, rz] of [[-0.18, 0.62, 0.9], [0.2, 0.66, -0.8], [-0.12, 0.38, -0.5], [0.16, 0.36, 0.5]]) box(torso, 0.03, 0.26, 0.03, core, x, y, 0.33).rotation.z = rz;
+      for (const sx of [-1, 1]) part(torso, icoGeo(0.3, 0), lt, sx * 0.64, 0.98, 0, sx, 0.5, 0);
+      const head = pivot(torso, 0, 1.1, 0.16);
+      box(head, 0.42, 0.34, 0.38, bm, 0, 0, 0);
+      box(head, 0.48, 0.1, 0.16, dk, 0, 0.1, 0.16);
+      box(head, 0.36, 0.1, 0.3, dk, 0, -0.18, 0.04);
+      for (const sx of [-1, 1]) box(head, 0.1, 0.055, 0.03, eyeM, sx * 0.1, 0.02, 0.2);
+      const armL = pivot(torso, -0.72, 0.88, 0), armR = pivot(torso, 0.72, 0.88, 0);
+      for (const A of [armL, armR]) {
+        box(A, 0.3, 0.5, 0.34, dk, 0, -0.22, 0);
+        box(A, 0.42, 0.5, 0.46, bm, 0, -0.66, 0.02);
+        box(A, 0.46, 0.3, 0.46, dk, 0, -1.02, 0.04);
+        for (const kx of [-0.13, 0, 0.13]) box(A, 0.11, 0.1, 0.08, lt, kx, -0.98, 0.27);
+        if (!icy) box(A, 0.03, 0.34, 0.02, core, 0, -0.66, 0.24);
+      }
+      if (icy) {
+        const ic = mat(0xcff0ff, { e: 0x4ab0e0, ei: 0.5 });
+        for (const [a, b, r] of [[[-0.5, 1.0, -0.1], [-0.72, 1.5, -0.3], 0.1], [[-0.32, 1.0, -0.3], [-0.38, 1.46, -0.5], 0.08], [[0.5, 1.0, -0.1], [0.74, 1.46, -0.32], 0.1], [[0.2, 1.0, -0.32], [0.26, 1.4, -0.54], 0.08], [[0, 0.9, -0.36], [0, 1.3, -0.62], 0.09]]) spike(torso, a, b, r, ic, 5);
+        for (const A of [armL, armR]) spike(A, [0, -0.6, -0.2], [0, -0.48, -0.5], 0.07, ic, 5);
       } else {
-        box(torso, 0.3, 0.06, 0.02, eyeM, 0, 0.5, 0.31);
+        const moss = mat(0x4a6a3a);
+        for (const sx of [-1, 1]) box(torso, 0.34, 0.06, 0.3, moss, sx * 0.64, 1.18, 0).rotation.z = sx * 0.2;
+        box(head, 0.3, 0.05, 0.24, moss, 0, 0.18, -0.04);
       }
       if (t.crown) {
         const cm = mat(0xe8c547, { e: 0x8a6a10, ei: 0.5 });
-        for (let i = 0; i < 5; i++) part(torso, coneGeo(0.05, 0.16, 4), cm, -0.18 + i * 0.09, 1.3, 0.08);
+        for (let i = 0; i < 5; i++) spike(head, [-0.16 + i * 0.08, 0.16, 0.04], [-0.16 + i * 0.08, 0.34 + (i % 2) * 0.06, 0.04], 0.045, cm, 4);
       }
-      const armL = pivot(torso, -0.62, 0.8, 0), armR = pivot(torso, 0.62, 0.8, 0);
-      box(armL, 0.3, 0.9, 0.32, dk, 0, -0.4, 0);
-      box(armR, 0.3, 0.9, 0.32, dk, 0, -0.4, 0);
-      box(armL, 0.36, 0.3, 0.38, bm, 0, -0.9, 0);
-      box(armR, 0.36, 0.3, 0.38, bm, 0, -0.9, 0);
-      Object.assign(M, { legL, legR, armL, armR, golem: true, height: 2.1 });
+      Object.assign(M, { legL, legR, armL, armR, golem: true, height: 2.3 });
       break;
     }
     case 'witch': {
       body.position.y = 0.15;
-      const rm = mat(C);
-      part(body, coneGeo(0.46, 1.3, 7), rm, 0, 0.65, 0);
-      const head = pivot(body, 0, 1.42, 0);
-      box(head, 0.34, 0.34, 0.34, mat(t.name.indexOf('Gölge') >= 0 ? 0x0a0810 : 0xb8d8e8), 0, 0, 0);
-      box(head, 0.06, 0.06, 0.03, eyeM, -0.08, 0.02, 0.18);
-      box(head, 0.06, 0.06, 0.03, eyeM, 0.08, 0.02, 0.18);
-      if (t.name.indexOf('Gölge') >= 0) {
-        box(head, 0.44, 0.46, 0.44, rm, 0, 0.04, -0.04);
-        box(head, 0.3, 0.26, 0.05, mat(0x05030a), 0, -0.02, 0.2);
-        box(head, 0.06, 0.06, 0.03, eyeM, -0.07, 0.02, 0.23);
-        box(head, 0.06, 0.06, 0.03, eyeM, 0.07, 0.02, 0.23);
-      } else {
-        part(head, cylGeo(0.44, 0.44, 0.05, 8), rm, 0, 0.18, 0);
-        part(head, coneGeo(0.22, 0.65, 6), rm, 0, 0.5, -0.05, -0.25, 0, 0);
+      const isShade = t.name.indexOf('Gölge') >= 0, isIce = t.name.indexOf('Buzul') >= 0, isBone = t.name.indexOf('Ruh') >= 0;
+      const rm = mat(C), rmD = mat(shadeC(C, 0.6));
+      const trimC = isIce ? 0xcfe8ff : isBone ? 0x8aff9a : isShade ? 0xff4ab0 : 0xd8a040;
+      const trim = mat(trimC, { e: trimC, ei: isIce ? 0.3 : 0.7 });
+      const skin = mat(isShade ? 0x0a0810 : isIce ? 0xb8d8e8 : isBone ? 0xd8d0b8 : 0xc8b090);
+      // cüppe: çan etek (lathe) + yırtık etek ucu + ön panel + kuşak + omuz pelerini
+      part(body, latheGeo(isShade ? 'wraith' : 'robe', isShade ? [[0, 0.1], [0.3, 0.15], [0.42, 0.5], [0.34, 0.9], [0.26, 1.15], [0.1, 1.3]] : [[0, 0], [0.56, 0.02], [0.46, 0.4], [0.33, 0.82], [0.27, 1.12], [0.1, 1.3]], 12), rm, 0, 0, 0);
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * TAU, r0 = isShade ? 0.32 : 0.52, len = isShade ? 0.42 + (i % 3) * 0.12 : 0.2 + (i % 2) * 0.08;
+        spike(body, [Math.cos(a) * r0, isShade ? 0.2 : 0.12, Math.sin(a) * r0], [Math.cos(a) * (r0 + 0.06), (isShade ? 0.2 : 0.12) - len, Math.sin(a) * (r0 + 0.06)], 0.09, rmD, 4);
       }
-      const armL = pivot(body, -0.32, 1.15, 0), armR = pivot(body, 0.32, 1.15, 0);
-      box(armL, 0.14, 0.55, 0.14, rm, 0, -0.25, 0);
-      box(armR, 0.14, 0.55, 0.14, rm, 0, -0.25, 0);
-      const hand = pivot(armR, 0, -0.55, 0);
+      box(body, 0.2, 0.86, 0.04, rmD, 0, 0.56, 0.38).rotation.x = -0.2;
+      part(body, cylGeo(0.29, 0.3, 0.08, 12), trim, 0, 0.86, 0);
+      box(body, 0.44, 0.34, 0.3, rm, 0, 1.12, 0);
+      part(body, coneGeo(0.42, 0.3, 10), rmD, 0, 1.33, 0);
+      if (isBone) for (let i = 0; i < 7; i++) { const a = -1.1 + i * 0.37; part(body, sphGeo(0.035, 4, 3), mat(0xe8e0c8), Math.sin(a) * 0.24, 1.3 - Math.cos(a) * 0.08, Math.cos(a) * 0.2); }
+      const head = pivot(body, 0, 1.5, 0);
+      box(head, 0.3, 0.32, 0.3, skin, 0, 0, 0);
+      for (const sx of [-1, 1]) box(head, 0.06, 0.05, 0.03, eyeM, sx * 0.07, 0.02, isShade ? 0.24 : 0.16);
+      if (isShade) {
+        box(head, 0.46, 0.5, 0.46, rm, 0, 0.04, -0.04);
+        box(head, 0.32, 0.3, 0.06, mat(0x05030a), 0, -0.02, 0.2);
+        spike(head, [0, 0.26, -0.1], [0, 0.42, -0.36], 0.14, rm, 5);
+        box(head, 0.48, 0.05, 0.05, trim, 0, 0.22, 0.2);
+      } else if (isIce) {
+        box(head, 0.34, 0.6, 0.1, mat(0xeef6ff), 0, -0.12, -0.18);
+        box(head, 0.34, 0.1, 0.34, mat(0xeef6ff), 0, 0.17, -0.02);
+        const ic = mat(0xcff0ff, { e: 0x4ab0e0, ei: 0.6 });
+        for (let i = 0; i < 5; i++) spike(head, [-0.12 + i * 0.06, 0.2, 0.06], [-0.14 + i * 0.07, 0.36 + (i === 2 ? 0.14 : (i % 2) * 0.06), 0.04], 0.035, ic, 4);
+      } else if (isBone) {
+        box(head, 0.26, 0.08, 0.2, mat(0xb8b0a0), 0, -0.19, 0.04);
+        box(head, 0.4, 0.42, 0.42, rmD, 0, 0.06, -0.06);
+        for (const sx of [-1, 1]) spike(head, [sx * 0.16, 0.2, -0.04], [sx * 0.3, 0.42, -0.14], 0.05, mat(0xe8e0c8), 4);
+      } else {
+        part(head, cylGeo(0.44, 0.44, 0.05, 10), rm, 0, 0.18, 0);
+        part(head, coneGeo(0.22, 0.65, 8), rm, 0, 0.5, -0.05, -0.25, 0, 0);
+      }
+      const armL = pivot(body, -0.3, 1.24, 0), armR = pivot(body, 0.3, 1.24, 0);
+      for (const A of [armL, armR]) {
+        part(A, cylGeo(0.08, 0.15, 0.56, 8), rm, 0, -0.27, 0);
+        part(A, cylGeo(0.155, 0.155, 0.05, 8), trim, 0, -0.54, 0);
+        box(A, 0.1, 0.12, 0.1, skin, 0, -0.62, 0);
+      }
+      const hand = pivot(armR, 0, -0.6, 0);
       const st = buildWeapon('staff', t.proj || 0x9fe8ff);
-      st.rotation.x = -1.3; st.scale.setScalar(0.8);
+      st.rotation.x = -1.3; st.scale.setScalar(0.85);
       hand.add(st);
-      Object.assign(M, { armL, armR, hand, float: true, height: 2.0 });
+      if (isIce || isBone || isShade) part(armL, sphGeo(0.09, 6, 4), mat(trimC, { e: trimC, ei: 1.4 }), 0, -0.74, 0.08);
+      if (t.crown) { const cm = mat(0xe8c547, { e: 0x8a6a10, ei: 0.5 }); for (let i = 0; i < 5; i++) spike(head, [-0.12 + i * 0.06, 0.18, 0.12], [-0.12 + i * 0.06, 0.32, 0.12], 0.03, cm, 4); }
+      Object.assign(M, { armL, armR, hand, float: true, height: 2.1 });
       break;
     }
     case 'metin': {
@@ -12612,23 +12992,28 @@ function mergeStatic(L) {
   const nm = new THREE.Matrix3();
   const collect = (o) => {
     if (o.userData.dyn || o.isInstancedMesh) return;
-    if (o.isMesh && !o.material.transparent && o.material.isMeshLambertMaterial && !o.material.map) {
-      if (!buckets.has(o.material)) buckets.set(o.material, []);
-      buckets.get(o.material).push(o);
+    if (o.isMesh && !o.material.transparent && o.material.isMeshLambertMaterial && !o.material.map && !o.material.vertexColors) {
+      // ışımasız düz renkler köşe rengiyle tek kovada (yumuşak / köşeli / çift yüz ayrı): çizim çağrısı ↓
+      const m = o.material, glow = m.emissive && m.emissiveIntensity > 0 && (m.emissive.r + m.emissive.g + m.emissive.b) > 0;
+      const key = glow ? m : 'vc' + (m.flatShading ? 'f' : 's') + (m.side === THREE.DoubleSide ? 'd' : '');
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(o);
       victims.push(o);
     }
     for (const c of o.children.slice()) collect(c);
   };
   for (const c of L.group.children.slice()) collect(c);
   const v = new THREE.Vector3();
-  for (const [material, list] of buckets) {
-    if (list.length < 2) { const i = victims.indexOf(list[0]); if (i >= 0) victims.splice(i, 1); continue; }
+  for (const [bk, list] of buckets) {
+    const vc = typeof bk === 'string', material = vc ? vcMat(bk[2] === 'f', bk.length > 3) : bk;
+    if (list.length < 2 && !vc) { const i = victims.indexOf(list[0]); if (i >= 0) victims.splice(i, 1); continue; }
     let nv = 0, ni = 0;
     for (const m of list) { nv += m.geometry.attributes.position.count; ni += m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count; }
-    const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), idx = new Uint32Array(ni);
+    const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), idx = new Uint32Array(ni), col = vc ? new Float32Array(nv * 3) : null;
     let vo = 0, io = 0;
     for (const m of list) {
       const g = m.geometry, pa = g.attributes.position, na = g.attributes.normal, ia = g.index;
+      if (vc) { const cc = m.material.color; for (let i = 0; i < pa.count; i++) { col[(vo + i) * 3] = cc.r; col[(vo + i) * 3 + 1] = cc.g; col[(vo + i) * 3 + 2] = cc.b; } }
       nm.getNormalMatrix(m.matrixWorld);
       for (let i = 0; i < pa.count; i++) {
         v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld);
@@ -12643,6 +13028,7 @@ function mergeStatic(L) {
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
     geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    if (vc) geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
     geo.computeBoundingSphere();
     const mesh = new THREE.Mesh(geo, material);
     mesh.castShadow = true; mesh.receiveShadow = true;
@@ -12740,22 +13126,35 @@ function buildTower(L, x, z, h) {
   addGlowSprite(L, x, 0.5 + h * 0.62, z + r + 0.3, 0xffa040, 3.2);
   return g;
 }
-// Depocu kulübesi: batıya açık, yana eğimli koyu çatılı, içinde sandıklar
+// Depocu ambarı: batıya açık, taş kaideli, dikey tahta duvarlı, kiremit sıralı tek eğimli çatı; içinde raf + sandık + çuval
 function buildShed(L, x, z, w, d) {
   const g = pivot(L.group, x, 0, z);
-  const wood = mat(0x8a5a32), dk = mat(0x5a3a22);
-  box(g, w, 0.2, d, PAL.foundation, 0, 0.1, 0);
-  box(g, 0.3, 3.0, d, wood, w / 2 - 0.15, 1.7, 0);
-  for (const sz of [-1, 1]) box(g, w, 1.3, 0.22, wood, 0, 0.85, sz * (d / 2 - 0.11));
-  for (const sz of [-1, 0, 1]) box(g, 0.2, 3.3, 0.2, dk, -w / 2 + 0.2, 1.85, sz * (d / 2 - 0.2));
-  box(g, 0.2, 0.2, d, dk, -w / 2 + 0.2, 3.4, 0);
-  const roof = pivot(g, 0, 3.45, 0); roof.rotation.z = 0.2;
-  box(roof, w + 1.1, 0.22, d + 0.9, 0x5a3a2a, 0, 0, 0);
-  for (let k = 0; k < 4; k++) box(roof, w + 1.12, 0.07, 0.14, mat(0x5a3a22), 0, 0.14, -d / 2 + 0.5 + (k * (d - 1)) / 3);
-  box(g, 0.5, 0.1, d - 0.8, wood, w / 2 - 0.6, 1.5, 0);
-  for (let k = 0; k < 3; k++) box(g, 0.4, 0.4, 0.4, 0xa8784a, w / 2 - 0.6, 1.75, -d / 3 + k * (d / 3));
-  propChest(g, w / 2 - 1.5, -d / 4, Math.PI / 2); propChest(g, w / 2 - 1.5, d / 4, Math.PI / 2);
-  propChest(g, w / 2 - 1.5, 0.05, Math.PI / 2).position.y = 0.2;
+  const wood = mat(0x8a5a32), woodD = mat(0x6a4426), dk = mat(0x4a3220), roofC = 0x5a4434;
+  stoneBase(g, w, d, 0.3);
+  // arka (doğu) duvar: dikey tahtalar
+  for (let k = 0; k < Math.round(d / 0.42); k++) sbox(g, 0.22, 3.0, 0.4, k % 2 ? wood : woodD, w / 2 - 0.15, 0.3 + 1.5, -d / 2 + 0.21 + k * 0.42);
+  // yan duvarlar: alt tahta + üstte çıtalar
+  for (const sz of [-1, 1]) {
+    sbox(g, w - 0.3, 1.3, 0.2, wood, 0.15, 0.3 + 0.65, sz * (d / 2 - 0.1));
+    for (let k = 0; k < 3; k++) sbox(g, w - 0.3, 0.1, 0.16, woodD, 0.15, 1.85 + k * 0.42, sz * (d / 2 - 0.1));
+  }
+  for (const sz of [-1, 0, 1]) sbox(g, 0.24, 3.3, 0.24, dk, -w / 2 + 0.2, 0.3 + 1.65, sz * (d / 2 - 0.2));
+  sbox(g, 0.24, 0.26, d, dk, -w / 2 + 0.2, 3.5, 0);
+  // tek eğimli çatı + kiremit sıraları
+  const roof = pivot(g, 0, 3.55, 0); roof.rotation.z = 0.2;
+  sbox(roof, w + 1.1, 0.16, d + 0.9, shadeC(roofC, 0.75), 0, 0, 0);
+  for (let k = 0; k < 9; k++) { const r = sbox(roof, (w + 1.1) / 9 + 0.08, 0.07, d + 0.94, k % 2 ? roofC : liftC(roofC, 0.12), -(w + 1.1) / 2 + (k + 0.5) * (w + 1.1) / 9, 0.1, 0); r.rotation.z = 0.12; }
+  sbox(roof, 0.12, 0.2, d + 1.0, dk, -(w + 1.1) / 2, 0, 0);
+  // raflar + kutular, sandıklar, çuvallar
+  for (const yy of [1.0, 1.9]) sbox(g, 0.55, 0.08, d - 0.8, woodD, w / 2 - 0.55, yy, 0);
+  for (let k = 0; k < 4; k++) { sbox(g, 0.4, 0.38, 0.4, k % 2 ? 0xa8784a : 0x8a6a42, w / 2 - 0.58, 1.24, -d / 3 + k * (d / 4.5)); sbox(g, 0.36, 0.32, 0.36, 0x9a7048, w / 2 - 0.58, 2.11, -d / 3.4 + k * (d / 4.6)); }
+  propChest(g, w / 2 - 1.6, -d / 4, Math.PI / 2); propChest(g, w / 2 - 1.6, d / 4, Math.PI / 2);
+  propSack(g, 0.2, d / 2 - 0.7); propSack(g, 0.6, d / 2 - 0.5);
+  // tabela (anahtar işareti) + fener
+  sbox(g, 0.1, 0.1, 1.0, dk, -w / 2 - 0.1, 3.0, -d / 2 + 0.9);
+  sbox(g, 0.08, 0.7, 0.9, wood, -w / 2 - 0.12, 2.45, -d / 2 + 1.2);
+  part(g, new THREE.TorusGeometry(0.1, 0.03, 4, 10), mat(PAL.gold), -w / 2 - 0.17, 2.55, -d / 2 + 1.2, 0, Math.PI / 2, 0);
+  sbox(g, 0.04, 0.05, 0.3, mat(PAL.gold), -w / 2 - 0.17, 2.36, -d / 2 + 1.2);
   addGlowSprite(L, x - w / 2 + 0.6, 2.6, z, 0xffa040, 3.0);
   addLightSpot(L, x - w / 2 + 0.8, 2.4, z, 0xffa040, 0.9, 8);
   return g;
@@ -12879,38 +13278,95 @@ function buildExitGate(L, C, zz) {
 // Kamera güneyden baktığı için yapılar NPC'nin ARKASINDA ve alçak tutulur (çatı NPC'yi kapatmasın). Yerel eksen: ön yüz +z;
 // `rot` ön yüzün dünya yönüdür (π/2 doğu, -π/2 batı, 0 güney). WP: yerel (lx, lz) → dünya.
 const WP = (cx, cz, rot, lx, lz) => ({ x: cx + lx * Math.cos(rot) + lz * Math.sin(rot), z: cz - lx * Math.sin(rot) + lz * Math.cos(rot) });
-// Beşik çatı: sırt yerel x boyunca, `span` z boyunca; iki eğik levha + saçak kirişi + uç alınlıkları. Döner: çatı grubu (userData.rise)
+const sbox = (p, w, h, d, c, x, y, z) => part(p, boxGeo(w, h, d, true), typeof c === 'object' ? c : mat(c), x, y, z);
+// Beşik çatı: sırt yerel x boyunca, `span` z boyunca. Kademeli iki tonlu kiremit sıraları (saçağa doğru kalkık),
+// saçak + uç (barge) tahtaları, yuvarlak mahya, mahya uçlarında süs, alınlıkta dikme + kiriş. Döner: çatı (userData.rise)
 function roofGable(g, len, span, y, o) {
   const a = o.a || 0.6, over = o.over || 0.55;
   const hs = span / 2 + over, rise = (span / 2) * Math.tan(a) + 0.1, slabL = hs / Math.cos(a);
-  const rm = mat(o.roof), rmD = mat(new THREE.Color(o.roof).multiplyScalar(0.74).getHex()), tm = mat(o.timber);
+  const rm = mat(o.roof), rmD = mat(shadeC(o.roof, 0.72)), rmL = mat(liftC(o.roof, 0.1)), tm = mat(o.timber);
   const roof = pivot(g, 0, y, 0); roof.userData.rise = rise;
+  const rows = Math.max(4, Math.round(slabL / 0.34));
   for (const sgn of [1, -1]) {
     const p = pivot(roof, 0, rise - (hs / 2) * Math.tan(a), sgn * hs / 2); p.rotation.x = sgn * a;
-    box(p, len, 0.18, slabL, rm, 0, 0, 0);
-    for (let k = 0; k < 7; k++) box(p, len + 0.02, 0.06, 0.1, rmD, 0, 0.11, -slabL / 2 + 0.3 + k * (slabL - 0.45) / 6.2);
-    for (let k = 0; k < 5; k++) box(p, 0.08, 0.05, slabL - 0.2, rmD, -len / 2 + 0.6 + k * (len - 1.2) / 4, 0.11, 0); // kiremit derzleri
-    box(p, len + 0.1, 0.12, 0.16, tm, 0, -0.02, sgn * (slabL / 2 - 0.04));
+    sbox(p, len, 0.12, slabL, rmD, 0, -0.02, 0);
+    for (let k = 0; k < rows; k++) {
+      const z = sgn * (-slabL / 2 + (k + 0.55) * slabL / rows);
+      const row = sbox(p, len + 0.04, 0.07, slabL / rows + 0.08, k % 2 ? rm : rmL, (k % 2 ? 0.06 : -0.03), 0.07, z);
+      row.rotation.x = -sgn * 0.13;
+    }
+    sbox(p, len + 0.1, 0.12, 0.14, tm, 0, -0.02, sgn * (slabL / 2 - 0.04));
+    for (const sx of [-1, 1]) sbox(p, 0.1, 0.16, slabL + 0.04, tm, sx * (len / 2 + 0.02), 0.03, 0);
   }
-  box(roof, len + 0.2, 0.2, 0.24, tm, 0, rise + 0.06, 0);
+  part(roof, cylGeo(0.13, 0.13, len + 0.2, 6), rmD, 0, rise + 0.1, 0, 0, 0, Math.PI / 2);
+  for (const sx of [-1, 1]) spike(roof, [sx * (len / 2 + 0.1), rise + 0.1, 0], [sx * (len / 2 + 0.16), rise + 0.42, 0], 0.07, tm, 4);
   const sh = new THREE.Shape();
   sh.moveTo(-span / 2, 0); sh.lineTo(span / 2, 0); sh.lineTo(0, rise - 0.05); sh.lineTo(-span / 2, 0);
   const pg = new THREE.ExtrudeGeometry(sh, { depth: len - 1.0, bevelEnabled: false });
   pg.rotateY(Math.PI / 2); pg.translate(-(len - 1.0) / 2, 0, 0);
   pg.userData.tmp = true;
   part(roof, pg, mat(o.wall), 0, 0, 0);
+  for (const sx of [-1, 1]) { // alınlık ahşabı: dikme + kiriş
+    const gx = sx * ((len - 1.0) / 2 + 0.02);
+    sbox(roof, 0.06, rise - 0.15, 0.12, tm, gx, (rise - 0.15) / 2, 0);
+    sbox(roof, 0.06, 0.12, span - 0.2, tm, gx, 0.12, 0);
+    for (const sz of [-1, 1]) { const b = sbox(roof, 0.06, 0.1, span * 0.36, tm, gx, rise * 0.32, sz * span * 0.17); b.rotation.x = sz * -0.55; }
+  }
   return roof;
 }
-// Pencere: ahşap çerçeve, sıcak ışık, çapraz çıta; `shutter` renkli kepenk, `flowers` çiçeklik
+// Düzensiz taş kaide: çevrede farklı boy/tonlu bloklar + iç dolgu
+function stoneBase(g, w, d, h, c) {
+  const cs = [c || PAL.foundation, shadeC(c || PAL.foundation, 0.86), liftC(c || PAL.foundation, 0.1)];
+  sbox(g, w, h - 0.04, d, cs[0], 0, (h - 0.04) / 2, 0);
+  for (const [len, ax] of [[w, 'x'], [d, 'z']]) for (const s of [-1, 1]) {
+    let u = -len / 2;
+    while (u < len / 2 - 0.05) {
+      const bl = Math.min(len / 2 - u, rand(0.42, 0.8)), bh = h + rand(-0.04, 0.05), c2 = cs[randi(0, 2)];
+      if (ax === 'x') sbox(g, bl - 0.04, bh, 0.24, c2, u + bl / 2, bh / 2, s * (d / 2 + 0.02));
+      else sbox(g, 0.24, bh, bl - 0.04, c2, s * (w / 2 + 0.02), bh / 2, u + bl / 2);
+      u += bl;
+    }
+  }
+}
+// Sarmaşık: duvar köşesinden yukarı yeşil yaprak kümeleri
+function propIvy(g, x, z, h, nx, nz) {
+  const lm = [mat(0x3e6a30), mat(0x548a3a), mat(0x2e5426)];
+  for (let k = 0; k < Math.round(h / 0.22); k++) {
+    const y = 0.3 + k * 0.22, j = Math.sin(k * 1.7) * 0.12;
+    sbox(g, 0.16 + (k % 3) * 0.05, 0.16, 0.06, lm[k % 3], x + nz * j, y, z + nx * j).rotation.set(0, Math.atan2(nx, nz), (k % 2 ? 0.4 : -0.3));
+  }
+}
+// Baca dumanı: yükselip büyüyen ve sönen üç yumuşak sprite (tek malzeme, köy animasyon listesi)
+let SMOKE_MAT = null;
+function addSmoke(L, x, y, z) {
+  SMOKE_MAT = SMOKE_MAT || new THREE.SpriteMaterial({ map: glowTex(), color: 0xb4aea6, transparent: true, opacity: 0.55, depthWrite: false });
+  const ps = [];
+  for (let i = 0; i < 3; i++) { const s = new THREE.Sprite(SMOKE_MAT); s.userData.dyn = true; L.group.add(s); ps.push(s); }
+  const ph = Math.random() * 3;
+  L.anims.push((t) => {
+    ps.forEach((s, i) => {
+      const k = ((t * 0.28 + ph + i / 3) % 1);
+      s.position.set(x + Math.sin(k * 3 + i) * 0.25 + k * 0.5, y + k * 2.4, z + k * 0.2);
+      s.scale.setScalar(0.6 + k * 1.6);
+    });
+  });
+}
+// Pencere: ahşap çerçeve, sıcak ışık, çapraz çıta, taş eşik + lento; `shutter` renkli kepenk, `flowers` çiçeklik
 function propWindow(g, x, y, z, ry, tm, shutter, flowers) {
   const wg = pivot(g, x, y, z); wg.rotation.y = ry || 0;
-  box(wg, 0.95, 0.95, 0.1, tm, 0, 0, 0);
-  box(wg, 0.7, 0.7, 0.12, mat(PAL.windowGlow, { e: 0xffa040, ei: 0.6 }), 0, 0, 0.02);
-  box(wg, 0.06, 0.7, 0.14, tm, 0, 0, 0.04); box(wg, 0.7, 0.06, 0.14, tm, 0, 0, 0.04);
-  if (shutter) for (const sx of [-1, 1]) box(wg, 0.34, 0.9, 0.06, mat(shutter), sx * 0.66, 0, 0.04);
+  sbox(wg, 0.95, 0.95, 0.1, tm, 0, 0, 0);
+  sbox(wg, 0.72, 0.72, 0.12, mat(PAL.windowGlow, { e: 0xffa040, ei: 0.6 }), 0, 0, 0.02);
+  sbox(wg, 0.06, 0.72, 0.14, tm, 0, 0, 0.04); sbox(wg, 0.72, 0.06, 0.14, tm, 0, 0, 0.04);
+  sbox(wg, 1.12, 0.1, 0.22, mat(0xa89c86), 0, -0.52, 0.06);
+  sbox(wg, 1.12, 0.12, 0.16, tm, 0, 0.53, 0.03);
+  if (shutter) for (const sx of [-1, 1]) {
+    sbox(wg, 0.34, 0.9, 0.06, mat(shutter), sx * 0.66, 0, 0.04);
+    for (const yy of [-0.25, 0.25]) sbox(wg, 0.3, 0.05, 0.08, mat(shadeC(shutter, 0.7)), sx * 0.66, yy, 0.05);
+  }
   if (flowers) {
-    box(wg, 1.0, 0.18, 0.28, mat(0x6a4426), 0, -0.58, 0.16);
-    for (let k = 0; k < 4; k++) box(wg, 0.15, 0.15, 0.15, mat(pick(PAL.flower)), -0.36 + k * 0.24, -0.42, 0.16);
+    sbox(wg, 1.0, 0.18, 0.28, mat(0x6a4426), 0, -0.66, 0.18);
+    for (let k = 0; k < 5; k++) part(wg, sphGeo(0.08, 4, 3), mat(pick(PAL.flower)), -0.4 + k * 0.2, -0.5, 0.2 + (k % 2) * 0.05);
+    for (let k = 0; k < 3; k++) sbox(wg, 0.1, 0.16, 0.04, mat(0x4a7a32), -0.3 + k * 0.3, -0.72, 0.33).rotation.z = 0.3;
   }
   return wg;
 }
@@ -12930,35 +13386,54 @@ const COTTAGE = [
 ];
 function buildCottage(L, cx, cz, rot, w, d, si) {
   const st = COTTAGE[si % COTTAGE.length], g = pivot(L.group, cx, 0, cz); g.rotation.y = rot;
-  const wh = 2.5, tm = mat(st.timber);
-  box(g, w + 0.3, 0.5, d + 0.3, PAL.foundation, 0, 0.25, 0);
-  box(g, w, wh - 0.5, d, st.wall, 0, 0.5 + (wh - 0.5) / 2, 0);
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(g, 0.24, wh - 0.4, 0.24, tm, sx * w / 2, 0.5 + (wh - 0.5) / 2, sz * d / 2);
-  box(g, w + 0.1, 0.16, d + 0.1, tm, 0, wh - 0.1, 0);
-  if (st.frame) {
-    box(g, w, 0.12, 0.1, tm, 0, 1.55, d / 2 + 0.03); box(g, w, 0.12, 0.1, tm, 0, 1.55, -d / 2 - 0.03);
-    for (const sz of [-1, 1]) { const b = box(g, 0.1, 1.5, 0.08, tm, sz * (w / 2 + 0.03), 1.55, 0); b.rotation.x = sz * 0.9; }
+  const wh = 2.6, tm = mat(st.timber), tmD = mat(shadeC(st.timber, 0.8));
+  stoneBase(g, w + 0.2, d + 0.2, 0.55);
+  sbox(g, w, wh - 0.55, d, st.wall, 0, 0.55 + (wh - 0.55) / 2, 0);
+  // köşe dikmeleri + üst kiriş + orta kuşak
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) sbox(g, 0.24, wh - 0.45, 0.24, tm, sx * w / 2, 0.55 + (wh - 0.55) / 2, sz * d / 2);
+  sbox(g, w + 0.12, 0.18, d + 0.12, tm, 0, wh - 0.08, 0);
+  sbox(g, w + 0.06, 0.12, d + 0.06, tmD, 0, 1.5, 0);
+  if (st.frame) { // yarım ahşap çerçeve: ön/arka dikmeler + üst panelde çapraz
+    for (const sz of [-1, 1]) for (const u of [-w / 4, w / 4]) {
+      sbox(g, 0.1, wh - 0.7, 0.06, tm, u + (sz > 0 ? -0.05 : 0), 0.6 + (wh - 0.7) / 2, sz * (d / 2 + 0.03));
+    }
+    for (const sz of [-1, 1]) for (const sx of [-1, 1]) { const b = sbox(g, 0.08, 1.2, 0.05, tm, sx * (w / 2 - 0.55), 2.0, sz * (d / 2 + 0.035)); b.rotation.z = sx * 0.75; }
+    for (const sx of [-1, 1]) { const b = sbox(g, 0.05, 1.2, 0.08, tm, sx * (w / 2 + 0.035), 2.0, 0); b.rotation.x = 0.75; const b2 = sbox(g, 0.05, 1.2, 0.08, tm, sx * (w / 2 + 0.035), 2.0, 0); b2.rotation.x = -0.75; }
   }
   if (st.quoins) {
-    const qm = mat(0xd2c6b0);
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (let k = 0; k < 3; k++) box(g, 0.32 + (k % 2) * 0.14, 0.3, 0.32 + ((k + 1) % 2) * 0.14, qm, sx * w / 2, 0.75 + k * 0.6, sz * d / 2);
+    const qm = mat(0xd2c6b0), qm2 = mat(0xbcae96);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (let k = 0; k < 4; k++) sbox(g, 0.32 + (k % 2) * 0.16, 0.3, 0.32 + ((k + 1) % 2) * 0.16, k % 2 ? qm : qm2, sx * w / 2, 0.75 + k * 0.48, sz * d / 2);
   }
-  if (st.planks) { const pm = mat(0x7a5234); for (let k = 0; k < 4; k++) box(g, w + 0.04, 0.06, d + 0.04, pm, 0, 0.85 + k * 0.45, 0); }
-  // kapı + basamak + fener (ön yüz +z)
+  if (st.planks) { const pm = mat(0x7a5234); for (let k = 0; k < 5; k++) sbox(g, w + 0.04, 0.06, d + 0.04, pm, 0, 0.8 + k * 0.38, 0); }
+  // kapı: kemerli çerçeve, demir menteşe, basamak, saçak
   const dx = -w / 6;
-  box(g, 1.15, 1.95, 0.1, tm, dx, 0.5 + 0.98, d / 2 + 0.04);
-  box(g, 0.92, 1.75, 0.12, PAL.door, dx, 0.5 + 0.88, d / 2 + 0.06);
-  box(g, 0.07, 0.07, 0.05, mat(PAL.gold), dx + 0.28, 1.35, d / 2 + 0.14);
-  box(g, 1.4, 0.18, 0.55, PAL.foundation, dx, 0.09 + 0.2, d / 2 + 0.38);
-  box(g, 1.5, 0.1, 0.7, mat(st.roof), dx, 2.45, d / 2 + 0.4).rotation.x = 0.35;
-  propHangLantern(L, g, cx, cz, rot, dx + 0.95, 1.8, d / 2 + 0.22);
-  propWindow(g, w / 4 + 0.3, 1.7, d / 2 + 0.04, 0, tm, st.shut, true);
-  propWindow(g, w / 2 + 0.03, 1.7, 0, Math.PI / 2, tm, st.shut, false);
-  const roof = roofGable(g, w + 0.9, d, wh, { a: 0.66, over: 0.55, roof: st.roof, timber: st.timber, wall: st.wall });
+  sbox(g, 1.2, 2.05, 0.12, tm, dx, 0.55 + 1.02, d / 2 + 0.04);
+  part(g, cylGeo(0.6, 0.6, 0.12, 10, ), tm, dx, 0.55 + 2.05, d / 2 + 0.04, Math.PI / 2, 0, 0);
+  sbox(g, 0.92, 1.85, 0.12, PAL.door, dx, 0.55 + 0.92, d / 2 + 0.07);
+  for (let k = 0; k < 3; k++) sbox(g, 0.04, 1.8, 0.02, mat(shadeC(PAL.door, 0.75)), dx - 0.3 + k * 0.3, 0.55 + 0.92, d / 2 + 0.14);
+  for (const yy of [0.95, 1.95]) sbox(g, 0.5, 0.06, 0.03, mat(0x30323a), dx - 0.18, yy, d / 2 + 0.15);
+  part(g, sphGeo(0.04, 4, 3), mat(PAL.gold), dx + 0.3, 1.45, d / 2 + 0.16);
+  sbox(g, 1.5, 0.16, 0.6, PAL.foundation, dx, 0.08, d / 2 + 0.4);
+  sbox(g, 1.2, 0.14, 0.4, liftC(PAL.foundation, 0.1), dx, 0.3, d / 2 + 0.3);
+  const ab = sbox(g, 1.6, 0.1, 0.8, mat(st.roof), dx, 2.95, d / 2 + 0.4); ab.rotation.x = 0.4;
+  for (const sx of [-1, 1]) { const br = sbox(g, 0.08, 0.5, 0.08, tm, dx + sx * 0.7, 2.7, d / 2 + 0.25); br.rotation.x = -0.6; }
+  propHangLantern(L, g, cx, cz, rot, dx + 0.95, 2.05, d / 2 + 0.22);
+  propWindow(g, w / 4 + 0.35, 1.85, d / 2 + 0.04, 0, tm, st.shut, true);
+  propWindow(g, w / 2 + 0.03, 1.85, 0, Math.PI / 2, tm, st.shut, false);
+  propWindow(g, -w / 2 - 0.03, 1.85, 0, -Math.PI / 2, tm, st.shut, false);
+  propIvy(g, -w / 2 - 0.05, d / 2 + 0.05, 2.2, 0, 1);
+  // önde küçük eşyalar: fıçı, saksı, odun
+  propBarrel(g, w / 2 + 0.55, d / 2 + 0.5, 0.75);
+  part(g, cylGeo(0.2, 0.15, 0.3, 8), mat(0x9a5a3a), -w / 2 + 0.2, 0.15, d / 2 + 0.55);
+  part(g, sphGeo(0.2, 5, 4), mat(0x4a7a32), -w / 2 + 0.2, 0.38, d / 2 + 0.55);
+  const roof = roofGable(g, w + 0.9, d, wh, { a: 0.68, over: 0.55, roof: st.roof, timber: st.timber, wall: st.wall });
   if (st.chim) {
-    const rs = roof.userData.rise, cm = mat(0x8a7e72);
-    box(g, 0.6, 1.6, 0.6, cm, w / 4, wh + rs * 0.62, -d * 0.18);
-    box(g, 0.78, 0.14, 0.78, mat(0x6a6058), w / 4, wh + rs * 0.62 + 0.86, -d * 0.18);
+    const rs = roof.userData.rise, cm = mat(0x8a7e72), cm2 = mat(0x9a8e80), top = wh + rs * 0.62 + 0.95;
+    sbox(g, 0.62, top - wh, 0.62, cm, w / 4, wh + (top - wh) / 2, -d * 0.18);
+    for (let k = 0; k < 4; k++) sbox(g, 0.66, 0.08, 0.66, cm2, w / 4, wh + 0.3 + k * ((top - wh - 0.3) / 4), -d * 0.18);
+    sbox(g, 0.8, 0.14, 0.8, mat(0x6a6058), w / 4, top + 0.05, -d * 0.18);
+    const s = WP(cx, cz, rot, w / 4, -d * 0.18);
+    addSmoke(L, s.x, top + 0.3, s.z);
   }
   return g;
 }
@@ -12966,7 +13441,7 @@ function buildCottage(L, cx, cz, rot, w, d, si) {
 function buildSmithy(L, cx, cz, rot) {
   const w = 7, d = 6, g = pivot(L.group, cx, 0, cz); g.rotation.y = rot;
   const stone = mat(0x7d7a84), stoneL = mat(0x9c98a2), tm = mat(PAL.timber);
-  box(g, w + 0.4, 0.3, d + 0.4, PAL.foundation, 0, 0.15, 0);
+  stoneBase(g, w + 0.4, d + 0.4, 0.32);
   box(g, w, 2.7, 0.5, stone, 0, 0.3 + 1.35, -d / 2 + 0.25);
   box(g, 0.5, 2.7, d, stone, -w / 2 + 0.25, 0.3 + 1.35, 0);
   box(g, 0.45, 1.0, d - 1.4, stone, w / 2 - 0.22, 0.3 + 0.5, -0.7);
@@ -12980,6 +13455,7 @@ function buildSmithy(L, cx, cz, rot) {
   box(g, 1.15, top, 1.15, stone, bx, top / 2, bz);
   for (let k = 0; k < 6; k++) box(g, 1.2, 0.1, 1.2, stoneL, bx, 0.9 + k * 0.85, bz);
   box(g, 1.4, 0.18, 1.4, mat(0x6a6670), bx, top + 0.05, bz);
+  { const sm = WP(cx, cz, rot, bx, bz); addSmoke(L, sm.x, top + 0.4, sm.z); }
   // ocak: ÖNDE (gölgelik altında) — kamera çatı eteğinin üstünden baktığı için iç kısım görünmez; ocak dışarıda parlar
   const fx = 1.8, fzz = d / 2 + 0.95;
   box(g, 1.9, 1.05, 1.4, stone, fx, 0.5, fzz);
@@ -13020,7 +13496,7 @@ function buildSmithy(L, cx, cz, rot) {
 function buildMerchant(L, cx, cz, rot) {
   const w = 7, d = 6, g = pivot(L.group, cx, 0, cz); g.rotation.y = rot;
   const tm = mat(PAL.timber), wood = mat(0x8a5a32), bd = d - 1.8, bz = -d / 2 + bd / 2, fz = -d / 2 + bd;
-  box(g, w + 0.4, 0.3, d + 0.4, PAL.foundation, 0, 0.15, 0);
+  stoneBase(g, w + 0.4, d + 0.4, 0.32);
   box(g, w - 0.4, 3.0, bd, PAL.plaster, 0, 0.3 + 1.5, bz);
   for (const sx of [-1, 1]) for (const z of [-d / 2, fz]) box(g, 0.24, 3.1, 0.24, tm, sx * (w / 2 - 0.2), 0.3 + 1.55, z);
   for (const y of [1.8, 3.25]) { box(g, w - 0.2, 0.14, 0.12, tm, 0, y, fz + 0.04); box(g, w - 0.2, 0.14, 0.12, tm, 0, y, -d / 2 - 0.02); }
@@ -13030,6 +13506,7 @@ function buildMerchant(L, cx, cz, rot) {
   const roof = roofGable(g, w + 1.0, d, 3.4, { a: 0.6, over: 0.8, roof: 0xa8402f, timber: PAL.timber, wall: PAL.plaster });
   const rs = roof.userData.rise;
   box(g, 0.8, 1.8, 0.8, mat(0x8a7e72), -w / 4, 3.4 + rs * 0.55 + 0.4, -d * 0.2); box(g, 1.0, 0.16, 1.0, mat(0x6a6058), -w / 4, 3.4 + rs * 0.55 + 1.35, -d * 0.2);
+  { const sm = WP(cx, cz, rot, -w / 4, -d * 0.2); addSmoke(L, sm.x, 3.4 + rs * 0.55 + 1.6, sm.z); }
   // kapı (solda) + pencere (sağda), cephe
   box(g, 1.15, 2.05, 0.1, tm, -2.3, 0.3 + 1.03, fz + 0.06); box(g, 0.92, 1.85, 0.12, PAL.door, -2.3, 0.3 + 0.93, fz + 0.08);
   propWindow(g, 1.4, 2.0, fz + 0.06, 0, tm, 0x3a6a8a, false);
@@ -18886,7 +19363,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { buildMobModel, buildNPC, MOB_TPL, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
