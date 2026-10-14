@@ -1,6 +1,6 @@
 # Taş Mührü — proje durumu (kısa teknik hafıza)
 
-Son güncelleme: 2026-10-13 · `main` ucu `10f7a92` (Beceri Ustalığı Aşama 2); `ozellik/gorev-sistemi` (görev zinciri + çanta sayfaları) ve onun üstündeki `ozellik/arayuz-minimal` (HUD + pencere teması) main'e alınmadı. Satır numaraları bu sürüme göredir ve kayar;
+Son güncelleme: 2026-10-14 · `main`: görev zinciri + çanta/arayüz yenilemesi + Savaşçı silahlı bekleme/koşu/yürüme animasyonları ve ince kılıçlar (`SWORD_W/SWORD_T`) dahil. `ozellik/koy-meydani` (köy yeniden tasarımı) main'e alınmadı, kullanıcının 3B ev modellerini bekliyor. Satır numaraları bu sürüme göredir ve kayar;
 her zaman `grep -n` ile doğrula.
 
 ## Dosyalar
