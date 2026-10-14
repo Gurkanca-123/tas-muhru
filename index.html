@@ -1233,7 +1233,7 @@ const dailyReward = (lv) => ({ gold: Math.round(60 + lv * lv * 5), exp: lv < 50 
 
 // ---------- Görsel temalar ----------
 const THEMES = {
-  village: { fog: 0x9c8c88, fogDensity: 0.0058, hemiSky: 0xb8c4e4, hemiGround: 0x7a5e48, hemiI: 0.74, sun: 0xffb878, sunI: 0.58, exposure: 1.0, vignette: 0.3, ambient: 'firefly', ambientN: 24 },
+  village: { fog: 0x9c8c88, fogDensity: 0.0058, hemiSky: 0xb8c4e4, hemiGround: 0x7a5e48, hemiI: 0.68, sun: 0xffb070, sunI: 0.54, exposure: 1.0, vignette: 0.32, ambient: 'firefly', ambientN: 24 },
   forest: { floor: 0x7a7458, wall: 0x5c5644, wallTop: 0x4c4838, fog: 0x2a3322, fogNear: 12, fogFar: 46, hemiSky: 0xd8e6c4, hemiGround: 0x6a6a4e, hemiI: 1.05, sun: 0xe8f0d0, sunI: 0.55, exposure: 1.2, light: 0xffd49a, lightI: 1.7, torch: 0xffa040, deco: 'forest', vignette: 0.24, ambient: 'firefly', ambientN: 34 },
   spider: { floor: 0x685a72, wall: 0x4c4058, wallTop: 0x62547a, fog: 0x281e32, fogNear: 12, fogFar: 44, hemiSky: 0xd4c4ec, hemiGround: 0x54466a, hemiI: 1.05, sun: 0xd8ccff, sunI: 0.5, exposure: 1.2, light: 0xc8ff9a, lightI: 1.7, torch: 0x9aff4a, deco: 'spider', vignette: 0.26, ambient: 'spore', ambientN: 30 },
   grave: { floor: 0x747884, wall: 0x565a66, wallTop: 0x6a7288, fog: 0x222838, fogNear: 12, fogFar: 46, hemiSky: 0xc4d2ee, hemiGround: 0x505a70, hemiI: 1.05, sun: 0xc8d8ff, sunI: 0.55, exposure: 1.2, light: 0xa8c0ff, lightI: 1.7, torch: 0x6ab0ff, deco: 'grave', vignette: 0.26, ambient: 'dust', ambientN: 26 },
@@ -12875,6 +12875,78 @@ function buildExitGate(L, C, zz) {
   addLightSpot(L, C, 4.0, zz - 0.8, 0xffa040, 1.0, 9);
 }
 
+// ---------- Köy binaları (GLB: Demirci, Tüccar) ----------
+// Kullanıcının 3B modelleri Blender'da hafifletildi (≈12 bin üçgen, 1536 px tek doku, ~1,2 MB/GLB; koy_*.js → window.TM_ASSETS).
+// Sayfa açılırken tembel yüklenir; hazır değilse prosedürel ev görünür ve model gelince yerinde değişir (VillageAssets.onReady).
+// Modeller +Z'ye bakar, ayak tabanı (kaldırım) alt sınırdadır; ölçek/yön `VILLAGE_BLDG` tablosundan.
+const VILLAGE_FILES = { demirci: 'koy_demirci.js?v=3e9410ead9', tuccar: 'koy_tuccar.js?v=d77e6e11ce' };
+const VillageAssets = {
+  tpl: {}, state: {}, onReady: [],
+  load() {
+    for (const k of Object.keys(VILLAGE_FILES)) {
+      if (this.state[k]) continue;
+      this.state[k] = 'yükleniyor';
+      const fin = (g) => {
+        this.state[k] = g ? 'hazır' : 'hata';
+        if (g) this.tpl[k] = this.prep(g.scene);
+        for (const f of this.onReady.slice()) f(k);
+      };
+      const parse = () => {
+        const A = window.TM_ASSETS || {}, key = 'koy_' + k, b64 = A[key];
+        if (!b64) { console.error('Köy binası yok:', key); fin(null); return; }
+        try {
+          const bin = atob(b64), buf = new ArrayBuffer(bin.length), v = new Uint8Array(buf);
+          for (let i = 0; i < bin.length; i++) v[i] = bin.charCodeAt(i);
+          delete A[key]; // base64 metni bellekten bırak
+          new THREE.GLTFLoader().parse(buf, '', fin, (e) => { console.error('Köy binası ayrıştırılamadı:', key, e); fin(null); });
+        } catch (e) { console.error('Köy binası çözümlenemedi:', key, e); fin(null); }
+      };
+      if (window.TM_ASSETS && window.TM_ASSETS['koy_' + k]) { parse(); continue; } // sayfaya gömülü derleme
+      const sc = document.createElement('script');
+      sc.src = VILLAGE_FILES[k]; sc.async = true; sc.onload = parse;
+      sc.onerror = () => { console.error('Köy binası indirilemedi:', sc.src); fin(null); };
+      document.head.appendChild(sc);
+    }
+  },
+  // Mobil maliyet: tek Lambert malzeme + doku, gölge yok (tüm köy gölgesi sabit önemli nesnelerde kalır)
+  prep(scene) {
+    const mats = new Map();
+    scene.traverse((o) => {
+      if (!o.isMesh) return;
+      const old = o.material; // emissive: akşam ışığında koyu pişmiş dokuyu hafif yükseltir
+      if (!mats.has(old)) { const m = new THREE.MeshLambertMaterial({ map: old.map || null, color: 0xffffff, emissive: 0xffffff, emissiveMap: old.map || null, emissiveIntensity: 0.3 }); if (m.map) m.map.anisotropy = 2; mats.set(old, m); }
+      o.material = mats.get(old); o.castShadow = o.receiveShadow = false; o.frustumCulled = true;
+    });
+    const box = new THREE.Box3().setFromObject(scene);
+    return { scene, minY: box.min.y, size: box.getSize(new THREE.Vector3()) };
+  },
+  make(k) { const t = this.tpl[k]; return t ? t.scene.clone(true) : null; },
+};
+// x, z: bina bloğunun merkezi · rot: ön yüzün yönü (Y dönüşü; model +Z'ye bakar) · sc: ölçek (blok 10×12 birim)
+const VILLAGE_BLDG = {
+  smith: { key: 'demirci', rot: Math.PI / 2, sc: 10.4 },
+  shop: { key: 'tuccar', rot: -Math.PI / 2, sc: 10.4 },
+};
+function placeVillageBldg(L, id, cx, cz) {
+  const d = VILLAGE_BLDG[id], t = d && VillageAssets.tpl[d.key];
+  if (!t) return null;
+  const m = VillageAssets.make(d.key);
+  m.scale.setScalar(d.sc); m.rotation.y = d.rot;
+  m.position.set(cx, -t.minY * d.sc - 0.05, cz);
+  const g = new THREE.Group(); g.userData.dyn = true; g.userData.bldg = id; g.add(m);
+  L.group.add(g);
+  return g;
+}
+VillageAssets.onReady.push(() => { // model köy kurulduktan sonra geldiyse prosedürel evi yerinde değiştir
+  let L = null; try { L = G.level; } catch (e) { /* G henüz yok: köy kurulurken zaten hazır model kullanılır */ }
+  if (!L || !L.bldgSlots) return;
+  for (const sl of L.bldgSlots.slice()) {
+    if (!placeVillageBldg(L, sl.id, sl.x, sl.z)) continue;
+    L.group.remove(sl.g);
+    L.bldgSlots.splice(L.bldgSlots.indexOf(sl), 1);
+  }
+});
+VillageAssets.load();
 function buildVillage() {
   const L = newLevel('village');
   L.theme = THEMES.village;
@@ -12945,7 +13017,11 @@ function buildVillage() {
   for (const h of HOUSES) {
     const [i0, j0, i1, j1] = h.b;
     block(i0, j0, i1, j1);
-    buildHouse(L, i0 * T, j0 * T, (i1 - i0 + 1) * T, (j1 - j0 + 1) * T, h.face, h.style, { doorU: h.doorU });
+    const bcx = (i0 + i1 + 1) * T / 2, bcz = (j0 + j1 + 1) * T / 2;
+    if (h.id && VILLAGE_BLDG[h.id] && placeVillageBldg(L, h.id, bcx, bcz)) { /* GLB bina */ } else {
+      const hg = buildHouse(L, i0 * T, j0 * T, (i1 - i0 + 1) * T, (j1 - j0 + 1) * T, h.face, h.style, { doorU: h.doorU });
+      if (h.id && VILLAGE_BLDG[h.id]) { hg.userData.dyn = true; (L.bldgSlots = L.bldgSlots || []).push({ id: h.id, g: hg, x: bcx, z: bcz }); } // model gelince yerinde değişir
+    }
     // ev köşelerine çalı
     const x0 = i0 * T, z0 = j0 * T, x1 = (i1 + 1) * T, z1 = (j1 + 1) * T;
     for (const [bx, bz] of [[x0 - 0.6, z0 - 0.6], [x1 + 0.6, z0 - 0.6], [x0 - 0.6, z1 + 0.6], [x1 + 0.6, z1 + 0.6]]) if (chance(0.6)) fBush(F, bx, bz, rand(0.8, 1.1));
