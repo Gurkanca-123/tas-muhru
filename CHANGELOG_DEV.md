@@ -10,15 +10,14 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
-## 2026-10-14 (20) — Köy: Demirci ve Tüccar GLB binaları · dal `ozellik/koy-modeller` (köy yeniden tasarımı dalı + main birleşik; yedek: `yedek/koy-modeller-oncesi`)
-- Dosyalar: `index.html` (`VillageAssets`, `VILLAGE_BLDG`, `placeVillageBldg`, `buildVillage` ev döngüsü, `THEMES.village` hafif ısıtma) · yeni `koy_demirci.js`, `koy_tuccar.js` (base64 GLB, `?v=3e9410ead9` / `?v=d77e6e11ce`).
-- Modeller (kullanıcının AI üretimi 3B binaları): orijinal Demirci 9 MB / 19,6 bin üçgen, Tüccar 21,5 MB / 18 bin üçgen, 3×4096 px doku. Blender (bpy) ile: 12 bin üçgene decimate → yeni UV (smart project) → orijinalden 1536 px
-  tek renk dokusuna bake (normal / metal-pürüz dokuları atıldı) → GLB ~1,15 / 1,28 MB. 6 bin üçgende çatılar parçalanıyordu, 12 bin orijinale yakın. Model +Z'ye bakar; ölçek 10,4 (blok 10×12 birim).
-- Yerleşim: Demirci `HOUSES.smith` bloğunda (ön yüz doğuya, Demirci NPC'sine), Tüccar `HOUSES.shop` bloğunda (ön yüz batıya). Çarpışma bloğu ve NPC noktaları değişmedi. Malzeme tek Lambert + doku (+ `emissive` %30 ile koyu doku yükseltilir), gölge yok.
-- Yükleme: sayfa açılırken tembel (`TM_ASSETS`, Savaşçı/Tapınak betikleriyle aynı yol). Model köy kurulurken hazır değilse prosedürel ev kurulur (`L.bldgSlots`), model gelince yerinde değişir; indirme hatasında prosedürel ev kalır.
-- Stil: konsept görsellere göre köy zaten akşam / mangal / mavi bayrak / mor çadır düzenindeydi; yalnız tema biraz ısıtıldı (hemiI 0.74→0.68, güneş 0.58→0.54). Depo/Usta/Simyacı/çıkış kapısı yeniden modellenmedi (yalnız iki GLB verildi).
-- Testler (Playwright + SwiftShader): `vtest` 23/23, `vfall` (model geç gelir / indirilemez) 6/6, `qtest` 40/40. Köy render: 147 çağrı, ~165k üçgen. Gerçek telefonda FPS, bellek (2 doku ≈ 25 MB GPU) ve yükleme süresi **denenmedi**.
-- Açık: konsept görseldeki çevre çit/kaya halkası, Depo ve Usta yapıları ve bina içi ocak/fener haleleri (`addGlowSprite`) eklenmedi; model dokusu baked olduğu için gece/gündüz ışığına tepki sınırlı.
+## 2026-10-14 (20) — Köy: küçük özgün yapılar (Demirci, Tüccar, Usta sundurması, kulübeler) + yerleşim · dal `ozellik/koy-modeller` (köy yeniden tasarımı dalı + main birleşik; yedek: `yedek/koy-modeller-oncesi`)
+- Dosya: yalnız `index.html` (köy). Önce kullanıcının iki GLB'si (Demirci / Tüccar) denendi; diğer yapılarla uyumsuz bulunduğu için KALDIRILDI (`koy_*.js`, `VillageAssets` yok). Referans görseller ve modeller esas alınıp yapılar oyunun kutu-tabanlı diliyle yeniden yazıldı.
+- Yeni yapılar (`WP`, `roofGable`, `propWindow`, `propHangLantern`, `buildCottage`, `buildSmithy`, `buildMerchant`, `propDummy`, `buildPavilion`): eski evlerin ~%60'ı boyutunda (≈7×6 birim, duvar 2.5–3 yükseklik). Demirci: arduvaz çatı, taş baca, ÖNDE parlayan ocak + kırmızı gölgelik, örs, odun yığını, tabela. Tüccar: kırmızı kiremit çatı, çizgili + mavi gölgelik, tezgâh/mallar, para kesesi tabelası.
+  Usta: açık eğitim sundurması (mavi-arduvaz çatı, kalkanlar, silah rafı, bayraklar, mangallar, 2 dummy). Küçük kulübeler 3 stil (kuzeybatı, kuzeydoğu, güneydoğu, Simyacı evi).
+- Yerleşim: kamera güneyden baktığı için yapı NPC'nin ARKASINDA (kuzeyde), ön yüz meydana ≈31° çevrik; NPC yapı önünde. Usta batıya (eskiden güneydoğuda evin çatısı arkasında kalıyordu), Depocu doğuda, Simyacı çadırı güneybatıda. `blockRot` dönük yapı çarpışması. Meydan yuvarlak kaldı; meydandan yapı önlerine yollar (z≈24 ve z≈40) + kulübe patikaları.
+- Çatı detayı (7 kiremit sırası + derz), Demirci ocağı çatı eteği kameraya kapatacağı için sundurma dışına alındı.
+- Testler (Playwright + SwiftShader): `vtest` 23/23 (6 NPC BFS erişimi, paneller, tek parça yürünebilir alan), köy render 149 çağrı / ~170k üçgen. Gerçek telefonda FPS ve görünüm **denenmedi**.
+- Açık: Depocu kulübesi eski boyutta (çatı büyük); Demirci iç mekânı kameradan görünmez; köyü büyütme (yeni yol ağı) yapılmadı, yalnız yollar eklendi.
 
 ## 2026-10-14 (19) — Beceri Ustalığı son dengeleme main'e alındı (kayıt 2026-10-13 (11) ile aynı iş) · `ozellik/ustalik-asama2` → main, kullanıcı onayıyla (yedek: `yedek/main-ustalik-denge-oncesi`)
 - Yedek: `yedek/ustalik-denge-oncesi`. Değişen tek veri: `MASTERY_STEP` M 0.08→0.04, G 0.12→0.06 (`index.html`, 1 satır + yorum).
