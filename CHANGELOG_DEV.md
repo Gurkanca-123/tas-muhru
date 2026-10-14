@@ -54,6 +54,16 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - Testler: 5 gövdeden 4'ü (bez, kurt, nihai, efsane) + fantazi bekleme/koşu görüntüleri elle incelendi; geçişler (bekle→koş→yürü→dur→saldırı→yetenek) başsız tarayıcıda doğrulandı;
   qtest 40/40, qtest3 22/22, qtest4 32/32, qtest5 26/26. Gerçek telefonda DENENMEDİ.
 - Açık: saldırı/yetenek klipleri değişmedi (silah elde klipler arası geçişte kısa karışma olabilir); kılıç açısı gözle ayarlandı, beğenilmezse `svBuildClips` içindeki `blade` / kol yönleri.
+## 2026-10-13 (14) — Köy meydanı yeniden tasarımı (referans görsele göre) · dal `ozellik/koy-meydani` (yedek: `yedek/koy-oncesi`)
+- Dosya: `index.html` (yalnız köy: `buildVillage` + yeni yardımcılar + `THEMES.village`); oyun mantığı / kayıt / savaş değişmedi.
+- Yerleşim (kuzey = ekran üstü): ortada **Merkez Anıt** (`buildMonument`: 3 kademeli platform, mavi rünlü dikilitaş, 2 yan taş, zincir, dönen rünler, 4 köşe mangal); üstte **Zindan Girişi** (`buildDungeonHall` salon + merdiven + 2 mangal, iki gözcü kulesi `buildTower`, Bekçi basamakların önünde);
+  solda Demirci (ocak, eski yeri) + **Simyacı mor çadırı** (`buildTent`, kazan çadırın içinde, arduvaz çatılı ev = `HOUSE_STYLES[3]`); sağda Tüccar (yukarı kaydı), **Depocu kulübesi** (`buildShed`, sağa taşındı), Usta (aynı yer, bayrak eklendi); altta **köy çıkışı** kapısı (`buildExitGate`: sütunlar, kiriş, bayrak, mangal, basamak). Çit, ağaç, kayalar (`propRock`) ve bayraklar (`propBannerCloth`) eklendi.
+- Kaldırıldı: eski çeşme, eski portal platformu ve ayrı «Portal Taşı» etkileşimi (Bekçi aynı `id:'portal'` ile zindan panelini açar; görev motoru etkilenmedi). İpucu ve q01 metni «zindan girişi / Bekçi» olarak güncellendi.
+- Atmosfer: `THEMES.village` akşam tonuna çekildi (daha düşük hemi/güneş, sıcak güneş, mor-gri sis). Işık sayısı sabit; mangal alevleri tek `InstancedMesh` (`addFlameInst` / `flushFlames`), haleler tek sprite (`addGlowSprite`).
+- `buildHouse` yeni `opts.noDoor` (kapıyı çağıran kurar). Kayıt alanı eklenmedi.
+- Testler (Playwright + SwiftShader, tek tarayıcı): yeni köy testi 23/23 (6 NPC'ye BFS erişim, spawn/dönüş noktası yürünebilir, tek parça yürünebilir alan, NPC panelleri, zindana gidiş-dönüş, anıt/salon çarpışması, JS hatası yok); görev 40/40, çanta 22/22, HUD 32/32, pencereler 26/26; `node --check` OK.
+- Maliyet (SwiftShader ölçümü): üçgen ~+4% (170k→176k), köy sahne nesnesi 249→281; gerçek telefonda FPS **denenmedi**.
+- Açık: gerçek cihazda performans ve okunabilirlik; köy çıkışı yalnız görsel (dünya haritası yok); eski testlerdeki «Portal Taşı» etiketine bakan betik varsa güncellenmeli.
 
 ## 2026-10-13 (13) — Minimal fantastik arayüz yenilemesi (Aşama 1 HUD + Aşama 2 Çanta/Görev defteri) · dal `ozellik/arayuz-minimal` (yedek: `yedek/arayuz-oncesi`)
 - Taban: `ozellik/gorev-sistemi` ucu `6b9e2d4` (HUD'daki Görevler düğmesi ve çanta sayfaları `main`'de yok; `main` = `10f7a92`, değişmedi).

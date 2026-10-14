@@ -1,6 +1,6 @@
 # Taş Mührü — proje durumu (kısa teknik hafıza)
 
-Son güncelleme: 2026-10-14 · `main`: görev zinciri + çanta/arayüz yenilemesi + Savaşçı silahlı bekleme/koşu/yürüme animasyonları ve ince kılıçlar (`SWORD_W/SWORD_T`) dahil. `ozellik/koy-meydani` (köy yeniden tasarımı) main'e alınmadı, kullanıcının 3B ev modellerini bekliyor. Satır numaraları bu sürüme göredir ve kayar;
+Son güncelleme: 2026-10-14 · `main`: görev zinciri + çanta/arayüz yenilemesi + Savaşçı silahlı bekleme/koşu/yürüme animasyonları ve ince kılıçlar (`SWORD_W/SWORD_T`) dahil. `ozellik/koy-modeller` dalında köy yeniden tasarımı + Demirci/Tüccar GLB binaları (main'e alınmadı). Satır numaraları bu sürüme göredir ve kayar;
 her zaman `grep -n` ile doğrula.
 
 ## Dosyalar
@@ -46,7 +46,9 @@ her zaman `grep -n` ile doğrula.
   Kayıt: `P.quest = { done, cur: { id, n, ready, brief } }`. Arayüz: `#qline`, `UI.p_quest`, Menü düğmesi, Bekçi listesinde `Quest.star`. Kancalar tek satırlık `Quest.ev(...)`.
   **Yeni zindan** eklenince: `QUESTS`'e `{type:'clear', d:'<id>'}` satırı (sıra + `lv` ile). **Yeni sınıf** (Büyücü / Şaman): `CLASSES[cls].skills` sırası yeterli (metinlerde `sk(i)`);
   sınıfa özel görev gerekirse `cls:['kimlik']` alanı (`Quest.ok`). Günlük görevler (`Daily`) ayrı sistemdir. NPC adları yalnız rol (`NPC_ROLE`).
-- **Arayüz teması (dal `ozellik/arayuz-minimal`):** stil sayfası sonunda iki üzerine-yazan blok: «HUD: minimal fantastik» (`#hud` değişkenleri `--hud-bg/--hud-line`, küçük görseller + `::before` dokunma alanı) ve «Pencereler: minimal fantastik» (`#panel[data-p=bag|quest]`; yeni panel eklemek için `:is([...])` listesine ekle). Geri almak = ilgili bloğu silmek. Savaş düğmeleri boyutça değişmedi.
+- **Arayüz teması:** stil sayfası sonunda iki üzerine-yazan blok: «HUD: minimal fantastik» (`#hud` değişkenleri `--hud-bg/--hud-line`, küçük görseller + `::before` dokunma alanı) ve «Pencereler: minimal fantastik» (`#panel[data-p=bag|quest]`; yeni panel eklemek için `:is([...])` listesine ekle). Geri almak = ilgili bloğu silmek. Savaş düğmeleri boyutça değişmedi.
+- **Köy meydanı (dal `ozellik/koy-meydani`):** `buildVillage` (31×31 ızgara, `T`=2, merkez `C`=31; kuzey = ekran üstü). Yerleşim: Merkez Anıt (C,C) · Bekçi (C,12.6) zindan girişi salonunun merdiveninde · Demirci (19.8,28.2) · Tüccar (41.6,24.5) · Depocu (47,33.2, kulübe x 49–57) · Usta (47,40.4) · Simyacı (25.2,44.2, çadır 20.2,47.5) · çıkış kapısı z≈57.6.
+  Parçalar `buildMonument/buildDungeonHall/buildExitGate/buildTower/buildShed/buildTent`, süsler `propBannerCloth/propBrazier/propRock/propChest`. Alevler `addFlameInst` (köy sonunda `flushFlames`), haleler `addGlowSprite`. Çarpışma `block(i0,j0,i1,j1)` / `blockAt` ile (yeni bina eklerken ızgarayı kapat; NPC'ye `r`≈3.2 içinde yürünebilir hücre kalmalı). Ayrı «Portal Taşı» yok: Bekçi `id:'portal'`. Atmosfer `THEMES.village` (akşam). Köy çıkışı yalnız görsel.
 - **Çanta sayfaları:** `P.invPages` (1…3), `INV_SIZE` = sayfa boyutu (40), `INV_PAGES_MAX`, `INV_PAGE_COST` (100.000), `invCap()`, `buyInvPage()`. `P.inv` düz dizi; sayfa sekmeleri yalnız `UI.invGrid`'te (dizin = gerçek). Yeni sayfa ücretini / sayısını bu sabitlerden değiştir.
 - **Savaş:** `Combat.calc` (atk, def, kritik) → `hitMob` → `killMob` (EXP seviye farkıyla ölçeklenir, `rollLoot`). Canavar
   gücü `mobBase(Sv) × RANK × MOBS çarpanı × L.mobPow × DIFFS`. Ortak oyunda ek oyuncu başına can +%60 (`COOP_HP`).
@@ -89,7 +91,8 @@ her zaman `grep -n` ile doğrula.
 - Yerel `src/` projesi bu depoyla eşitli değil.
 
 ## Son tamamlanan büyük özellikler
-- 2026-10-13 Ana görev zinciri (23 görev, HUD satırı, Görev defteri, NPC ❗/✔, eski kayıt göçü) — dal `ozellik/gorev-sistemi` (main'e alınmadı).
+- 2026-10-13 Köy meydanı yeniden tasarımı (anıt, zindan girişi salonu, çadır, kulübe, çıkış kapısı, akşam atmosferi) — dal `ozellik/koy-meydani` (main'e alınmadı).
+- 2026-10-13 Ana görev zinciri (23 görev, HUD satırı, Görev defteri, NPC ❗/✔, eski kayıt göçü) — main (`c6eba8e`…`a364f0d`; çanta sayfaları + Görevler düğmesi + minimal arayüz dahil).
 - 2026-10-13 Beceri Ustalığı Aşama 1 (veri + iki parşömen; parşömenler geçici olarak Tüccar'da) + Tüccar bedava ilk alım hatası düzeltildi — main.
 - 2026-10-13 Alev haresi azaltıldı — main.
 - 2026-10-13 Demirci +7…+9 daha zor (`UPG.rate`, `GEL_MULT`, malzeme ×1.5) ve Sv 45+ EXP 2 kat (`expNeed`/`expNeed0`) — dal `ozellik/demirci-exp-zorluk`.
