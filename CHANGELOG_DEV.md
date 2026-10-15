@@ -4,6 +4,7 @@ Her görev sonunda kısa kayıt: tarih ve görev · değişen dosyalar · öneml
 Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 
 ## Önceki işler (özet, git geçmişinden)
+- (29) Köy sadeleştirme (dal `ozellik/koy-sadelestir`, yedek `yedek/koy-sadelestir-oncesi`): 6 oturma bankası, tüm köy/yapı fıçıları (Tüccar, Demirci, kulübe, Usta, Simyacı çevresi) ve anıtın etrafındaki 4 mangal kaldırıldı; ilgili `blockAt` çarpışmaları da silindi (karakter takılmasın). `propBarrel/propBench` fonksiyonları duruyor. Doğrulama: sözdizimi + başsız ekran görüntüsü; gerçek cihazda denenmedi.
 - `1889fb6` Savaşçı sınıfı (5 gövde GLB, yeniden rig + animasyon), Sv 70 ve son oyun dengesi.
 - `d9f1acd` · `f65921b` · `032b90e` · `12e578b` · `0c38673`: Savaşçı kılıçları, hareket yakalama animasyonları, yeni yetenek
   seti (Hamle, Üç Yönlü Kesme, Kılıç Çevirme, Mühür Yemini), vuruş hissi, yetenek sırasında hareket kilidi.
