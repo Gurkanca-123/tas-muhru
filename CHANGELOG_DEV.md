@@ -10,6 +10,11 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-15 (27) — HUD sadeleştirme · dal `ozellik/hud-sadelestir` (main'e alınmadı)
+- Sorun: üst ortada kat adı + oda kodu + görev satırı + büyük hedef çubuğu üst üste biniyor, afiş (boss adı) 44 px ile ekranın dörtte birini kaplıyordu.
+- Çözüm (CSS sonuna blok): `#zone` + `#party` tek ince satırda (`#topc` sarmalayıcı; dikeyde `display:contents`), hedef çubuğu ince ve yarı saydam, çarpışmada (hedef varken) görev satırı gizli, `#toast` yatayda aşağı-orta, `#banner` küçük (en çok 22 px) ve daha yukarıda.
+- Doğrulama: 900×412 yatay ve 412×900 dikey ekran görüntüleri (boss hedefli / hedefsiz). Gerçek telefon: **denenmedi**.
+
 ## 2026-10-15 (26) — Zırh ikonları (çizme baştan, kask/göğüslük ayrıntı) · dal `ozellik/efsun-set-boss` → main'e alındı (kullanıcı onayı)
 - 3B ikon: çizme yandan profil ekstrüzyonuyla yeniden modellendi (kıvrık burun, topuk bloğu, taban, yan levha, burun koruması, 3 kemer + toka, kapak, taş); kaska ense koruması / tepe topuzu / göz taşları; göğüslüğe boyunluk ve etek levhaları. Süs parçaları gövde ekstrüzyonunun (bevel dahil) dışında kalacak z değerlerinde olmalı.
 - Test: galeri (143 ikon) hatasız; qtest3 22/22, stest 15/15. Gerçek telefon: **denenmedi**.

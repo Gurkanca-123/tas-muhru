@@ -507,6 +507,20 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
   #panel:is([data-p="bag"],[data-p="quest"]) #pbody{padding:8px 12px}
   #panel:is([data-p="bag"],[data-p="quest"]) #pfoot{padding:6px 10px}
 }
+/* ---------- HUD sadeleştirme (kullanıcı geri bildirimi): üst orta tek ince satır; hedef çubuğu ve görev satırı ince, görev satırı çarpışmada gizli; toast aşağı, afiş küçük ---------- */
+#topc{display:contents}
+@media (orientation:landscape){
+  #topc{display:flex;position:absolute;left:50%;top:calc(4px + var(--st));transform:translateX(-50%);gap:4px;align-items:center;max-width:calc(100vw - 440px);pointer-events:none}
+  #topc #zone,#topc #party{position:static;transform:none;pointer-events:auto;font-size:11px;padding:1px 8px;background:rgba(14,10,18,.36);box-shadow:none;opacity:.92;max-width:none;overflow:hidden;text-overflow:ellipsis}
+  #hud #target,#hud:has(#party:not([hidden])) #target{top:calc(26px + var(--st));width:min(170px,26vw);padding:2px 6px 4px;background:rgba(14,10,18,.5);box-shadow:0 0 0 1px rgba(233,198,138,.35)}
+  #hud #target .tn{font-size:11px}#hud #target .bar{height:6px;margin-top:2px}
+  #hud #qline,#hud #party:not([hidden]) ~ #qline{top:calc(26px + var(--st));font-size:10.5px;padding:1px 8px;max-width:min(360px,calc(100vw - 440px));background:rgba(14,10,18,.4);box-shadow:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85}
+  #hud:has(#target:not([hidden])) #qline{display:none}
+}
+@media (orientation:landscape){#toast{top:auto;bottom:calc(58px + var(--sb));font-size:13px;padding:4px 10px}}
+#banner{top:13%}
+#banner h2{font-size:clamp(15px,2.4vw,22px);text-shadow:2px 2px 0 var(--ink),-1px -1px 0 var(--ink)}
+#banner p{font-size:12px;margin-top:2px}
 </style>
 
 <div id="game">
@@ -545,8 +559,7 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
         <button class="pbtn ibtn" id="b-zoom" aria-label="Karaktere yakınlaş"><img alt=""></button>
       </div>
     </div>
-    <div id="zone"></div>
-    <div id="party" hidden></div>
+    <div id="topc"><div id="zone"></div><div id="party" hidden></div></div>
     <div id="qline" hidden></div>
     <div id="coopq" hidden><div class="dq-t"></div><div class="dq-b"><button id="coop-ok" class="pbtn">Katıl</button><button id="coop-no" class="pbtn">Kapat</button></div></div>
     <div id="duelq" hidden><div class="dq-t"></div><div class="dq-b"><button id="duel-ok" class="pbtn">Kabul</button><button id="duel-no" class="pbtn">Reddet</button></div></div>
@@ -19962,7 +19975,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
