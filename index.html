@@ -46,6 +46,7 @@ button:focus-visible{outline:2px solid var(--lantern);outline-offset:2px}
 .pbtn.blue{background:#234a82}
 .pbtn[disabled]{opacity:.45;pointer-events:none}
 .pix{image-rendering:pixelated;image-rendering:crisp-edges}
+img[src^="data:image/png;i3"]{image-rendering:auto!important}
 img[src$="#sm"]{image-rendering:auto!important}
 .skbtn img[src$="#sm"]{width:44px;height:44px}
 #btn-atk img[src$="#sm"]{width:54px;height:54px}
@@ -1006,6 +1007,15 @@ const GEAR_SETS = {
   efsane: { name: 'Efsanevi Zırh Seti', tier: 7, lv: 55, body: 'efsane', mat: 'j7', color: '#ff8a5a', endgame: { normal: 0.015, elite: 0.05, boss: 0.25, metin: 0.2 }, minDiff: 1,
     bonus: { 2: { hpPct: 0.1 }, 3: { defPct: 0.18 }, 4: { atkPct: 0.16, mob: 12 } },
     names: { head: 'Efsanevi Miğfer', chest: 'Efsanevi Zırh', feet: 'Efsanevi Çizme', shield: 'Efsanevi Kalkan' } },
+  // Adlı takı setleri (jewel: yüzük + kolye + tılsım; kademe 7 temel değerleri × mul). Rastgele düşmez, yalnız özel kaynaklar:
+  // bronzm (Sv 55): Bronz Taş Tapınağı 6. kat patronu (TEMPLE_REWARDS[5].jset) · ulumuhur (Sv 65): tapınak 8-10. kat
+  // (TEMPLE_REWARDS[7..9].jset) ve Kara Taş Tapınağı Kabus'ta Kırık Taş Mühür (rollLoot JSET_KABUS).
+  bronzm: { name: 'Bronz Mühür Takı Seti', jewel: true, tier: 7, lv: 55, mat: 'j7', color: '#e0a050', mul: 1.15, crit: 1,
+    bonus: { 2: { crit: 5, mob: 5 }, 3: { atkPct: 0.12, hpPct: 0.12 } },
+    names: { ring: 'Bronz Mühür Yüzüğü', neck: 'Bronz Mühür Kolyesi', charm: 'Bronz Mühür Tılsımı' } },
+  ulumuhur: { name: 'Ulu Mühür Takı Seti', jewel: true, tier: 7, lv: 65, mat: 'j7', color: '#7ad8ff', mul: 1.38, crit: 2,
+    bonus: { 2: { crit: 7, mob: 8 }, 3: { atkPct: 0.17, hpPct: 0.17, defPct: 0.06 } },
+    names: { ring: 'Ulu Mühür Yüzüğü', neck: 'Ulu Mühür Kolyesi', charm: 'Ulu Mühür Tılsımı' } },
   tas: { name: 'Taş Balta', tier: 0, lv: 1, mat: 'j1', look: 'baltaci_balta', cls: 'baltaci', names: { weapon: 'Taş Balta' } },
   kurtb: { name: 'Kurt Başlı Balta', tier: 2, lv: 10, mat: 'j2', look: 'baltaci_kurt_balta', cls: 'baltaci', drop: [0, 0, 0.3, 0.4, 0.4, 0.4, 0.4, 0.35], names: { weapon: 'Kurt Başlı Balta' } },
   bronz: { name: 'Bronz Taş Balta', tier: 5, lv: 25, mat: 'j4', look: 'baltaci_bronz_balta', cls: 'baltaci', drop: [0, 0, 0, 0, 0.04, 0.06, 0.08, 0.15], names: { weapon: 'Bronz Taş Balta' } },
@@ -1084,11 +1094,11 @@ const STACKS = {
   ess_shield: { name: 'Ejder Kabuğu', kind: 'ess', icon: 'soul', tint: '#e05a3a', sell: 480, desc: '+7 … +9 kalkan geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
   ess_charm: { name: 'Kehribar Damlası', kind: 'ess', icon: 'soul', tint: '#e8b040', sell: 480, desc: '+7 … +9 tılsım geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
   ess_neck: { name: 'Gölge İncisi', kind: 'ess', icon: 'soul', tint: '#7a7aff', sell: 480, desc: '+7 … +9 kolye geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
-  bless: { name: 'Kutsama Kağıdı', kind: 'scroll', price: 2500, sell: 300, icon: 'scroll', tint: '#d8a02a', desc: 'Geliştirme başarısız olursa eşya seviyesi düşmez.' },
+  bless: { name: 'Kutsama Kağıdı', kind: 'scroll', price: 10000, sell: 300, icon: 'scroll', tint: '#d8a02a', desc: 'Geliştirme başarısız olursa eşya seviyesi düşmez.' },
   tp: { name: 'Dönüş Parşömeni', kind: 'scroll', price: 30, icon: 'scroll', tint: '#3a8ae0', desc: 'Zindandan anında köye ışınlar.' },
-  // Beceri ustalığı parşömenleri: düşüş / ödül tablosuna bağlı değil. DENEME: Tüccar'da geçici olarak satılık (price; SHOP_LIST)
-  usta_parsomen: { name: 'Usta Yetenek Parşömeni', kind: 'scroll', price: 3000, sell: 500, icon: 'scroll', tint: '#4ad0c0', desc: 'Seviye 5\'e (en yüksek normal seviye) ulaşmış bir beceriyi M1 ustalık aşamasına geçirir. Çantada Kullan → beceri seç.' },
-  busta_parsomen: { name: 'Büyük Usta Yetenek Parşömeni', kind: 'scroll', price: 10000, sell: 2000, icon: 'scroll', tint: '#c070ff', desc: 'M10 ustalık aşamasındaki bir beceriyi G1 büyük ustalık aşamasına geçirir. Çantada Kullan → beceri seç.' },
+  // Beceri ustalığı parşömenleri: Kara Taş Tapınağı ve Kemik Taht Kabus'ta düşer (PARCH_KABUS). Tüccar'da satılmaz; çantadan satış 100.000 / 150.000
+  usta_parsomen: { name: 'Usta Yetenek Parşömeni', kind: 'scroll', sell: 100000, icon: 'scroll', tint: '#4ad0c0', desc: 'Seviye 5\'e (en yüksek normal seviye) ulaşmış bir beceriyi M1 ustalık aşamasına geçirir. Çantada Kullan → beceri seç. Kara Taş Tapınağı ve Kemik Taht\'ın Kabus zorluğunda düşer.' },
+  busta_parsomen: { name: 'Büyük Usta Yetenek Parşömeni', kind: 'scroll', sell: 150000, icon: 'scroll', tint: '#c070ff', desc: 'M10 ustalık aşamasındaki bir beceriyi G1 büyük ustalık aşamasına geçirir. Çantada Kullan → beceri seç. Kara Taş Tapınağı ve Kemik Taht\'ın Kabus zorluğunda düşer.' },
   // Zindan malzemeleri (eskiden "çöp"): her geliştirmede eşyanın kademesine göre biri istenir (dmatOf). Zindanın
   // canavarlarından düşer; o kademedeki gereksiz eşyayı parçalayınca da çıkar.
   j1: { name: 'Kurt Azısı', kind: 'dmat', sell: 5, icon: 'bone', tint: '#e8dcc0', desc: 'Bez Zırh, Taş Balta ve kademe 0-1 eşya geliştirmede kullanılır. Yosunlu İn\'de düşer.' },
@@ -1101,7 +1111,7 @@ const STACKS = {
   j6: { name: 'Kara Taş Tozu', kind: 'dmat', sell: 60, icon: 'ore', tint: '#6a4a7a', desc: 'Kademe 6 eşya geliştirmede kullanılır. Kara Taş Tapınağı\'nda düşer.' },
 };
 const STACK_MAX = 200;
-const SHOP_LIST = ['hp1', 'hp2', 'hp3', 'mp1', 'mp2', 'mp3', 'tp', 'ore', 'bless', 'usta_parsomen', 'busta_parsomen']; // DENEME: ustalık parşömenleri geçici olarak satılık (kaynakları belirlenince kaldırılacak)
+const SHOP_LIST = ['hp1', 'hp2', 'hp3', 'mp1', 'mp2', 'mp3', 'tp', 'ore', 'bless']; // ustalık parşömenleri artık Kabus düşüşü (PARCH_KABUS)
 
 // ---------- Taş Mühürler (Bronz Taş Tapınağı 6-10. kat ödülü) ----------
 // Ekipmana takılan, normal geliştirmeden (+0…+9) bağımsız ilerleme katmanı. Her ekipman parçasında 1 yuva (it.seal = mühür
@@ -1210,6 +1220,10 @@ const DROP = {
 // ---------- Zindan zorlukları ----------
 // Sırayla açılır: zindanı Normal'de bitirince Zor, Zor'da bitirince Kabus (P.clearDiff). Canavar gücü (Mob yapıcısı)
 // ve ödül çarpanları; rar: eşya nadirliği için ek zar (en iyisi alınır), drop: eşya/cevher/ruh taşı/öz düşme şansı.
+// Kabus özel düşüş payları (rollLoot): Kara Taş Tapınağı Kabus Kırık Taş Mühür → Ulu Mühür takısı;
+// Kara Taş Tapınağı + Kemik Taht Kabus → [Usta, Büyük Usta] Yetenek Parşömeni (rütbeye göre)
+const JSET_KABUS = 0.18;
+const PARCH_KABUS = { normal: [0.002, 0], elite: [0.012, 0.004], metin: [0.05, 0.02], boss: [0.08, 0.03] };
 const DIFFS = [
   { name: 'Normal', color: '#e8e2d2', hp: 1, atk: 1, def: 1, exp: 1, gold: 1, drop: 1, rar: 0, ess: 1 },
   { name: 'Zor', color: '#ffb24a', hp: 1.7, atk: 1.35, def: 1.2, exp: 1.6, gold: 1.6, drop: 1.3, rar: 1, ess: 1.5 },
@@ -2361,9 +2375,13 @@ function setInfoOf(it, equip) {
     const S = GEAR_SETS[it.set];
     return { key: 'a:' + it.set, name: S.name, color: S.color, total: SET_SLOTS.length, have: SET_SLOTS.filter((sl) => equip[sl] && equip[sl].set === it.set).length, bonus: S.bonus };
   }
+  if (it.set && JEWEL_SLOTS.includes(it.slot) && GEAR_SETS[it.set] && GEAR_SETS[it.set].jewel) { // adlı takı seti
+    const S = GEAR_SETS[it.set];
+    return { key: 'js:' + it.set, name: S.name, color: S.color, total: JEWEL_SLOTS.length, have: JEWEL_SLOTS.filter((sl) => equip[sl] && equip[sl].set === it.set).length, bonus: S.bonus };
+  }
   if (JEWEL_SLOTS.includes(it.slot)) {
     const t = it.tier;
-    return { key: 'j:' + t, name: JEWEL_SET_NAMES[t], color: TIER_TINT[t], total: JEWEL_SLOTS.length, have: JEWEL_SLOTS.filter((sl) => equip[sl] && equip[sl].tier === t).length, bonus: jewelSetBonus(t) };
+    return { key: 'j:' + t, name: JEWEL_SET_NAMES[t], color: TIER_TINT[t], total: JEWEL_SLOTS.length, have: JEWEL_SLOTS.filter((sl) => equip[sl] && equip[sl].tier === t && !equip[sl].set).length, bonus: jewelSetBonus(t) };
   }
   return null;
 }
@@ -2387,10 +2405,11 @@ const itemColor = (it) => (it.type === 'gear' ? RARITY[it.rarity].color : STACKS
 function gearStats(it) {
   const out = { atk: 0, def: 0, hp: 0, mp: 0, crit: 0, spd: 0, mob: 0, regen: 0 };
   const base = BASE_STATS[it.slot];
-  const m = RARITY[it.rarity].mult * (1 + UPG.bonus[it.plus]);
+  const JS = it.set && GEAR_SETS[it.set] && GEAR_SETS[it.set].jewel ? GEAR_SETS[it.set] : null; // adlı takı: × mul, + kritik
+  const m = RARITY[it.rarity].mult * (1 + UPG.bonus[it.plus]) * (JS ? JS.mul : 1);
   for (const k in base) {
     const v = base[k][it.tier];
-    out[k] += k === 'crit' || k === 'spd' ? v : v * m;
+    out[k] += k === 'crit' || k === 'spd' ? v + (JS && k === 'crit' ? JS.crit : 0) : v * m;
   }
   for (const b of it.bonus) out[b.k] += b.v;
   if (it.dur <= 0) for (const k in out) out[k] *= 0.5;
@@ -2402,11 +2421,298 @@ function sellPrice(it) {
     const s = STACKS[it.id];
     return s.sell != null ? s.sell : Math.max(1, Math.floor((s.price || 4) * 0.25));
   }
-  return Math.round((it.tier * it.tier * 9 + 8) * RARITY[it.rarity].sell * (1 + it.plus * 0.35));
+  const JS = it.set && GEAR_SETS[it.set] && GEAR_SETS[it.set].jewel ? GEAR_SETS[it.set] : null;
+  return Math.round((it.tier * it.tier * 9 + 8) * RARITY[it.rarity].sell * (1 + it.plus * 0.35) * (JS ? JS.mul * 2 : 1));
 }
+// ---------- 3B eşya ikonları (three.js) ----------
+// Her eşya türü için küçük prosedürel model; ana renderer ile 256 px render hedefine çizilir, 2B tuvalde 112 px'e
+// küçültülür (yumuşak kenar), nadirlik halesi eklenir, data URL önbelleğe alınır (anahtar: tür + renkler). Ana sahneye ve
+// ışık havuzuna dokunmaz (ayrı sahne + kendi ışıkları). Renderer hazır değilse eski 2B ikon döner.
+// Data URL'deki `i3=1` parametresi CSS'te pikselleştirmeyi kapatır (img[src^="data:image/png;i3"]).
+const ICON3D = { cache: {}, scene: null };
+const IC_TIER = [ // kademe metali / taş rengi / ışıma
+  { metal: 0x8a7462, gem: 0x9a8a7a, glow: 0 }, { metal: 0xb8c0cc, gem: 0x9ab8e0, glow: 0 }, { metal: 0x7aa860, gem: 0x8aff5a, glow: 0.4 },
+  { metal: 0xe2d8bc, gem: 0xd8d0b0, glow: 0 }, { metal: 0xd8642a, gem: 0xff8a3a, glow: 0.7 }, { metal: 0x9fd8f0, gem: 0x8fdcff, glow: 0.6 },
+  { metal: 0x4a3e5a, gem: 0xc055e8, glow: 0.9 }, { metal: 0xffb04a, gem: 0xff5a3a, glow: 1.0 },
+];
+// adlı set / silah görünümü: metal, taş, ışıma, işaret (ek parça)
+const IC_SET = {
+  bez: { metal: 0xd8c8a0, gem: 0xa8885a, cloth: true }, kurt: { metal: 0xb8b0a0, gem: 0xe8e0c8, fur: true }, bronzz: { metal: 0xc9a45a, gem: 0xe0a050, glow: 0.3 },
+  nihai: { metal: 0xa8b4c8, gem: 0x5a8aff, glow: 0.5 }, efsane: { metal: 0xff8a5a, gem: 0xffd040, glow: 1.0, wing: true },
+  bronzm: { metal: 0xc88a40, gem: 0xffb040, glow: 0.9 }, ulumuhur: { metal: 0xdce8ff, gem: 0x5ad8ff, glow: 1.2, wing: true },
+  tas: { metal: 0x9a948c, gem: 0x7a746c, stone: true }, kurtb: { metal: 0xb8b0a0, gem: 0xe8e0c8, fur: true }, bronz: { metal: 0xc9a45a, gem: 0xe0a050, glow: 0.3 },
+  ebalta: { metal: 0xff8a5a, gem: 0xffd040, glow: 1.0 }, tkilic: { metal: 0x9a948c, gem: 0x7a746c, stone: true }, dkilic: { metal: 0xc8ccd4, gem: 0x9ab8e0 },
+  kkilic: { metal: 0xe8e0c8, gem: 0xd8c8a8, fur: true }, gkilic: { metal: 0xb8c4b0, gem: 0x8a6a4a, antler: true }, okilic: { metal: 0x2a2232, gem: 0xb05aff, glow: 1.0 },
+  ekilic: { metal: 0xffc860, gem: 0x5ad8ff, glow: 1.1 },
+};
+function icMats(metal, gem, glow) {
+  return {
+    metal: new THREE.MeshPhongMaterial({ color: metal, specular: 0xb8b8b8, shininess: 70 }),
+    metalD: new THREE.MeshPhongMaterial({ color: new THREE.Color(metal).multiplyScalar(0.55), specular: 0x707070, shininess: 50 }),
+    gem: new THREE.MeshPhongMaterial({ color: gem, specular: 0xffffff, shininess: 120, emissive: gem, emissiveIntensity: 0.25 + (glow || 0) * 0.55 }),
+    leather: new THREE.MeshLambertMaterial({ color: 0x5a3a22 }), wood: new THREE.MeshLambertMaterial({ color: 0x8a5a32 }),
+    cloth: new THREE.MeshLambertMaterial({ color: metal }), dark: new THREE.MeshLambertMaterial({ color: 0x2a2228 }),
+    bone: new THREE.MeshLambertMaterial({ color: 0xece2c8 }),
+  };
+}
+const icAdd = (g, geo, m, x, y, z, rx, ry, rz) => { const o = new THREE.Mesh(geo, m); o.position.set(x || 0, y || 0, z || 0); o.rotation.set(rx || 0, ry || 0, rz || 0); g.add(o); return o; };
+const icExtrude = (pts, depth, bevel) => {
+  const sh = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? sh.lineTo(x, y) : sh.moveTo(x, y)));
+  const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: !!bevel, bevelThickness: bevel || 0, bevelSize: bevel || 0, bevelSegments: 2 });
+  g.translate(0, 0, -depth / 2); return g;
+};
+// ---- modeller (yerel: yukarı +y; çerçeveye sığdırma icon3DRender'da) ----
+const IC_BUILD = {
+  sword(g, M, o) {
+    icAdd(g, icExtrude([[-0.12, 0], [0.12, 0], [0.11, 1.75], [0, 2.05], [-0.11, 1.75]], 0.05, 0.025), M.metal, 0, 0.25, 0);
+    icAdd(g, new THREE.BoxGeometry(0.05, 1.55, 0.1), M.metalD, 0, 1.05, 0);
+    icAdd(g, new THREE.BoxGeometry(0.85, 0.12, 0.16), M.metal, 0, 0.2, 0);
+    for (const s of [-1, 1]) icAdd(g, new THREE.SphereGeometry(0.09, 12, 8), M.gem, s * 0.45, 0.2, 0);
+    icAdd(g, new THREE.CylinderGeometry(0.065, 0.065, 0.5, 10), M.leather, 0, -0.08, 0);
+    for (let k = 0; k < 4; k++) icAdd(g, new THREE.TorusGeometry(0.07, 0.016, 6, 12), M.metalD, 0, -0.26 + k * 0.12, 0, Math.PI / 2);
+    icAdd(g, new THREE.OctahedronGeometry(0.13), M.gem, 0, -0.42, 0);
+    icAdd(g, new THREE.OctahedronGeometry(0.1), M.gem, 0, 0.32, 0.06);
+    if (o.fur) for (let k = 0; k < 3; k++) icAdd(g, new THREE.ConeGeometry(0.05, 0.22, 5), M.bone, -0.13 - k * 0.0, 0.6 + k * 0.35, 0, 0, 0, 1.2);
+    if (o.antler) for (const s of [-1, 1]) icAdd(g, new THREE.ConeGeometry(0.05, 0.4, 5), M.bone, s * 0.5, 0.36, 0, 0, 0, -s * 0.6);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.5, 0.25], [s * 0.38, 0.05], [s * 0.55, -0.05]], 0.04), M.gem, s * 0.38, 0.2, 0);
+    g.rotation.z = -Math.PI / 4;
+  },
+  axe(g, M, o) {
+    icAdd(g, new THREE.CylinderGeometry(0.07, 0.08, 2.1, 10), o.stone ? M.wood : M.wood, 0, 0.6, 0);
+    for (let k = 0; k < 3; k++) icAdd(g, new THREE.TorusGeometry(0.085, 0.018, 6, 12), M.leather, 0, -0.1 + k * 0.1, 0, Math.PI / 2);
+    const head = icExtrude([[0.05, 0.35], [0.45, 0.55], [0.75, 0.42], [0.8, 0], [0.75, -0.42], [0.45, -0.55], [0.05, -0.35]], 0.09, 0.03);
+    icAdd(g, head, M.metal, 0.02, 1.35, 0);
+    icAdd(g, new THREE.BoxGeometry(0.2, 0.36, 0.2), M.metalD, 0, 1.35, 0);
+    icAdd(g, new THREE.ConeGeometry(0.08, 0.35, 6), M.metal, -0.24, 1.35, 0, 0, 0, Math.PI / 2);
+    icAdd(g, new THREE.OctahedronGeometry(0.1), M.gem, 0, 1.35, 0.12);
+    icAdd(g, new THREE.SphereGeometry(0.1, 10, 8), M.metalD, 0, -0.45, 0);
+    if (o.fur) for (let k = 0; k < 4; k++) icAdd(g, new THREE.ConeGeometry(0.05, 0.25, 5), M.bone, -0.12, 1.1 + k * 0.12, 0, 0, 0, 1.3);
+    if (o.wing || o.glow > 0.8) icAdd(g, new THREE.TorusGeometry(0.16, 0.025, 6, 16), M.gem, 0.42, 1.35, 0.08);
+    g.rotation.z = -Math.PI / 4;
+  },
+  head(g, M, o) {
+    icAdd(g, new THREE.SphereGeometry(0.62, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), o.cloth ? M.cloth : M.metal, 0, 0, 0);
+    icAdd(g, new THREE.TorusGeometry(0.6, 0.06, 8, 24), M.metalD, 0, -0.05, 0, Math.PI / 2);
+    icAdd(g, new THREE.BoxGeometry(0.1, 0.5, 0.08), M.metalD, 0, -0.18, 0.6);
+    for (const s of [-1, 1]) icAdd(g, new THREE.BoxGeometry(0.1, 0.45, 0.32), M.metal, s * 0.56, -0.3, 0.22, 0, s * 0.35, 0);
+    icAdd(g, new THREE.BoxGeometry(0.08, 0.16, 1.0), M.metalD, 0, 0.6, -0.05);
+    icAdd(g, new THREE.OctahedronGeometry(0.11), M.gem, 0, 0.32, 0.56);
+    if (o.fur) for (let k = 0; k < 7; k++) icAdd(g, new THREE.ConeGeometry(0.07, 0.3, 5), M.bone, Math.cos(k / 6 * Math.PI) * 0.55, 0.05, Math.sin(k / 6 * Math.PI) * -0.3, 0, 0, Math.cos(k / 6 * Math.PI) * 1.1);
+    else if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.6, 0.45], [s * 0.45, 0.12], [s * 0.7, 0.05], [s * 0.3, -0.08]], 0.05), M.gem, s * 0.5, 0.15, 0);
+    else for (let k = 0; k < 5; k++) icAdd(g, new THREE.ConeGeometry(0.06, 0.4 - Math.abs(k - 2) * 0.08, 6), new THREE.MeshLambertMaterial({ color: o.plume }), 0, 0.72, 0.3 - k * 0.15, -0.3 + k * 0.15);
+    g.rotation.set(0.2, -0.5, 0);
+  },
+  chest(g, M, o) {
+    const pts = [[0.42, -0.75], [0.55, -0.4], [0.62, 0.1], [0.58, 0.55], [0.3, 0.75], [0.0, 0.78]].map(([x, y]) => new THREE.Vector2(x, y));
+    const body = icAdd(g, new THREE.LatheGeometry(pts, 20), o.cloth ? M.cloth : M.metal, 0, 0, 0); body.scale.set(1, 1, 0.62);
+    icAdd(g, new THREE.BoxGeometry(0.08, 1.2, 0.1), M.metalD, 0, 0.05, 0.38);
+    for (const s of [-1, 1]) { const p = icAdd(g, new THREE.SphereGeometry(0.32, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), M.metal, s * 0.6, 0.55, 0); p.rotation.z = -s * 0.5; p.scale.set(1, 0.8, 1); }
+    icAdd(g, new THREE.TorusGeometry(0.5, 0.06, 8, 24), M.leather, 0, -0.45, 0, Math.PI / 2).scale.set(1, 0.66, 1);
+    icAdd(g, new THREE.BoxGeometry(0.2, 0.16, 0.06), M.metalD, 0, -0.45, 0.34);
+    icAdd(g, new THREE.OctahedronGeometry(0.14), M.gem, 0, 0.3, 0.4);
+    if (o.fur) for (let k = 0; k < 9; k++) icAdd(g, new THREE.ConeGeometry(0.07, 0.26, 5), M.bone, -0.5 + k * 0.125, 0.72, 0.15, 0.6, 0, 0);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, new THREE.ConeGeometry(0.08, 0.45, 6), M.gem, s * 0.7, 0.85, 0, 0, 0, -s * 0.5);
+    g.rotation.y = -0.35;
+  },
+  feet(g, M, o) {
+    const mm = o.cloth ? M.cloth : M.metal;
+    icAdd(g, new THREE.CylinderGeometry(0.28, 0.3, 0.9, 14), mm, 0, 0.35, 0);
+    icAdd(g, new THREE.BoxGeometry(0.56, 0.32, 0.95), mm, 0, -0.18, 0.25);
+    icAdd(g, new THREE.BoxGeometry(0.6, 0.1, 1.0), M.dark, 0, -0.38, 0.25);
+    icAdd(g, new THREE.TorusGeometry(0.3, 0.05, 8, 20), M.metalD, 0, 0.75, 0, Math.PI / 2);
+    icAdd(g, new THREE.TorusGeometry(0.3, 0.035, 8, 20), M.metalD, 0, 0.2, 0, Math.PI / 2);
+    icAdd(g, new THREE.OctahedronGeometry(0.1), M.gem, 0, 0.2, 0.32);
+    icAdd(g, new THREE.BoxGeometry(0.5, 0.22, 0.4), M.metalD, 0, -0.1, 0.55);
+    if (o.fur) for (let k = 0; k < 8; k++) icAdd(g, new THREE.ConeGeometry(0.06, 0.2, 5), M.bone, Math.cos(k / 8 * Math.PI * 2) * 0.3, 0.86, Math.sin(k / 8 * Math.PI * 2) * 0.3);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.4, 0.3], [s * 0.3, 0.05]], 0.04), M.gem, s * 0.3, 0.55, -0.1);
+    g.rotation.set(0.25, -0.75, 0);
+  },
+  shield(g, M, o) {
+    if (o.round) {
+      icAdd(g, new THREE.CylinderGeometry(0.8, 0.8, 0.12, 24), M.wood, 0, 0, 0, Math.PI / 2);
+      for (let k = -2; k <= 2; k++) icAdd(g, new THREE.BoxGeometry(0.03, 1.5, 0.14), M.leather, k * 0.3, 0, 0);
+      icAdd(g, new THREE.TorusGeometry(0.8, 0.06, 8, 32), M.metalD, 0, 0, 0);
+    } else {
+      const kite = [[0, 1.0], [0.72, 0.72], [0.66, -0.1], [0, -1.05], [-0.66, -0.1], [-0.72, 0.72]];
+      icAdd(g, icExtrude(kite, 0.12, 0.04), M.metalD, 0, 0, -0.04).scale.set(1.06, 1.05, 1);
+      icAdd(g, icExtrude(kite, 0.12, 0.03), M.metal, 0, 0, 0.04);
+      icAdd(g, icExtrude([[0, 0.45], [0.3, 0], [0, -0.55], [-0.3, 0]], 0.06), M.gem, 0, 0.05, 0.13);
+    }
+    icAdd(g, new THREE.SphereGeometry(0.18, 14, 10), M.metal, 0, 0.05, 0.12);
+    if (o.fur) for (let k = 0; k < 5; k++) icAdd(g, new THREE.ConeGeometry(0.07, 0.3, 5), M.bone, -0.5 + k * 0.25, 0.95 - Math.abs(k - 2) * 0.1, 0, 0, 0, 0);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.55, 0.4], [s * 0.4, 0.1], [s * 0.6, 0.0]], 0.05), M.gem, s * 0.6, 0.55, 0);
+    g.rotation.set(-0.15, -0.35, 0);
+  },
+  ring(g, M, o) {
+    icAdd(g, new THREE.TorusGeometry(0.55, 0.12, 14, 36), M.metal, 0, 0, 0);
+    icAdd(g, new THREE.CylinderGeometry(0.2, 0.14, 0.18, 8), M.metalD, 0, 0.62, 0);
+    for (let k = 0; k < 4; k++) icAdd(g, new THREE.ConeGeometry(0.04, 0.16, 4), M.metal, Math.cos(k * Math.PI / 2 + 0.78) * 0.18, 0.76, Math.sin(k * Math.PI / 2 + 0.78) * 0.18);
+    const gem = icAdd(g, new THREE.OctahedronGeometry(0.26), M.gem, 0, 0.85, 0); gem.scale.set(1, 0.9, 1);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.35, 0.28], [s * 0.28, 0.05]], 0.04), M.metal, s * 0.22, 0.62, 0);
+    g.rotation.set(0.5, 0.3, 0);
+  },
+  neck(g, M, o) {
+    for (let k = 0; k < 15; k++) {
+      const a = Math.PI * 0.08 + (k / 14) * Math.PI * 0.84;
+      icAdd(g, new THREE.TorusGeometry(0.07, 0.025, 6, 10), M.metal, Math.cos(a) * 0.72, 0.15 + Math.sin(a) * 0.6, 0, 0, k % 2 ? Math.PI / 2 : 0);
+    }
+    icAdd(g, new THREE.TorusGeometry(0.32, 0.05, 8, 20), M.metal, 0, -0.38, 0);
+    const p = icAdd(g, new THREE.OctahedronGeometry(0.27), M.gem, 0, -0.38, 0); p.scale.set(0.9, 1.25, 0.7);
+    icAdd(g, new THREE.SphereGeometry(0.06, 8, 6), M.metalD, 0, -0.02, 0);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.38, 0.22], [s * 0.3, 0.0], [s * 0.4, -0.12]], 0.04), M.metal, s * 0.3, -0.36, 0);
+    g.rotation.set(-0.25, 0.2, 0);
+  },
+  charm(g, M, o) {
+    icAdd(g, new THREE.CylinderGeometry(0.6, 0.6, 0.14, o.wing ? 6 : 24), M.metal, 0, 0, 0, Math.PI / 2);
+    icAdd(g, new THREE.CylinderGeometry(0.42, 0.42, 0.16, 24), M.metalD, 0, 0, 0.02, Math.PI / 2);
+    icAdd(g, new THREE.TorusGeometry(0.28, 0.05, 8, 20), M.gem, 0, 0, 0.12);
+    for (let k = 0; k < 3; k++) icAdd(g, new THREE.BoxGeometry(0.05, 0.36, 0.04), M.gem, 0, 0, 0.12, 0, 0, k * Math.PI / 3);
+    icAdd(g, new THREE.TorusGeometry(0.12, 0.04, 8, 14), M.metal, 0, 0.7, 0);
+    for (let k = 0; k < 8; k++) icAdd(g, new THREE.SphereGeometry(0.045, 6, 5), M.gem, Math.cos(k / 8 * Math.PI * 2) * 0.52, Math.sin(k / 8 * Math.PI * 2) * 0.52, 0.08);
+    g.rotation.set(0.15, -0.4, 0);
+  },
+  potion(g, M, o) {
+    const r = o.size || 1;
+    const pts = [[0.0, -0.6], [0.45, -0.55], [0.6, -0.25], [0.55, 0.15], [0.22, 0.4], [0.17, 0.75], [0.0, 0.75]].map(([x, y]) => new THREE.Vector2(x * r, y));
+    const glass = new THREE.MeshPhongMaterial({ color: 0xdcecf0, specular: 0xffffff, shininess: 120 });
+    icAdd(g, new THREE.LatheGeometry(pts, 24), M.gem, 0, 0, 0); // dolu şişe: sıvı renkli gövde
+    icAdd(g, new THREE.CylinderGeometry(0.2 * r, 0.24 * r, 0.42, 16), glass, 0, 0.55, 0);
+    icAdd(g, new THREE.TorusGeometry(0.21 * r, 0.04, 8, 18), glass, 0, 0.74, 0, Math.PI / 2);
+    icAdd(g, new THREE.TorusGeometry(0.5 * r, 0.03, 6, 24), glass, 0, 0.02, 0, Math.PI / 2);
+    icAdd(g, new THREE.CylinderGeometry(0.17 * r, 0.15 * r, 0.24, 12), M.wood, 0, 0.82, 0);
+    if (o.band) icAdd(g, new THREE.TorusGeometry(0.2 * r, 0.04, 8, 18), new THREE.MeshPhongMaterial({ color: 0xe8c547, specular: 0xffffff, shininess: 90 }), 0, 0.5, 0, Math.PI / 2);
+    icAdd(g, new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), -0.25 * r, -0.1, 0.42 * r);
+    g.rotation.set(0.15, 0, -0.18);
+  },
+  scroll(g, M, o) {
+    const paper = new THREE.MeshLambertMaterial({ color: 0xeedfb8 });
+    icAdd(g, new THREE.CylinderGeometry(0.28, 0.28, 1.6, 20), paper, 0, 0, 0, 0, 0, Math.PI / 2);
+    icAdd(g, new THREE.BoxGeometry(1.5, 0.04, 0.7), paper, 0, -0.27, 0.35, 0.25);
+    for (const s of [-1, 1]) { icAdd(g, new THREE.CylinderGeometry(0.1, 0.1, 0.2, 10), o.gold ? new THREE.MeshPhongMaterial({ color: 0xe8c547, specular: 0xffffff, shininess: 90 }) : M.wood, s * 0.88, 0, 0, 0, 0, Math.PI / 2); icAdd(g, new THREE.SphereGeometry(0.12, 10, 8), M.wood, s * 1.0, 0, 0); }
+    icAdd(g, new THREE.TorusGeometry(0.3, 0.05, 8, 20), M.gem, 0, 0, 0, 0, Math.PI / 2);
+    icAdd(g, new THREE.CylinderGeometry(0.17, 0.17, 0.06, 16), M.gem, 0, -0.05, 0.3, Math.PI / 2);
+    icAdd(g, new THREE.BoxGeometry(0.08, 0.35, 0.03), M.gem, -0.06, -0.3, 0.3, 0, 0, 0.2); icAdd(g, new THREE.BoxGeometry(0.08, 0.35, 0.03), M.gem, 0.06, -0.3, 0.3, 0, 0, -0.2);
+    g.rotation.set(0.35, 0.2, 0.35);
+  },
+  ore(g, M, o) {
+    const rock = new THREE.MeshPhongMaterial({ color: o.rock || 0x6a6470, specular: 0x444444, shininess: 20, flatShading: true });
+    for (const [x, y, z, r] of [[0, 0, 0, 0.55], [0.45, -0.2, 0.1, 0.38], [-0.45, -0.18, 0.15, 0.36], [0.1, 0.42, -0.1, 0.32]]) icAdd(g, new THREE.DodecahedronGeometry(r, 0), rock, x, y, z, x * 3, y * 2, z);
+    const fl = new THREE.MeshPhongMaterial({ color: o.tint, specular: 0xffffff, shininess: 100, emissive: o.tint, emissiveIntensity: 0.3, flatShading: true });
+    for (let k = 0; k < 7; k++) icAdd(g, new THREE.OctahedronGeometry(0.1 + (k % 3) * 0.04, 0), fl, Math.cos(k * 2.3) * 0.42, Math.sin(k * 1.7) * 0.32, 0.38 + (k % 2) * 0.08, k, k * 2, 0);
+    g.rotation.set(0.3, 0.3, 0);
+  },
+  crystal(g, M, o) {
+    const cm = new THREE.MeshPhongMaterial({ color: o.tint, specular: 0xffffff, shininess: 140, emissive: o.tint, emissiveIntensity: 0.45, flatShading: true });
+    const shape = o.shape || 0;
+    const geo = shape === 1 ? new THREE.IcosahedronGeometry(0.42, 0) : shape === 2 ? new THREE.DodecahedronGeometry(0.42, 0) : new THREE.OctahedronGeometry(0.42, 0);
+    icAdd(g, geo, cm, 0, 0.18, 0).scale.set(0.8, 1.7, 0.8);
+    icAdd(g, new THREE.OctahedronGeometry(0.26, 0), cm, 0.42, -0.25, 0.1, 0, 0, -0.5).scale.set(0.8, 1.6, 0.8);
+    icAdd(g, new THREE.OctahedronGeometry(0.22, 0), cm, -0.4, -0.3, 0.05, 0, 0, 0.5).scale.set(0.8, 1.5, 0.8);
+    icAdd(g, new THREE.DodecahedronGeometry(0.45, 0), new THREE.MeshLambertMaterial({ color: 0x4a4450, flatShading: true }), 0, -0.62, 0).scale.set(1.3, 0.45, 1);
+    g.rotation.set(0.2, 0.4, 0);
+  },
+  bone(g, M, o) {
+    const bm = new THREE.MeshLambertMaterial({ color: o.tint });
+    icAdd(g, new THREE.CylinderGeometry(0.12, 0.12, 1.3, 12), bm, 0, 0, 0);
+    for (const s of [-1, 1]) for (const x of [-0.13, 0.13]) icAdd(g, new THREE.SphereGeometry(0.19, 12, 10), bm, x, s * 0.68, 0);
+    g.rotation.set(0.3, 0, -Math.PI / 4);
+  },
+  seal(g, M, o) {
+    const st = new THREE.MeshPhongMaterial({ color: 0x5a5662, specular: 0x555555, shininess: 30, flatShading: true });
+    icAdd(g, new THREE.CylinderGeometry(0.62, 0.68, 0.22, 8), st, 0, 0, 0, Math.PI / 2);
+    icAdd(g, new THREE.TorusGeometry(0.5, 0.05, 6, 8), M.gem, 0, 0, 0.12, 0, 0, Math.PI / 8);
+    const rune = { atk: [[0, 0.3], [0.2, -0.25], [-0.2, -0.25]], def: [[0, 0.32], [0.28, 0.12], [0.2, -0.28], [-0.2, -0.28], [-0.28, 0.12]], hp: [[0, -0.3], [0.3, 0.05], [0.15, 0.3], [0, 0.15], [-0.15, 0.3], [-0.3, 0.05]], crit: [[0, 0.34], [0.1, 0.1], [0.34, 0], [0.1, -0.1], [0, -0.34], [-0.1, -0.1], [-0.34, 0], [-0.1, 0.1]], skill: [[0.05, 0.35], [0.25, 0.0], [0.05, 0.0], [0.15, -0.35], [-0.2, 0.08], [-0.02, 0.08]] }[o.stat] || [[0, 0.3], [0.3, 0], [0, -0.3], [-0.3, 0]];
+    icAdd(g, icExtrude(rune, 0.08), M.gem, 0, 0, 0.14);
+    for (let k = 0; k < o.grade; k++) icAdd(g, new THREE.SphereGeometry(0.07, 8, 6), M.gem, -0.2 + k * 0.2, -0.5, 0.12);
+    g.rotation.set(-0.2, -0.3, 0);
+  },
+};
+// eşya → model tanımı (tür + renkler + seçenekler) ve önbellek anahtarı
+function iconSpec(it) {
+  if (it.type === 'stack') {
+    const s = STACKS[it.id], tint = parseInt((s.tint || '#cccccc').slice(1), 16);
+    const q = sealParse(it.id);
+    if (q) return { kind: 'seal', metal: 0x5a5662, gem: parseInt(q.G.tint.slice(1), 16), glow: 0.6 + q.g * 0.2, stat: q.stat, grade: q.g };
+    if (s.icon === 'potion') return { kind: 'potion', metal: 0x888888, gem: tint, glow: 0.5, size: 0.8 + (s.lv >= 28 ? 0.35 : s.lv >= 12 ? 0.18 : 0), band: s.lv >= 28 };
+    if (s.icon === 'scroll') return { kind: 'scroll', metal: 0x888888, gem: tint, glow: it.id === 'bless' || it.id === 'busta_parsomen' ? 0.8 : 0.3, gold: it.id === 'bless' || it.id === 'busta_parsomen' };
+    if (s.icon === 'ore') return { kind: 'ore', metal: 0x888888, gem: tint, tint, rock: it.id === 'j4' ? 0x3a2a24 : it.id === 'j6' ? 0x2a2230 : it.id === 'bronzparca' ? 0x6a5a48 : 0x6a6470 };
+    if (s.icon === 'bone') return { kind: 'bone', metal: 0x888888, gem: tint, tint: it.id === 'j7' ? 0xd8f0d8 : tint };
+    let h = 0; for (const c of it.id) h = (h * 31 + c.charCodeAt(0)) % 997;
+    return { kind: 'crystal', metal: 0x888888, gem: tint, tint, shape: h % 3 };
+  }
+  const T = IC_TIER[Math.min(7, it.tier)], S = it.set && IC_SET[it.set];
+  const kind = it.slot === 'weapon' ? (CLASSES[it.cls] && CLASSES[it.cls].icon === 'axe' ? 'axe' : 'sword') : it.slot;
+  const sp = Object.assign({ kind, metal: T.metal, gem: T.gem, glow: T.glow, plume: T.gem, round: it.slot === 'shield' && it.tier === 0 && !it.set }, S || {});
+  if (!S && it.tier === 0 && SET_SLOTS.includes(it.slot) && it.slot !== 'shield') sp.cloth = true;
+  if (!S && it.tier === 3) sp.fur = true; // kemik kademesi
+  if (!S && it.tier >= 6) sp.wing = true;
+  return sp;
+}
+function icon3DInit() {
+  if (ICON3D.scene) return true;
+  if (typeof W3 === 'undefined' || !W3.renderer) return false;
+  const sc = new THREE.Scene();
+  sc.add(new THREE.HemisphereLight(0xfff2e0, 0x40364a, 0.75));
+  const key = new THREE.DirectionalLight(0xffffff, 1.15); key.position.set(2, 3.5, 4); sc.add(key);
+  const rim = new THREE.DirectionalLight(0xa8d0ff, 0.7); rim.position.set(-3, 1.5, -2.5); sc.add(rim);
+  const fill = new THREE.DirectionalLight(0xffd8a8, 0.35); fill.position.set(-2, -2, 3); sc.add(fill);
+  ICON3D.scene = sc;
+  ICON3D.cam = new THREE.PerspectiveCamera(26, 1, 0.1, 50); ICON3D.cam.position.set(0, 0, 7); ICON3D.cam.lookAt(0, 0, 0);
+  ICON3D.rt = new THREE.WebGLRenderTarget(256, 256);
+  ICON3D.buf = new Uint8Array(256 * 256 * 4);
+  ICON3D.c1 = document.createElement('canvas'); ICON3D.c1.width = ICON3D.c1.height = 256;
+  ICON3D.c2 = document.createElement('canvas'); ICON3D.c2.width = ICON3D.c2.height = 112;
+  const lut = ICON3D.lut = new Uint8Array(256); // doğrusal → sRGB (render hedefi doğrusal yazar)
+  for (let i = 0; i < 256; i++) { const v = i / 255; lut[i] = Math.round(255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055)); }
+  return true;
+}
+function icon3DRender(sp, halo) {
+  const key = JSON.stringify(sp) + '|' + (halo || '');
+  if (ICON3D.cache[key]) return ICON3D.cache[key];
+  if (!icon3DInit()) return null;
+  const R = W3.renderer, g = new THREE.Group();
+  const M = icMats(sp.metal, sp.gem, sp.glow);
+  try { IC_BUILD[sp.kind](g, M, sp); } catch (e) { console.error('ikon modeli:', sp.kind, e); return null; }
+  // çerçeveye sığdır: kutu merkezini ortala, en büyük boyutu ~2.5 birime ölçekle
+  const wrap = new THREE.Group(); wrap.add(g); ICON3D.scene.add(wrap);
+  wrap.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(wrap), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  const k = (sp.kind === 'sword' || sp.kind === 'axe' ? 3.45 : 2.85) / Math.max(size.x, size.y, size.z * 0.7); // çapraz silah kutusu boş alan bırakır
+  wrap.scale.setScalar(k); wrap.position.set(-c.x * k, -c.y * k, -c.z * k);
+  const prevRT = R.getRenderTarget(), prevCol = R.getClearColor(new THREE.Color()), prevA = R.getClearAlpha(), prevShadow = R.shadowMap.autoUpdate;
+  R.shadowMap.autoUpdate = false;
+  R.setRenderTarget(ICON3D.rt); R.setClearColor(0x000000, 0); R.clear(true, true, true);
+  R.render(ICON3D.scene, ICON3D.cam);
+  R.readRenderTargetPixels(ICON3D.rt, 0, 0, 256, 256, ICON3D.buf);
+  R.setRenderTarget(prevRT); R.setClearColor(prevCol, prevA); R.shadowMap.autoUpdate = prevShadow;
+  ICON3D.scene.remove(wrap);
+  wrap.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); } });
+  for (const m of Object.values(M)) m.dispose();
+  // pikseller: dikey çevir + sRGB → tuval
+  const c1 = ICON3D.c1.getContext('2d'), img = c1.createImageData(256, 256), b = ICON3D.buf, lut = ICON3D.lut;
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
+    const s = ((255 - y) * 256 + x) * 4, d = (y * 256 + x) * 4;
+    img.data[d] = lut[b[s]]; img.data[d + 1] = lut[b[s + 1]]; img.data[d + 2] = lut[b[s + 2]]; img.data[d + 3] = b[s + 3];
+  }
+  c1.putImageData(img, 0, 0);
+  const c2 = ICON3D.c2.getContext('2d');
+  c2.clearRect(0, 0, 112, 112);
+  if (halo) { const gr = c2.createRadialGradient(56, 56, 6, 56, 56, 54); gr.addColorStop(0, halo + '4d'); gr.addColorStop(1, halo + '00'); c2.fillStyle = gr; c2.fillRect(0, 0, 112, 112); }
+  c2.shadowColor = 'rgba(0,0,0,0.55)'; c2.shadowBlur = 5; c2.shadowOffsetY = 2;
+  c2.imageSmoothingEnabled = true; c2.imageSmoothingQuality = 'high';
+  c2.drawImage(ICON3D.c1, 0, 0, 112, 112);
+  c2.shadowColor = 'transparent';
+  const url = 'data:image/png;i3=1;' + ICON3D.c2.toDataURL('image/png').slice('data:image/png;'.length);
+  ICON3D.cache[key] = url;
+  return url;
+}
+// yığın kimliğinden ikon (çanta dışındaki listeler: dükkân, malzeme satırları)
+function stackIcon(id) { return (STACKS[id] && icon3DRender(iconSpec({ type: 'stack', id }))) || spriteIcon(STACKS[id].icon, STACKS[id].tint); }
 function itemIcon(it) {
+  const u3 = icon3DRender(iconSpec(it), it.type === 'gear' && it.rarity > 0 ? RARITY[it.rarity].color : null); // 3B ikon (yedek: 2B)
+  if (u3) return u3;
   if (it.type === 'stack') { const s = STACKS[it.id]; return spriteIcon(s.icon, s.tint); }
-  if (it.set) return spriteIcon(it.set + '_' + it.slot); // sete / adlı eşyaya özel ikon (02c)
+  if (it.set && !GEAR_SETS[it.set].jewel) return spriteIcon(it.set + '_' + it.slot); // sete / adlı eşyaya özel ikon (02c)
   if (it.slot === 'weapon') return spriteIcon(CLASSES[it.cls].icon, TIER_TINT[it.tier]);
   if (JEWEL_SLOTS.includes(it.slot)) return spriteIcon(it.slot, TIER_TINT[it.tier]);
   return spriteIcon(it.slot, ARMOR_TINT[it.tier]);
@@ -15617,15 +15923,15 @@ const TEMPLE_REWARDS = [
   { gold: 850, exp: 0.01, mats: [['ore', 3, 5, 1], ['soul', 1, 2, 0.6], ['j7', 1, 2, 0.6]], gear: { chance: 0.16, rank: 'elite', n: 1 } },
   { gold: 1000, exp: 0.012, mats: [['ore', 4, 5, 1], ['soul', 1, 2, 0.8], ['j7', 1, 3, 0.8]], gear: { chance: 0.2, rank: 'elite', n: 1 } },
   { gold: 1600, exp: 0.02, chest: true, mats: [['soul', 2, 3, 1], ['j7', 2, 3, 1], ['bless', 1, 1, 0.25]], gear: { chance: 1, rank: 'boss', n: 1 }, ess: 0.25, seal: [1, 1, 0.45],
-    efs: [0.28], minRar: 1, ts: [[1, 1], [1, 0.35], [2, 0.12]] },
+    efs: [0.28], minRar: 1, ts: [[1, 1], [1, 0.35], [2, 0.12]], jset: ['bronzm', 0.35] },
   { gold: 1900, exp: 0.015, mats: [['soul', 2, 3, 1], ['j7', 2, 4, 1], ['bless', 1, 1, 0.1]], gear: { chance: 0.25, rank: 'elite', n: 1 }, ess: 0.3, seal: [1, 1, 0.1],
     efs: [0.22], minRar: 1, ts: [[1, 0.7], [2, 0.25]] },
   { gold: 2200, exp: 0.018, mats: [['soul', 2, 4, 1], ['j7', 3, 4, 1], ['bless', 1, 1, 0.15]], gear: { chance: 0.3, rank: 'elite', n: 1 }, ess: 0.35, seal: [1, 1, 0.15],
-    efs: [0.28], minRar: 2, ts: [[1, 0.6], [2, 0.35], [3, 0.03]] },
+    efs: [0.28], minRar: 2, ts: [[1, 0.6], [2, 0.35], [3, 0.03]], jset: ['ulumuhur', 0.1] },
   { gold: 2500, exp: 0.02, mats: [['soul', 3, 4, 1], ['j7', 3, 5, 1], ['bless', 1, 1, 0.2]], gear: { chance: 0.35, rank: 'elite', n: 1 }, ess: 0.4, seal: [1, 1, 0.2],
-    efs: [0.34], minRar: 2, ts: [[2, 0.5], [1, 0.4], [3, 0.06]] },
+    efs: [0.34], minRar: 2, ts: [[2, 0.5], [1, 0.4], [3, 0.06]], jset: ['ulumuhur', 0.14] },
   { gold: 5000, exp: 0.04, chest: true, mats: [['soul', 3, 5, 1], ['j7', 4, 6, 1], ['bless', 1, 2, 0.6]], gear: { chance: 1, rank: 'boss', n: 2 }, rare: 0.35, ess: 1, ess2: 0.4, seal: [2, 3, 1],
-    efs: [1, 0.5], minRar: 2, ts: [[2, 1], [2, 0.5], [3, 0.2], [1, 0.5]] },
+    efs: [1, 0.5], minRar: 2, ts: [[2, 1], [2, 0.5], [3, 0.2], [1, 0.5]], jset: ['ulumuhur', 0.35] },
 ];
 // ilk kez temizlenen kat: bir kerelik ek ödül (ts: bir Taş Mühür, kademesi)
 const TEMPLE_FIRST = (f) => ({ gold: 400 * (f + 1), soul: f >= 5 ? 2 : 1, seal: f === 9 ? 2 : f === 5 ? 1 : 0, ts: f === 9 ? 3 : f === 5 ? 2 : f >= 6 ? 1 : 0 });
@@ -16158,6 +16464,8 @@ const Temple = {
     // 6-10. kat: Efsanevi set parçası / silah / takı (efs zarları) ve Taş Mühür zarları (ts)
     for (const p of R.efs || []) if (Math.random() < p) { const it = rarityAtLeast(rollGear(6, G_ ? G_.rank : 'elite', 7, true, 1), R.minRar); got.push('Efsanevi: ' + gname(it, give(it))); }
     for (const [gr, p] of R.ts || []) if (Math.random() < p) stack(sealId(pick(SEAL_KEYS), gr), 1);
+    // adlı takı seti parçası (6. kat: Bronz Mühür Sv 55 · 8-10. kat: Ulu Mühür Sv 65)
+    if (R.jset && Math.random() < R.jset[1]) { const it = rarityAtLeast(makeGear(pick(JEWEL_SLOTS), 7, rollRarity(6, 'boss'), P.cls, R.jset[0]), R.minRar); got.push('Takı seti: ' + gname(it, give(it))); }
     // ilk kez temizlenen kat: bir kerelik başarı ödülü
     const bit = 1 << f;
     if (!((S.first | 0) & bit)) {
@@ -17009,6 +17317,15 @@ const Combat = {
     // nadir yuva cevheri: bosslar/Kadim Mühür her zindanda, elitler yalnız 4. zindan ve sonrasında
     if (!(rank === 'elite' && tier < 4) && Math.random() < DROP.essence[rank] * df.ess) st(RAREMAT[pick(SLOTS)], 1);
     if (Math.random() < DROP.bless[rank]) st('bless', 1);
+    // Kabus özel kaynakları: Kara Taş Tapınağı'nda Kırık Taş Mühür → Ulu Mühür takısı; Kara Taş + Kemik Taht → ustalık parşömenleri
+    if ((L.diff | 0) === 2 && !L.dg.temple) {
+      if (L.dg.id === 'd6' && m.key === 'minimetin' && Math.random() < JSET_KABUS) spawnDrop(L, m.x, m.z, { item: rarityAtLeast(makeGear(pick(JEWEL_SLOTS), 7, rollRarity(6, 'boss'), P.cls, 'ulumuhur'), 1) });
+      if (L.dg.id === 'd6' || L.dg.id === 'd7') {
+        const P1 = PARCH_KABUS[rank] || [0, 0];
+        if (Math.random() < P1[0]) st('usta_parsomen', 1);
+        if (Math.random() < P1[1]) st('busta_parsomen', 1);
+      }
+    }
     if (!m.static && Math.random() < DROP.junk) st(L.dg.junk, rank === 'normal' ? 1 : randi(2, 4));
     if (Math.random() < DROP.potion) st(P.lv >= 28 ? 'hp3' : P.lv >= 12 ? 'hp2' : 'hp1', randi(1, 2));
   },
@@ -17773,7 +18090,7 @@ const UI = {
         const best = ids.filter((id) => countStack(id) > 0).pop() || ids[0];
         const b = $('#pot-' + k);
         const img = $('img', b);
-        const src = spriteIcon('potion', STACKS[best].tint);
+        const src = stackIcon(best);
         if (img.getAttribute('src') !== src) img.src = src;
         $('span', b).textContent = tot;
         b.style.opacity = tot ? 1 : 0.5;
@@ -18496,7 +18813,7 @@ const UI = {
       const id = RAREMAT[sl], st = STACKS[id], cost = simyaCost(sl);
       const ok = Object.keys(cost).every((k) => countStack(k) >= cost[k]);
       const r = el('div', 'li' + (this.sel.sl === sl ? ' sel' : '')); r.dataset.pick = sl;
-      r.innerHTML = `<img src="${spriteIcon(st.icon, st.tint)}" alt=""><div class="t"><b style="color:${st.tint}">${st.name}</b><span>${SLOT_NAMES[sl]} · elinde: ${countStack(id)}${ok ? ' · <b style="color:var(--good)">yapılabilir</b>' : ''}</span></div>`;
+      r.innerHTML = `<img src="${stackIcon(id)}" alt=""><div class="t"><b style="color:${st.tint}">${st.name}</b><span>${SLOT_NAMES[sl]} · elinde: ${countStack(id)}${ok ? ' · <b style="color:var(--good)">yapılabilir</b>' : ''}</span></div>`;
       r.addEventListener('click', () => { SFX.play('click'); this.sel = { sl }; this.render(); });
       list.appendChild(r);
     }
@@ -18505,7 +18822,7 @@ const UI = {
     const ids = Object.keys(cost);
     const rows = this.matRows(cost);
     const missing = ids.filter((k) => countStack(k) < cost[k]);
-    const F = this.footCard(S.foot, spriteIcon(st.icon, st.tint), `<div class="up-top"><b style="color:${st.tint}">${st.name}</b><span class="muted">${SLOT_NAMES[sl]} · elinde ${countStack(id)}</span></div><div class="up-cost">${rows}</div>${missing.length ? `<div class="up-hint muted">Nerede bulunur: ${missing.map((k) => STACKS[k].desc).join(' ')}</div>` : ''}`, 'smith');
+    const F = this.footCard(S.foot, stackIcon(id), `<div class="up-top"><b style="color:${st.tint}">${st.name}</b><span class="muted">${SLOT_NAMES[sl]} · elinde ${countStack(id)}</span></div><div class="up-cost">${rows}</div>${missing.length ? `<div class="up-hint muted">Nerede bulunur: ${missing.map((k) => STACKS[k].desc).join(' ')}</div>` : ''}`, 'smith');
     const can = !missing.length && canStackFit(id);
     if (!can) F.acts.appendChild(el('span', 'muted', missing.length ? STACKS[missing[0]].name + ' yetersiz' : 'Çantada yer yok'));
     F.acts.appendChild(this.btn('Üret', 'gold big', () => {
@@ -18526,7 +18843,7 @@ const UI = {
   matRows(mats) {
     return Object.keys(mats).map((k) => {
       const have = countStack(k), short = have < mats[k];
-      return `<span style="color:${short ? 'var(--bad)' : 'var(--parch)'}"><img class="pix" src="${spriteIcon(STACKS[k].icon, STACKS[k].tint)}" alt="">${STACKS[k].name} ${have}/${mats[k]}</span>`;
+      return `<span style="color:${short ? 'var(--bad)' : 'var(--parch)'}"><img class="pix" src="${stackIcon(k)}" alt="">${STACKS[k].name} ${have}/${mats[k]}</span>`;
     }).join('');
   },
   // Efsun: bonus satırlı (Yeşil ve üstü) eşyanın satırları baştan zarlanır; eski satırlar gider (doğrudan değişir)
@@ -18606,7 +18923,7 @@ const UI = {
         const lock = (s.lv || 1) > P.lv;
         const r = el('div', 'li' + (lock ? ' locked' : ''));
         const info = s.hp ? `${s.hp} can` : s.mp ? `${s.mp} mana` : s.desc || '';
-        r.innerHTML = `<img src="${spriteIcon(s.icon, s.tint)}" alt=""><div class="t"><b>${s.name}</b><span>${info}${lock ? ' · Sv ' + s.lv : ''} · elinde: ${countStack(id)}</span></div><span class="price">${coinImg()}${fmtFull(s.price)}</span>`;
+        r.innerHTML = `<img src="${stackIcon(id)}" alt=""><div class="t"><b>${s.name}</b><span>${info}${lock ? ' · Sv ' + s.lv : ''} · elinde: ${countStack(id)}</span></div><span class="price">${coinImg()}${fmtFull(s.price)}</span>`;
         const buy = (n) => {
           if (lock) { toast('Seviye ' + s.lv + ' gerekli'); return; }
           const cost = s.price * n;
@@ -18717,7 +19034,7 @@ const UI = {
     const col = rate >= 80 ? 'var(--good)' : rate >= 50 ? '#ffb24a' : 'var(--bad)';
     const matRows = matIds.map((id) => {
       const need = cost.mats[id], have = countStack(id), short = have < need;
-      return `<span style="color:${short ? 'var(--bad)' : 'var(--parch)'}"><img class="pix" src="${spriteIcon(STACKS[id].icon, STACKS[id].tint)}" alt="">${STACKS[id].name} ${have}/${need}</span>`;
+      return `<span style="color:${short ? 'var(--bad)' : 'var(--parch)'}"><img class="pix" src="${stackIcon(id)}" alt="">${STACKS[id].name} ${have}/${need}</span>`;
     }).join('');
     const missing = matIds.filter((id) => countStack(id) < cost.mats[id]);
     const hint = missing.length ? `<div class="up-hint muted">Nerede bulunur: ${missing.map((id) => STACKS[id].desc).join(' ')}</div>` : '';
@@ -19363,7 +19680,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { buildMobModel, buildNPC, MOB_TPL, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;

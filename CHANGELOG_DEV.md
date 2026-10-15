@@ -10,6 +10,20 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-15 (22) — Sv 55 / Sv 65 takı setleri, ustalık parşömeni ve kutsama fiyatları, 3B envanter ikonları · dal `ozellik/takiset-ikon` (yedek: `yedek/takiset-oncesi`)
+- Dosya: yalnız `index.html`.
+- Yeni adlı takı setleri (`GEAR_SETS.bronzm` / `ulumuhur`, `jewel: true`): Bronz Mühür Takı Seti (Sv 55, kademe 7 × 1.15, +1 kritik; 2: kritik +5, canavara +%5 · 3: saldırı / can +%12) ve Ulu Mühür Takı Seti (Sv 65, × 1.38, +2 kritik; 2: kritik +7,
+  canavara +%8 · 3: saldırı / can +%17, savunma +%6). `setInfoOf` adlı takıyı kendi setinde sayar (kademe 7 Efsane setine sayılmaz), `gearStats` / `sellPrice` mul uygular. Rastgele düşmezler.
+- Kaynaklar: Bronz Mühür yalnız Bronz Taş Tapınağı 6. kat (patron) ödülünde %35 (`TEMPLE_REWARDS[5].jset`); Ulu Mühür tapınak 8 / 9 / 10. kat %10 / %14 / %35 ve Kara Taş Tapınağı Kabus'ta Kırık Taş Mühür (`minimetin`) kırılınca %18 (`JSET_KABUS`).
+- Ustalık parşömenleri: Tüccar'dan kaldırıldı; çantadan satış Usta 100.000 / Büyük Usta 150.000. Kara Taş Tapınağı ve Kemik Taht Kabus'ta düşer (`PARCH_KABUS`: normal %0,2 / elit %1,2+%0,4 / taş %5+%2 / patron %8+%3).
+  Kutsama Kağıdı Tüccar fiyatı 2.500 → 10.000 (çantadan satış 300 aynı).
+- 3B envanter ikonları (`iconSpec`, `IC_BUILD`, `icon3DRender`, `stackIcon`): her eşya türü için prosedürel three.js modeli (kılıç, balta, miğfer, zırh, çizme, kalkan, yüzük, kolye, tılsım, iksir, parşömen, cevher, kristal, kemik,
+  Taş Mührü), kademe / set / nadirliğe göre renk + ışıma + ek parça (kürk, kanat, boynuz). Ana renderer ile 256 px render hedefi → 112 px tuval (sRGB çevrimi, yumuşak kenar, nadirlik halesi), anahtara göre önbellek.
+  Data URL `i3=1` parametresi CSS'te pikselleştirmeyi kapatır. Renderer hazır değilse eski 2B ikon. Dükkân / Simyacı / geliştirme malzeme satırları da 3B (`stackIcon`).
+- Testler: yeni `jtest` 13/13 (set adları, şartlar, statlar, set sayımı, fiyatlar, tapınak ödül tablosu, Kabus düşüş simülasyonu d6 / d7 / d5, Zor'da düşmemesi), `qtest` 40/40, `qtest3` 22/22, `qtest4` 32/32, `qtest5` 26/26.
+  İkon üretimi SwiftShader'da ~33 ms/ikon (143 ikon 4,7 sn); gerçek telefonda süre ve görünüm **denenmedi** (ilk çanta açılışında kısa takılma olabilir, sonra önbellekten).
+- Açık: q20 görev ödülü Usta parşömeni artık 100.000'e satılabilir; set parçalarının özel 3B modeli yok (renk/ek parça farkı).
+
 ## 2026-10-14 (21) — Görsel kalite geçişi: tüm zindan canavarları, NPC'ler, köy yapıları · dal `ozellik/koy-modeller` → main'e alındı (kullanıcı onayı; yedek `yedek/main-koy-kalite-oncesi`)
 - Dosya: yalnız `index.html`. Bronz Taş Tapınağı (GLB) ve Kemik Kral (GLB) dokunulmadı; Metin taşı aynı kaldı.
 - Canavarlar (`buildMobModelRaw`, 8 prosedürel tür, tüm seçkin/patron renk varyantları): kurt (yele, çene/diş, iki bölüm bacak + pati, kuyruk, seçkinde dikenli tasma), yarasa (parmak kemikli zar kanat), örümcek (diz eklemli 8 bacak, 8 göz, keliser, karın deseni),
