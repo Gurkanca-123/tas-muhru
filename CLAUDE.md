@@ -25,7 +25,10 @@ Tüm projeyi baştan incelemek yalnız görev gerçekten mimari çapında bir de
 - Yalnız değişiklikten etkilenmesi muhtemel testleri çalıştır; gerekiyorsa genel testi kullan.
 - Gerçekleştirilmemiş bir işlemi (test, push, doğrulama) yapılmış gibi bildirme. Denenmeyeni "denenmedi" diye yaz.
 - Tüm oyun metinleri Türkçe ("item" değil "eşya"). Kullanıcıya Türkçe yanıt ver.
-- Yalnız three.js (r158); yeni bağımlılık ekleme. Mobil öncelikli (yatay, dokunmatik); ışık sayısı sabit, gölge yalnız önemli nesnelerde.
+- **ÖNCELİK (kullanıcı kararı, 2026-10-15): YÜKSEK GÖRSEL KALİTE.** Zayıf telefon uyumu ve dosya boyutu artık kısıt değil; görsel kalite her şeyden önce gelir
+  (son-işleme, PBR/yansıma, gölge, doku, ayrıntılı modeller serbest). Eski "düşük poly / sabit ışık / az gölge" kuralları bağlayıcı değildir.
+  Yine de dokunmatik yatay arayüz ve oyun mantığı korunur; 'Performans' ve 'Standart' görünüm seçenekleri isteğe bağlı yedek olarak kalır.
+- three.js r158 temel alınır; kalite için gereken ek kod (son-işleme geçişleri vb.) çekirdeğe gömülür. Harici yeni kütüphane eklemeden önce kullanıcıya haber ver.
 - Dövüş matematiği, envanter, +0…+9 geliştirme oranları ve joystick mantığına hata düzeltmesi dışında dokunma; denge
   değişiklikleri veri tablolarından (`MOBS`, `RANK`, `mobBase`, `DROP`, `DIFFS`, `TEMPLE_*`) yapılır.
 - Kayıt (`applySave`) alan beyaz listesiyle çalışır: yeni kalıcı alan eklersen orada doğrula; mevcut alanları silme.

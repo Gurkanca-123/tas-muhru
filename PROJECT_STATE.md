@@ -80,6 +80,12 @@ her zaman `grep -n` ile doğrula.
   üretildi). Kemik Kral klipsiz, kodla poz (`animateBoneKing`). Tapınak düşmanları: idle / walk / run / death + atk / slam /
   spin / roar / plant / cast / seal / shoot; sahne extras `enemy.{handMount, handMountL, shieldMount, ev}`.
 
+## Kalite politikası (kullanıcı kararı 2026-10-15)
+- Öncelik yüksek görsel kalite; zayıf telefon ve dosya boyutu artık kısıt değil. Varsayılan görünüm `gfx:'ultra'` ("Yüksek kalite"); eski kayıtlardaki `lowpoly` bir kez `ultra`ya göç eder (`settings.gfxv`).
+- `Post` (index.html, "Son-işleme" bölümü): sahne HalfFloat + 4x MSAA hedefe çizilir → 5 kademeli bloom → tek geçişte ACES + sRGB + kontrast/doygunluk/ton + vinyet + dither. Tema bazlı ayar: `THEMES[x].grade = {bloom,thr,sat,con,tint,vig}` (isteğe bağlı). `gfx:'ultra'` dışındaki modlar doğrudan `renderer.render` kullanır.
+- Ultra: gölge haritası 2048, piksel oranı en az 1.5 (en çok 2). `renderer.info.render` artık yalnız son geçişi gösterir (son-işlemde calls=1); çizim sayısı ölçümü için `Post.on=false` yap.
+- Sıradaki kalite adımları: PBR/ortam yansıması (sahne materyalleri), SSAO/derinlik, dokulu yüksek ayrıntılı modeller, zindan ortamı.
+
 ## Bilinen sorunlar / kısıtlar
 - **Tapınak dengesi:** 2026-10-12'de yeniden dengelendi (simülasyon tabanlı; CHANGELOG_DEV.md). Gerçek oyuncu geri bildirimiyle ince ayar
   gerekir; kaldıraçlar `TEMPLE_POW`, `TEMPLE_FLOORS` dalgaları, `MOBS` çarpanları. Mühür / Efsanevi şansları `TEMPLE_REWARDS`.
