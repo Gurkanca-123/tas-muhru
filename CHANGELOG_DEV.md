@@ -10,6 +10,11 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-15 (28) — Mühür Yemini düzenlemesi · dal `ozellik/muhur-yemini` (main'e alınmadı); (27) HUD sadeleştirme main'e alındı
+- Animasyon: `skW4` klibi ölçüldü (el yüksekliği): 0–0.3 kılıç kalkar, 0.36–0.96 saplama/diz çökme, 1.02–1.62 eller havaya. Havaya kalkış oynatılmıyor: `SAVASCI_SKILL_T.w4` dur 1.82→0.92, lock 1.24→0.86, ışık sütunu (`rise`) 1.12→0.62 (saplanmış kılıçtan).
+- Değerler: saldırı +%30→+%20, savunma +%20→+%15, yeni `aspdPct` +%20 (otomatik/temel saldırı hızı; seviye çarpanına girmez; `recalc` → `D.aspd`), bekleme 30→31 sn.
+- Test: doğrulama betiği 3/3 (değerler, bekleme, buff etkin, D.aspd=20, atk +%19 / savunma +%15 yuvarlama). Gerçek telefonda animasyonun görünüşü: **denenmedi**.
+
 ## 2026-10-15 (27) — HUD sadeleştirme · dal `ozellik/hud-sadelestir` (main'e alınmadı)
 - Sorun: üst ortada kat adı + oda kodu + görev satırı + büyük hedef çubuğu üst üste biniyor, afiş (boss adı) 44 px ile ekranın dörtte birini kaplıyordu.
 - Çözüm (CSS sonuna blok): `#zone` + `#party` tek ince satırda (`#topc` sarmalayıcı; dikeyde `display:contents`), hedef çubuğu ince ve yarı saydam, çarpışmada (hedef varken) görev satırı gizli, `#toast` yatayda aşağı-orta, `#banner` küçük (en çok 22 px) ve daha yukarıda.

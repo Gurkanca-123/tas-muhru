@@ -820,7 +820,7 @@ const SKILLS = {
   w1: { name: 'Hamle', icon: 'dash', type: 'charge', mult: 2.3, pathMult: 0.7, radius: 2.4, stun: 0.9, dashLen: 4, mp: 10, cd: 6, range: 9, unlock: 1, desc: 'Kılıcı iki elle başının üstüne kaldırıp hedefe atılır; yolundakileri yana savurur, varışta kılıcı yere indirip çevresini sersemletir.' },
   w2: { name: 'Üç Yönlü Kesme', icon: 'slash3', type: 'triple_cut', mult: 0.95, lastMult: 1.3, radius: 3.3, arc: 1.05, push: 1.4, mp: 14, cd: 7, unlock: 1, desc: 'İleri adımlayarak önündeki yarım daireye üç ağır kesiş indirir (aşağı, yukarı, aşağı); son darbe düşmanları geri iter.' },
   w3: { name: 'Kılıç Çevirme', icon: 'spin', type: 'spin_advance', mult: 1.15, hits: 2, radius: 3.4, advance: 3, pull: 0.8, mp: 18, cd: 9, range: 7, unlock: 10, desc: 'Kılıcı iki elle tutup alçak duruşla iki tur dönerek ilerler; her turda çevresindekilere vurur ve onları içeri çeker.' },
-  w4: { name: 'Mühür Yemini', icon: 'seal', type: 'buff', buff: { atkPct: 0.3, defPct: 0.2 }, dur: 18, mp: 28, cd: 30, unlock: 20, swordGlow: true, sealPlant: true, radius: 3.2, push: 1.8, stun: 0.6, desc: 'Kılıcını yere saplayıp mühür yemini eder: yerde mühür açılır, çevresindekiler geri savrulur; 18 sn saldırı +%30, savunma +%20, kılıç ışır.' },
+  w4: { name: 'Mühür Yemini', icon: 'seal', type: 'buff', buff: { atkPct: 0.2, defPct: 0.15, aspdPct: 0.2 }, dur: 18, mp: 28, cd: 31, unlock: 20, swordGlow: true, sealPlant: true, radius: 3.2, push: 1.8, stun: 0.6, desc: 'Kılıcını yere saplayıp mühür yemini eder: yerde mühür açılır, çevresindekiler geri savrulur; 18 sn saldırı +%20, savunma +%15, saldırı hızı +%20, kılıç ışır.' },
   b1: { name: 'Balta Fırlatma', icon: 'axethrow', type: 'axe_throw', mult: 1.6, back: 1.0, mp: 10, cd: 5, range: 8, unlock: 1, desc: 'Baltayı döndürerek fırlatır: gidişte ve dönüşte yolundaki tüm düşmanları biçer, sonra eline döner.' },
   b2: { name: 'Kasırga', icon: 'whirl', type: 'aoe_self', mult: 0.8, hits: 3, radius: 4.0, mp: 18, cd: 7, unlock: 1, desc: 'Baltayla üç tur döner, etrafındaki tüm düşmanları biçer.' },
   b3: { name: 'Yer Sarsan', icon: 'quake', type: 'leap', mult: 2.2, radius: 3.2, stun: 1.5, mp: 16, cd: 9, range: 9, unlock: 10, desc: 'Baltayı başının üstüne kaldırıp hedefe sıçrar; inişte yeri yarar, çevresindekileri sersemletir.' },
@@ -3217,7 +3217,7 @@ function recalc() {
     const gs = gearStats(it);
     for (const k in gs) add[k] += gs[k];
   }
-  let atkPct = 0, defPct = 0, spdPct = 0, critAdd = 0, regenPct = 0;
+  let atkPct = 0, defPct = 0, spdPct = 0, critAdd = 0, regenPct = 0, aspdBuff = 0;
   // set bonusları (zırh seti 2/3/4 parça, takı seti 2/3 parça)
   const sets = activeSets(P.equip), sb = sets.sum;
   D.sets = sets.list;
@@ -3229,7 +3229,7 @@ function recalc() {
   atkPct += ss.atkPct; defPct += ss.defPct; critAdd += ss.crit;
   D.skillPct = ss.skillPct;
   for (const b of buffs) {
-    atkPct += b.atkPct || 0; defPct += b.defPct || 0; spdPct += b.speedPct || 0;
+    atkPct += b.atkPct || 0; defPct += b.defPct || 0; spdPct += b.speedPct || 0; aspdBuff += b.aspdPct || 0;
     critAdd += b.critAdd || 0; regenPct += b.regenPct || 0;
   }
   const main = s[c.main];
@@ -3241,7 +3241,7 @@ function recalc() {
   D.dodge = Math.min(18, s.dex * 0.12);
   D.spd = 5.4 * (1 + add.spd / 100 + spdPct);
   D.mob = add.mob;
-  D.aspd = Math.min(40, add.aspd); D.cdmg = Math.min(80, add.cdmg); D.steal = Math.min(12, add.steal); D.pierce = Math.min(40, add.pierce); D.bossP = add.boss;
+  D.aspd = Math.min(40, add.aspd) + Math.round(aspdBuff * 100); D.cdmg = Math.min(80, add.cdmg); D.steal = Math.min(12, add.steal); D.pierce = Math.min(40, add.pierce); D.bossP = add.boss;
   D.regen = add.regen;
   D.regenPct = regenPct;
   if (P.hp > D.maxHp) P.hp = D.maxHp;
@@ -10779,7 +10779,7 @@ const SAVASCI_SKILL_T = {
   w1: { dur: 1.0, dash0: 0.14, dashT: 0.32, hit: 0.5, leap: 1.15, lock: 0.66 }, // Hamle: çömel → sıçrayıp atıl (0.14–0.46) → inişte yere iniş
   w2: { dur: 1.48, hits: [0.28, 0.66, 1.06], lock: 1.18 }, // Üç Yönlü Kesme: aşağı – yukarı – aşağı (her biri hızlı, arada kısa duraksama)
   w3: { dur: 1.12, hits: [0.26, 0.75], lock: 0.88 }, // Kılıç Çevirme: hızlanan iki tur
-  w4: { dur: 1.82, plant: 0.38, rise: 1.12, lock: 1.24 }, // Mühür Yemini: kılıcı yere sapla → kalk, kılıç göğe
+  w4: { dur: 0.92, plant: 0.38, rise: 0.62, lock: 0.86 }, // Mühür Yemini: kılıcı yere sapla (klibin 0.96 sn sonrası — eller havaya kalkış — oynatılmaz), ışık sütunu saplanmış kılıçtan
 };
 // ---- Savaşçı silahlı duruş / yürüme / koşma klipleri ----
 // Gömülü klipler: zindan beklemesi (idleReady) çömelmiş, kılıç yatay; silahlı koşu/yürümede kollar doğal sallanıyor ama bilek
@@ -17948,7 +17948,7 @@ const Combat = {
           later(T4.plant, () => {
             if (pl.dead || G.player !== pl || G.level !== L) return;
             const b = { id, icon: sk.icon, until: G.time + sk.dur };
-            for (const k in sk.buff) b[k] = sk.buff[k] * (1 + 0.15 * (lvl - 1));
+            for (const k in sk.buff) b[k] = sk.buff[k] * (k === 'aspdPct' ? 1 : 1 + 0.15 * (lvl - 1));
             const ex = buffs.findIndex((x) => x.id === id);
             if (ex >= 0) buffs.splice(ex, 1);
             buffs.push(b); recalc();
@@ -17978,7 +17978,7 @@ const Combat = {
           break;
         }
         const b = { id, icon: sk.icon, until: G.time + sk.dur };
-        for (const k in sk.buff) b[k] = sk.buff[k] * (1 + 0.15 * (lvl - 1));
+        for (const k in sk.buff) b[k] = sk.buff[k] * (k === 'aspdPct' ? 1 : 1 + 0.15 * (lvl - 1));
         const ex = buffs.findIndex((x) => x.id === id);
         if (ex >= 0) buffs.splice(ex, 1);
         buffs.push(b); recalc();
@@ -19975,7 +19975,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { buffs, SKILLS, toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
