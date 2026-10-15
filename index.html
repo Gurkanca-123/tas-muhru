@@ -899,27 +899,27 @@ const MOBS = {
   wolf: { name: 'Yabani Kurt', model: 'wolf', color: 0x7a6a58, spd: 4.2 },
   bat: { name: 'Mağara Yarasası', model: 'bat', color: 0x4a3a52, hp: 0.7, spd: 4.8, size: 0.9 },
   alphawolf: { name: 'Alfa Kurt', model: 'wolf', color: 0x2f2b2b, eye: 0xff3030, size: 1.45, rank: 'elite', skills: ['charge'] },
-  wolfking: { name: 'Kurt Lordu Bozkır', model: 'wolf', color: 0xd9d2c3, eye: 0xffc040, size: 2.3, rank: 'boss', skills: ['slam', 'summon'], summon: 'wolf', crown: true },
+  wolfking: { name: 'Kurt Lordu Bozkır', model: 'wolf', color: 0xd9d2c3, eye: 0xffc040, size: 2.3, rank: 'boss', skills: ['slam', 'charge', 'summon'], summon: 'wolf', crown: true, enrage: true },
 
   spider: { name: 'Mağara Örümceği', model: 'spider', color: 0x3b2f36, spd: 4 },
   venomspider: { name: 'Zehirli Örümcek', model: 'spider', color: 0x4d7a2a, ranged: true, range: 6.5, poison: true, proj: 0x9aff4a, hp: 0.8 },
   spiderguard: { name: 'Ağ Muhafızı', model: 'spider', color: 0x5a2a5e, eye: 0xff40ff, size: 1.5, rank: 'elite', skills: ['web'] },
-  spiderqueen: { name: 'Kraliçe Karadul', model: 'spider', color: 0x1e1a22, eye: 0xff2020, size: 2.6, rank: 'boss', skills: ['nova', 'summon', 'web'], summon: 'spider', poison: true, crown: true },
+  spiderqueen: { name: 'Kraliçe Karadul', model: 'spider', color: 0x1e1a22, eye: 0xff2020, size: 2.6, rank: 'boss', skills: ['nova', 'summon', 'web', 'pool'], summon: 'spider', poison: true, crown: true, enrage: true, pool: 0x7aff4a, poolName: 'zehir bulutu' },
 
   skeleton: { name: 'İskelet Asker', model: 'skeleton', color: 0xd8d2bf, weapon: 'sword' },
   skelarcher: { name: 'İskelet Okçu', model: 'skeleton', color: 0xc9c2ad, weapon: 'bow', ranged: true, range: 7.5, proj: 0xe8e0c8, hp: 0.8 },
   graveknight: { name: 'Mezar Şövalyesi', model: 'skeleton', color: 0x9aa0b0, weapon: 'sword', armor: 0x3a4050, size: 1.4, rank: 'elite', skills: ['slam'] },
-  bonelord: { name: 'Kemik Lordu', model: 'skeleton', color: 0xeae2cc, weapon: 'sword', armor: 0x4a2a5a, eye: 0x60a0ff, size: 2.3, rank: 'boss', skills: ['slam', 'volley', 'summon'], summon: 'skeleton', crown: true },
+  bonelord: { name: 'Kemik Lordu', model: 'skeleton', color: 0xeae2cc, weapon: 'sword', armor: 0x4a2a5a, eye: 0x60a0ff, size: 2.3, rank: 'boss', skills: ['slam', 'volley', 'summon', 'bonerain'], summon: 'skeleton', crown: true, enrage: true },
 
   imp: { name: 'Ateş İfriti', model: 'imp', color: 0xd4471f, spd: 4.4 },
   lavaturtle: { name: 'Lav Kaplumbağası', model: 'turtle', color: 0x3a2a24, hp: 1.6, def: 2, spd: 2.6 },
   flameguard: { name: 'Alev Muhafızı', model: 'imp', color: 0x8a1a10, size: 1.6, rank: 'elite', skills: ['nova'] },
-  firelord: { name: 'Alev Beyi Kızılhan', model: 'imp', color: 0xff5a1a, size: 2.5, rank: 'boss', skills: ['slam', 'nova', 'volley'], proj: 0xff8a30, summon: 'imp', crown: true },
+  firelord: { name: 'Alev Beyi Kızılhan', model: 'imp', color: 0xff5a1a, size: 2.5, rank: 'boss', skills: ['slam', 'nova', 'volley', 'lance', 'pool'], proj: 0xff8a30, summon: 'imp', crown: true, enrage: true, pool: 0xff5a1a, poolName: 'alev gölü' },
 
   icewolf: { name: 'Ayaz Kurdu', model: 'wolf', color: 0xd4ecf7, eye: 0x40c0ff, spd: 4.4 },
   snowgolem: { name: 'Kar Golemi', model: 'golem', color: 0xbcd6e6, hp: 1.6, def: 1.5, spd: 2.8 },
   icewitch: { name: 'Buzul Cadısı', model: 'witch', color: 0x3a6a9a, ranged: true, range: 7, proj: 0x9fe8ff, size: 1.3, rank: 'elite', skills: ['frost'] },
-  frostgiant: { name: 'Buz Devi Ayaz', model: 'golem', color: 0x8fc8e8, eye: 0x40e0ff, size: 2.4, rank: 'boss', skills: ['slam', 'frost', 'summon'], summon: 'icewolf', crown: true },
+  frostgiant: { name: 'Buz Devi Ayaz', model: 'golem', color: 0x8fc8e8, eye: 0x40e0ff, size: 2.4, rank: 'boss', skills: ['slam', 'frost', 'summon', 'pool'], summon: 'icewolf', crown: true, enrage: true, pool: 0x7ad8ff, poolName: 'buz alanı' },
 
   shade: { name: 'Gölge Ruh', model: 'witch', color: 0x2a1f3a, eye: 0xff3aa0, spd: 4.4, ranged: true, range: 6.5, proj: 0xff4ab0, hp: 0.9 },
   stoneling: { name: 'Taşçık', model: 'golem', color: 0x4a4550, eye: 0xff3a8a, size: 0.85, hp: 1.3, def: 1.6 },
@@ -931,7 +931,7 @@ const MOBS = {
   // çok güçlü son boss: büyük can/saldırı, kemik yağmuru, iki kez çağırma, %50 canda öfke (enrage)
   boneking: { name: 'Kemik Kral Karaçor', model: 'boneking', color: 0xe8dcc0, armor: 0x2a1a30, eye: 0x6aff8a, weapon: 'sword', size: 2.2, rank: 'boss', hpMul: 1.6, atk: 1.3, def: 1.3,
     skills: ['slam', 'volley', 'bonerain', 'summon'], summon: 'bonewarrior', proj: 0x8aff9a, crown: true, enrage: true },
-  guardian: { name: 'Taş Muhafız', model: 'golem', color: 0x1e1a22, eye: 0xff2a6a, size: 2.4, rank: 'boss', skills: ['slam', 'nova'], crown: true, hpMul: 0.6 },
+  guardian: { name: 'Taş Muhafız', model: 'golem', color: 0x1e1a22, eye: 0xff2a6a, size: 2.4, rank: 'boss', skills: ['slam', 'nova', 'lance'], crown: true, hpMul: 0.6, enrage: true },
 
   // Bronz Taş Tapınağı (GLB modeller: tapinak_*.js, TempleAssets; yüklenemezse fb prosedürel model). tm: model dosyası,
   // set: aynı gövdede klip takımı, wR / wL / sh: sağ el / sol el silahı, kalkan. Taş Canavarı: dört ayaklı kristal canavar
@@ -15693,6 +15693,14 @@ class Mob {
     if (!sk) return false;
     const pl = this.tgt || G.player, me = G.player; // me: bu telefondaki oyuncu (yer uyarıları misafirde kendi telefonunda çözülür)
     const tg = (x, z, R, dl, col, raw, slow, grp) => Coop.ev('t', this.nid, Math.round(x * 10), Math.round(z * 10), R, dl, col, Math.round(raw), slow || 0, grp || 0);
+    // Yavru koruması: çağrılan yavrular yaşadıkça patron çok az hasar alır (yavruları öldür → koruma dağılır)
+    if (this.minions && this.minions.length && !this.t.phases) {
+      const alive = this.minions.some((q) => !q.dead), want = alive ? 0.35 : 1;
+      if (this.dmgK !== want && !(this.dmgK == null && want === 1)) {
+        this.dmgK = want;
+        if (!alive) { banner(this.name, 'koruması dağıldı!', 1.4); FX.ring(this.x, this.z, 3.2, 0xffe08a, 0.5); FX.burst(this.x, 1.2, this.z, 0xffe08a, 20, 5); SFX.play('boom'); }
+      }
+    }
     // Kırık Mühür Muhafızı: canı %50 ve %25'in altına inince saldırıları hızlanır
     if (this.t.frenzy && (this.frenzyN || 0) < 2 && this.hp / this.maxHp < (this.frenzyN ? 0.25 : 0.5)) {
       this.frenzyN = (this.frenzyN || 0) + 1; this.atkCd *= 0.72; this.spd *= 1.1; if (this.M.tm) this.M.tm.spd *= 1.2;
@@ -15724,8 +15732,9 @@ class Mob {
       for (let k = 0; k < 3; k++) {
         const a = rand(0, TAU);
         const x = this.x + Math.cos(a) * 2.5, z = this.z + Math.sin(a) * 2.5;
-        if (canStand(this.L, x, z, 0.4)) { const m = spawnMob(this.L, this.t.summon, Math.max(1, this.lv - 2), x, z, null); m.state = 'chase'; FX.burst(x, 0.5, z, 0xd8d0c0, 12, 4); }
+        if (canStand(this.L, x, z, 0.4)) { const m = spawnMob(this.L, this.t.summon, Math.max(1, this.lv - 2), x, z, null); m.state = 'chase'; (this.minions = this.minions || []).push(m); FX.burst(x, 0.5, z, 0xd8d0c0, 12, 4); }
       }
+      if (!this.t.phases) { this.dmgK = 0.35; banner(this.name, 'yavruları koruyor — önce yavruları öldür!', 2.2); }
       return true;
     }
     this.skT -= dt;
@@ -15781,6 +15790,47 @@ class Mob {
             Proj.mobShot(this, this.x + Math.sin(a) * 10, this.z + Math.cos(a) * 10, { dmg: this.atk * 0.9, color: this.t.proj || 0xffe0a0 });
           }
         } };
+        return true;
+      }
+      case 'lance': { // Hat atılımı: patrondan oyuncuya doğru sıralı patlayan yer uyarılı hat — yana çekil
+        if (d > 13) return false;
+        this.casting = 0.9; this.playAct('slam', 1.1);
+        const a = Math.atan2(pl.x - this.x, pl.z - this.z), n = big ? 7 : 5, R = 1.55, col = this.t.proj || 0xff6a30, hit = { v: false };
+        const grp = this.nid * 1000 + ((this.rainN = (this.rainN || 0) + 1) % 1000);
+        for (let k = 0; k < n; k++) {
+          const x = this.x + Math.sin(a) * (2.2 + k * 2.1), z = this.z + Math.cos(a) * (2.2 + k * 2.1), dl = 0.95 + k * 0.13;
+          tg(x, z, R, dl, col, this.atk * 1.4, 0, grp);
+          telegraph(x, z, R, dl, col, () => {
+            if (this.dead) return;
+            FX.ring(x, z, R, col, 0.35); FX.burst(x, 0.4, z, col, 12, 5); FX.pillar(x, z, col, rand(1.4, 2.2), 0.4, 0.25);
+            if (k === 0) SFX.play('boom');
+            if (!hit.v && me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) { hit.v = true; Combat.damagePlayer(this.atk * 1.4, this); }
+          });
+        }
+        Coop.ev('x', this.nid, 'rain');
+        banner('', this.name + ': hat atılımı — yana çekil!', 1);
+        return true;
+      }
+      case 'pool': { // Kalıcı tehlike alanları: 5 vuruş boyunca saniyede bir patlar — yerinde durma
+        if (d > 13) return false;
+        this.casting = 0.9; this.playAct('slam', 1.1);
+        const n = this.enraged ? 4 : 3, R = 2.3, ticks = this.enraged ? 6 : 5, col = this.t.pool || this.t.proj || 0x7aff4a, pts = [[pl.x, pl.z]];
+        for (let tries = 0; pts.length < n && tries < 40; tries++) { const a = rand(0, TAU), rr = rand(3, 6); const x = pl.x + Math.cos(a) * rr, z = pl.z + Math.sin(a) * rr; if (canStand(this.L, x, z, 0.3)) pts.push([x, z]); }
+        const dmg = this.atk * 0.55;
+        pts.forEach(([x, z], zi) => {
+          for (let k = 0; k < ticks; k++) later(k * 1.0 + zi * 0.15, () => {
+            if (this.dead) return;
+            const g = this.nid * 1000 + ((this.rainN = (this.rainN || 0) + 1) % 1000);
+            tg(x, z, R, 1.0, col, dmg, 0, g);
+            telegraph(x, z, R, 1.0, col, () => {
+              if (this.dead) return;
+              FX.ring(x, z, R, col, 0.3); FX.burst(x, 0.3, z, col, 8, 3);
+              if (me && !me.dead && dist(me.x, me.z, x, z) < R + 0.3) Combat.damagePlayer(dmg, this);
+            });
+          });
+        });
+        Coop.ev('x', this.nid, 'rain');
+        banner('', this.name + ': ' + (this.t.poolName || 'tehlikeli zemin') + ' — yerinde durma!', 1.2);
         return true;
       }
       case 'bonerain': {

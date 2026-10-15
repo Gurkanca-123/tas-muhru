@@ -10,6 +10,12 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-15 (25) — Efsun çeşitliliği, set etkileri, boss mekanikleri · dal `ozellik/efsun-set-boss` (main'e alınmadı)
+- Efsun: Saldırı Hızı, Kritik Hasarı, Can Çalma, Savunma Delme, Patronlara Karşı Güç (+ stat paneli satırları).
+- Set etkileri (5 adet, bkz. PROJECT_STATE): Taş Kabuk, Keskin Ritim, Efsane Öfke, Mühür Yankısı, Mühür Kalkanı; set bilgi kutusunda ✦ satırı.
+- Boss: tüm normal patronlara öfke aşaması; yeni `lance` ve `pool`; yavru koruması (`dmgK 0.35`); Kurt Lordu'na `charge`, Kemik Lordu'na `bonerain`.
+- Test (SwiftShader): etest 4/4, stest 15/15, btest 10/10 (yetenekler doğrudan tetiklenerek). Gerçek cihaz ve ortak oyun: **denenmedi**. Denge sayıları (yüzdeler, bekleme süreleri) ilk taslak; oynayıp ayarlanmalı.
+
 ## 2026-10-15 (24) — Yüksek kalite önceliği + son-işleme hattı · dal `ozellik/yuksek-kalite` (main'e alınmadı)
 - Kullanıcı kararı: zayıf telefon / dosya boyutu kaygısı bırakıldı, görsel kalite öncelik. `CLAUDE.md` ve `PROJECT_STATE.md` güncellendi.
 - `Post`: HalfFloat + MSAA sahne hedefi, 5 kademeli bloom, ACES + sRGB, kontrast/doygunluk/ton, vinyet, dither. Yeni görünüm "Yüksek kalite" (`ultra`, varsayılan; gölge 2048, piksel oranı ≥1.5); "Standart" = eski görünüm. Eski kayıtlar `ultra`ya göç eder.

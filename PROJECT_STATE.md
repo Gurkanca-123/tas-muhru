@@ -86,6 +86,11 @@ her zaman `grep -n` ile doğrula.
 - Ultra: gölge haritası 2048, piksel oranı en az 1.5 (en çok 2). `renderer.info.render` artık yalnız son geçişi gösterir (son-işlemde calls=1); çizim sayısı ölçümü için `Post.on=false` yap.
 - Sıradaki kalite adımları: PBR/ortam yansıması (sahne materyalleri), SSAO/derinlik, dokulu yüksek ayrıntılı modeller, zindan ortamı.
 
+## Efsun / set etkileri / boss mekanikleri (dal `ozellik/efsun-set-boss`)
+- `BONUS_POOL` yeni satırlar: `aspd` Saldırı Hızı (`D.aspd`, üst sınır %40; `basicAttack` bekleme süresini böler), `cdmg` Kritik Hasarı (`Combat.critMul()` = 1.8 + cdmg/100), `steal` Can Çalma (hitMob, dot hariç), `pierce` Savunma Delme (calc'ta hedef savunmasını düşürür), `boss` Patronlara Karşı Güç (`D.bossP`). Efsun (`rollBonus`) hepsini zarlar; eski eşyalar etkilenmez. Yeni satır eklerken `gearStats`/`recalc` anahtar listelerine de ekle.
+- Set etkileri: `SET_FX` (ad+metin) + `SETFX` (çalışma durumu; `recalc` `activeSets().fx` ile `SETFX.on`'u doldurur). Set `bonus[n].fx = '<id>'` ile bağlanır (toplama dışı). Etkiler: tasKabuk (bronzz 4), keskinRitim (nihai 4), efsaneOfke (efsane 4), muhurYanki (bronzm 3), muhurKalkan (ulumuhur 3). Kancalar: `damagePlayer`, `hitMob`, `killMob`, `basicAttack`, `sealEcho`. Süre/bekleme `G.time` ile.
+- Boss (d1–d6 normal patronlar): hepsine `enrage:true` (can %50). Yeni yetenekler `trySkill`'te: `lance` (hat atılımı, tek vuruş), `pool` (5–6 vuruşluk kalıcı alanlar, `later` ile tekrarlayan telegraph; renk `t.pool`, ad `t.poolName`). Yavru koruması: `summon` sonrası yavrular yaşadıkça `dmgK = 0.35`, ölünce dağılır (`minions`). Tapınak patronları (`t.phases`) bunun dışında. Ortak oyunda yer uyarıları `Coop.ev('t')` ile gider; banner'lar yalnız host'ta görünür.
+
 ## Bilinen sorunlar / kısıtlar
 - **Tapınak dengesi:** 2026-10-12'de yeniden dengelendi (simülasyon tabanlı; CHANGELOG_DEV.md). Gerçek oyuncu geri bildirimiyle ince ayar
   gerekir; kaldıraçlar `TEMPLE_POW`, `TEMPLE_FLOORS` dalgaları, `MOBS` çarpanları. Mühür / Efsanevi şansları `TEMPLE_REWARDS`.
