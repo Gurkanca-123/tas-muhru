@@ -2532,6 +2532,10 @@ const IC_BUILD = {
     icAdd(g, new THREE.BoxGeometry(0.62, 0.06, 0.06), M.dark, 0, -0.02, 0.58);
     for (const s of [-1, 1]) icAdd(g, new THREE.BoxGeometry(0.1, 0.5, 0.36), shell, s * 0.56, -0.32, 0.2, 0, s * 0.35, 0);
     icAdd(g, new THREE.BoxGeometry(0.07, 0.14, 1.05), M.trim, 0, 0.6, -0.04);
+    icAdd(g, new THREE.CylinderGeometry(0.64, 0.7, 0.3, 28, 1, true, Math.PI * 0.62, Math.PI * 0.76), shell, 0, -0.2, 0).scale.set(1, 1, 0.96); // ense koruması
+    icAdd(g, new THREE.TorusGeometry(0.66, 0.035, 6, 30, Math.PI * 0.76), M.trim, 0, -0.34, 0, Math.PI / 2, 0, Math.PI * 0.62);
+    icAdd(g, new THREE.SphereGeometry(0.075, 12, 8), M.trim, 0, 0.64, 0.0);
+    for (const s of [-1, 1]) icAdd(g, new THREE.SphereGeometry(0.035, 8, 6), M.gem, s * 0.17, -0.02, 0.6);
     icAdd(g, icGem(0.1), M.gem, 0, 0.32, 0.57, Math.PI / 2);
     if (o.fur) for (let k = 0; k < 9; k++) { const a = (k / 8) * Math.PI; icAdd(g, new THREE.ConeGeometry(0.065, 0.32, 6), M.bone, Math.cos(a) * 0.56, 0.06, -Math.sin(a) * 0.32, 0, 0, Math.cos(a) * 1.15); }
     else if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.62, 0.48], [s * 0.46, 0.16], [s * 0.74, 0.08], [s * 0.34, -0.08]], 0.03, 0.015), M.gem, s * 0.5, 0.16, 0);
@@ -2550,6 +2554,8 @@ const IC_BUILD = {
     }
     icAdd(g, new THREE.TorusGeometry(0.52, 0.065, 8, 32), M.leather, 0, -0.45, 0, Math.PI / 2).scale.set(1, 0.64, 1);
     icAdd(g, new THREE.BoxGeometry(0.22, 0.17, 0.06), M.trim, 0, -0.45, 0.35);
+    icAdd(g, new THREE.TorusGeometry(0.27, 0.07, 8, 24), M.trim, 0, 0.77, 0, Math.PI / 2).scale.set(1, 0.7, 1);
+    for (let k = -3; k <= 3; k++) { const a = k * 0.32; const pl = icAdd(g, new THREE.BoxGeometry(0.2, 0.36, 0.04), o.cloth ? M.cloth : M.metalD, Math.sin(a) * 0.5, -0.74 - Math.abs(k) * 0.015, Math.cos(a) * 0.3, 0.12, a, 0); icAdd(g, new THREE.BoxGeometry(0.2, 0.035, 0.05), M.trim, Math.sin(a) * 0.5, -0.9 - Math.abs(k) * 0.015, Math.cos(a) * 0.3 + 0.01, 0.12, a, 0); }
     icAdd(g, new THREE.CylinderGeometry(0.16, 0.16, 0.05, 16), M.trim, 0, 0.3, 0.38, Math.PI / 2);
     icAdd(g, icGem(0.12), M.gem, 0, 0.3, 0.42, Math.PI / 2);
     if (o.fur) for (let k = 0; k < 11; k++) icAdd(g, new THREE.ConeGeometry(0.065, 0.28, 6), M.bone, -0.55 + k * 0.11, 0.74, 0.12, 0.6, 0, 0);
@@ -2557,19 +2563,32 @@ const IC_BUILD = {
     g.rotation.y = -0.35;
   },
   feet(g, M, o) {
+    // yandan profil: kıvrık burunlu, topuklu, kapaklı çizme (gövde = profil ekstrüzyonu)
     const mm = o.cloth ? M.cloth : M.metal;
-    icAdd(g, new THREE.CylinderGeometry(0.27, 0.3, 0.92, 20), mm, 0, 0.36, 0);
-    const toe = new THREE.Shape(); toe.moveTo(-0.3, -0.36); toe.lineTo(0.62, -0.36); toe.quadraticCurveTo(0.78, -0.3, 0.7, -0.1); toe.quadraticCurveTo(0.45, 0.05, 0.2, 0.0); toe.lineTo(-0.3, 0.05);
-    const foot = icAdd(g, icExtrude(toe, 0.46, 0.05), mm, 0, 0, 0, 0, -Math.PI / 2, 0);
-    foot.position.set(0, 0.0, 0.05);
-    icAdd(g, new THREE.BoxGeometry(0.56, 0.08, 1.02), M.dark, 0, -0.4, 0.24);
-    icAdd(g, new THREE.SphereGeometry(0.26, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), M.metalD, 0, -0.32, 0.6, 0.2, 0, 0).scale.set(1, 0.7, 1);
-    icAdd(g, new THREE.TorusGeometry(0.3, 0.05, 8, 28), M.trim, 0, 0.78, 0, Math.PI / 2);
-    for (const y of [0.42, 0.18]) { icAdd(g, new THREE.TorusGeometry(0.3, 0.03, 6, 28), M.leather, 0, y, 0, Math.PI / 2); icAdd(g, new THREE.BoxGeometry(0.1, 0.08, 0.04), M.trim, 0.16, y, 0.27); }
-    icAdd(g, icGem(0.08), M.gem, 0, 0.6, 0.3, Math.PI / 2);
-    if (o.fur) for (let k = 0; k < 10; k++) icAdd(g, new THREE.ConeGeometry(0.055, 0.2, 6), M.bone, Math.cos(k / 10 * Math.PI * 2) * 0.3, 0.88, Math.sin(k / 10 * Math.PI * 2) * 0.3);
-    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.42, 0.32], [s * 0.3, 0.06]], 0.03, 0.01), M.gem, s * 0.3, 0.6, -0.1);
-    g.rotation.set(0.25, -0.85, 0);
+    const prof = new THREE.Shape();
+    prof.moveTo(-0.36, -0.5); prof.lineTo(0.7, -0.5); prof.quadraticCurveTo(0.9, -0.48, 0.88, -0.3); prof.quadraticCurveTo(0.84, -0.12, 0.5, -0.06);
+    prof.quadraticCurveTo(0.3, 0.0, 0.26, 0.14); prof.lineTo(0.3, 0.92); prof.lineTo(-0.32, 0.92); prof.lineTo(-0.36, 0.1); prof.quadraticCurveTo(-0.44, -0.2, -0.36, -0.5);
+    icAdd(g, icExtrude(prof, 0.46, 0.05), mm, 0, 0, 0);
+    // taban + topuk bloğu
+    const sole = new THREE.Shape(); sole.moveTo(-0.42, -0.66); sole.lineTo(0.78, -0.66); sole.quadraticCurveTo(0.96, -0.64, 0.92, -0.48); sole.lineTo(-0.42, -0.48);
+    icAdd(g, icExtrude(sole, 0.5, 0.025), M.dark, 0, 0, 0);
+    icAdd(g, new THREE.BoxGeometry(0.34, 0.2, 0.5), M.leather, -0.24, -0.76, 0);
+    // burun koruması + yan levha
+    icAdd(g, new THREE.SphereGeometry(0.3, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), M.trim, 0.58, -0.3, 0, 0, 0, -0.5).scale.set(1.05, 0.8, 1.2);
+    icAdd(g, icExtrude([[-0.28, -0.38], [0.42, -0.38], [0.3, -0.04], [-0.28, 0.08]], 0.04, 0.02), M.metalD, 0.06, 0.0, 0.3);
+    icRivets(g, M.trim, [[-0.2, -0.28, 0.35], [0.1, -0.28, 0.35], [0.3, -0.2, 0.35]], 0.03);
+    // kapak (kıvrık üst) + kemerler + tokalar
+    icAdd(g, new THREE.BoxGeometry(0.78, 0.2, 0.64), M.trim, -0.02, 0.9, 0);
+    icAdd(g, new THREE.BoxGeometry(0.56, 0.03, 0.42), M.dark, -0.02, 1.0, 0);
+    for (const y of [0.66, 0.4, 0.16]) {
+      icAdd(g, new THREE.BoxGeometry(0.7, 0.09, 0.6), M.leather, -0.02, y, 0);
+      icAdd(g, new THREE.BoxGeometry(0.13, 0.12, 0.05), M.trim, 0.2, y, 0.31);
+      icRivets(g, M.trim, [[-0.18, y, 0.31], [0.0, y, 0.31]], 0.028);
+    }
+    icAdd(g, icGem(0.1), M.gem, -0.06, 0.53, 0.33, Math.PI / 2);
+    if (o.fur) for (let k = 0; k < 11; k++) { const a = (k / 11) * Math.PI * 2; icAdd(g, new THREE.ConeGeometry(0.06, 0.26, 6), M.bone, -0.02 + Math.cos(a) * 0.38, 1.04, Math.sin(a) * 0.3); }
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [-0.46, 0.34 * s], [-0.3, 0.02 * s], [-0.52, -0.1 * s]], 0.03, 0.012), M.gem, -0.36, 0.5, s * 0.22, 0, Math.PI / 2, 0);
+    g.rotation.set(0.12, -0.62, 0);
   },
   shield(g, M, o) {
     if (o.round) {

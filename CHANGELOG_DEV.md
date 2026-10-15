@@ -10,6 +10,10 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-15 (26) — Zırh ikonları (çizme baştan, kask/göğüslük ayrıntı) · dal `ozellik/efsun-set-boss` → main'e alındı (kullanıcı onayı)
+- 3B ikon: çizme yandan profil ekstrüzyonuyla yeniden modellendi (kıvrık burun, topuk bloğu, taban, yan levha, burun koruması, 3 kemer + toka, kapak, taş); kaska ense koruması / tepe topuzu / göz taşları; göğüslüğe boyunluk ve etek levhaları. Süs parçaları gövde ekstrüzyonunun (bevel dahil) dışında kalacak z değerlerinde olmalı.
+- Test: galeri (143 ikon) hatasız; qtest3 22/22, stest 15/15. Gerçek telefon: **denenmedi**.
+
 ## 2026-10-15 (25) — Efsun çeşitliliği, set etkileri, boss mekanikleri · dal `ozellik/efsun-set-boss` (main'e alınmadı)
 - Efsun: Saldırı Hızı, Kritik Hasarı, Can Çalma, Savunma Delme, Patronlara Karşı Güç (+ stat paneli satırları).
 - Set etkileri (5 adet, bkz. PROJECT_STATE): Taş Kabuk, Keskin Ritim, Efsane Öfke, Mühür Yankısı, Mühür Kalkanı; set bilgi kutusunda ✦ satırı.
