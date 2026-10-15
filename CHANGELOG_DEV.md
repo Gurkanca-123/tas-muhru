@@ -10,12 +10,21 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-15 (23) — Parşömenler Tüccar'da 100.000 / 150.000 + ikon kalitesi 2. geçiş · dal `ozellik/takiset-ikon`
+- Kullanıcı düzeltmesi: ustalık parşömenleri Tüccar'da satılır (`SHOP_LIST`), fiyat Usta 100.000 / Büyük Usta 150.000; çantadan satış fiyatın %25'i (25.000 / 37.500, alım-satım açığı yok). Kabus düşüşleri (`PARCH_KABUS`) aynen kaldı.
+- İkonlar: ayrı küçük WebGL renderer (256 px, MSAA, ACES ton eşleme, sRGB, fiziksel ışık) + PMREM ortam yansıması (degrade gök + parlak paneller) → PBR metal (`MeshStandardMaterial`), fasetli pırlanta taşlar (`icGem`, `MeshPhysicalMaterial` clearcoat),
+  perçinler, altın süs kenarları, kavisli kılıç siperi, hilal balta ağzı, kemer/toka, zincir halkaları, şişe camı + etiket, çift kurdeleli mühürlü parşömen, kristal kümeleri. 2B son işlem: nadirlik halesi, koyu dış hat (yalnız halka;
+  yarı saydam cam koyulaşmaz), Mor nadirlik / kademe 7 / kutsama ve büyük usta parşömeninde ışıltı yıldızları. Çıktı 128 px.
+- Maliyet: SwiftShader'da ikon başına ~190 ms (143 ikon 28 sn; GPU'lu cihazda çok daha hızlı olması beklenir, **denenmedi**). Takılmayı azaltmak için `icon3DPrewarm`: her düzey kurulduktan sonra çanta / giyili / depo ikonları
+  arka planda 40 ms arayla tek tek çizilir; ikonlar önbellekten gelir.
+- Testler: `jtest` 13/13 (fiyat beklentisi güncellendi, stat karşılaştırması rastgele bonus satırından arındırıldı), `qtest3` 22/22, `qtest` 40/40. Gerçek telefonda görünüm ve süre **denenmedi**.
+
 ## 2026-10-15 (22) — Sv 55 / Sv 65 takı setleri, ustalık parşömeni ve kutsama fiyatları, 3B envanter ikonları · dal `ozellik/takiset-ikon` (yedek: `yedek/takiset-oncesi`)
 - Dosya: yalnız `index.html`.
 - Yeni adlı takı setleri (`GEAR_SETS.bronzm` / `ulumuhur`, `jewel: true`): Bronz Mühür Takı Seti (Sv 55, kademe 7 × 1.15, +1 kritik; 2: kritik +5, canavara +%5 · 3: saldırı / can +%12) ve Ulu Mühür Takı Seti (Sv 65, × 1.38, +2 kritik; 2: kritik +7,
   canavara +%8 · 3: saldırı / can +%17, savunma +%6). `setInfoOf` adlı takıyı kendi setinde sayar (kademe 7 Efsane setine sayılmaz), `gearStats` / `sellPrice` mul uygular. Rastgele düşmezler.
 - Kaynaklar: Bronz Mühür yalnız Bronz Taş Tapınağı 6. kat (patron) ödülünde %35 (`TEMPLE_REWARDS[5].jset`); Ulu Mühür tapınak 8 / 9 / 10. kat %10 / %14 / %35 ve Kara Taş Tapınağı Kabus'ta Kırık Taş Mühür (`minimetin`) kırılınca %18 (`JSET_KABUS`).
-- Ustalık parşömenleri: Tüccar'dan kaldırıldı; çantadan satış Usta 100.000 / Büyük Usta 150.000. Kara Taş Tapınağı ve Kemik Taht Kabus'ta düşer (`PARCH_KABUS`: normal %0,2 / elit %1,2+%0,4 / taş %5+%2 / patron %8+%3).
+- Ustalık parşömenleri (sonra (23) ile değişti): Tüccar'dan kaldırıldı; çantadan satış Usta 100.000 / Büyük Usta 150.000. Kara Taş Tapınağı ve Kemik Taht Kabus'ta düşer (`PARCH_KABUS`: normal %0,2 / elit %1,2+%0,4 / taş %5+%2 / patron %8+%3).
   Kutsama Kağıdı Tüccar fiyatı 2.500 → 10.000 (çantadan satış 300 aynı).
 - 3B envanter ikonları (`iconSpec`, `IC_BUILD`, `icon3DRender`, `stackIcon`): her eşya türü için prosedürel three.js modeli (kılıç, balta, miğfer, zırh, çizme, kalkan, yüzük, kolye, tılsım, iksir, parşömen, cevher, kristal, kemik,
   Taş Mührü), kademe / set / nadirliğe göre renk + ışıma + ek parça (kürk, kanat, boynuz). Ana renderer ile 256 px render hedefi → 112 px tuval (sRGB çevrimi, yumuşak kenar, nadirlik halesi), anahtara göre önbellek.

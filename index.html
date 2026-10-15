@@ -1096,9 +1096,9 @@ const STACKS = {
   ess_neck: { name: 'Gölge İncisi', kind: 'ess', icon: 'soul', tint: '#7a7aff', sell: 480, desc: '+7 … +9 kolye geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
   bless: { name: 'Kutsama Kağıdı', kind: 'scroll', price: 10000, sell: 300, icon: 'scroll', tint: '#d8a02a', desc: 'Geliştirme başarısız olursa eşya seviyesi düşmez.' },
   tp: { name: 'Dönüş Parşömeni', kind: 'scroll', price: 30, icon: 'scroll', tint: '#3a8ae0', desc: 'Zindandan anında köye ışınlar.' },
-  // Beceri ustalığı parşömenleri: Kara Taş Tapınağı ve Kemik Taht Kabus'ta düşer (PARCH_KABUS). Tüccar'da satılmaz; çantadan satış 100.000 / 150.000
-  usta_parsomen: { name: 'Usta Yetenek Parşömeni', kind: 'scroll', sell: 100000, icon: 'scroll', tint: '#4ad0c0', desc: 'Seviye 5\'e (en yüksek normal seviye) ulaşmış bir beceriyi M1 ustalık aşamasına geçirir. Çantada Kullan → beceri seç. Kara Taş Tapınağı ve Kemik Taht\'ın Kabus zorluğunda düşer.' },
-  busta_parsomen: { name: 'Büyük Usta Yetenek Parşömeni', kind: 'scroll', sell: 150000, icon: 'scroll', tint: '#c070ff', desc: 'M10 ustalık aşamasındaki bir beceriyi G1 büyük ustalık aşamasına geçirir. Çantada Kullan → beceri seç. Kara Taş Tapınağı ve Kemik Taht\'ın Kabus zorluğunda düşer.' },
+  // Beceri ustalığı parşömenleri: Tüccar'da 100.000 / 150.000 (çantadan satış fiyatın %25'i) + Kara Taş Tapınağı ve Kemik Taht Kabus düşüşü (PARCH_KABUS)
+  usta_parsomen: { name: 'Usta Yetenek Parşömeni', kind: 'scroll', price: 100000, sell: 25000, icon: 'scroll', tint: '#4ad0c0', desc: 'Seviye 5\'e (en yüksek normal seviye) ulaşmış bir beceriyi M1 ustalık aşamasına geçirir. Çantada Kullan → beceri seç. Tüccar\'da satılır; Kara Taş Tapınağı ve Kemik Taht\'ın Kabus zorluğunda da düşer.' },
+  busta_parsomen: { name: 'Büyük Usta Yetenek Parşömeni', kind: 'scroll', price: 150000, sell: 37500, icon: 'scroll', tint: '#c070ff', desc: 'M10 ustalık aşamasındaki bir beceriyi G1 büyük ustalık aşamasına geçirir. Çantada Kullan → beceri seç. Tüccar\'da satılır; Kara Taş Tapınağı ve Kemik Taht\'ın Kabus zorluğunda da düşer.' },
   // Zindan malzemeleri (eskiden "çöp"): her geliştirmede eşyanın kademesine göre biri istenir (dmatOf). Zindanın
   // canavarlarından düşer; o kademedeki gereksiz eşyayı parçalayınca da çıkar.
   j1: { name: 'Kurt Azısı', kind: 'dmat', sell: 5, icon: 'bone', tint: '#e8dcc0', desc: 'Bez Zırh, Taş Balta ve kademe 0-1 eşya geliştirmede kullanılır. Yosunlu İn\'de düşer.' },
@@ -1111,7 +1111,7 @@ const STACKS = {
   j6: { name: 'Kara Taş Tozu', kind: 'dmat', sell: 60, icon: 'ore', tint: '#6a4a7a', desc: 'Kademe 6 eşya geliştirmede kullanılır. Kara Taş Tapınağı\'nda düşer.' },
 };
 const STACK_MAX = 200;
-const SHOP_LIST = ['hp1', 'hp2', 'hp3', 'mp1', 'mp2', 'mp3', 'tp', 'ore', 'bless']; // ustalık parşömenleri artık Kabus düşüşü (PARCH_KABUS)
+const SHOP_LIST = ['hp1', 'hp2', 'hp3', 'mp1', 'mp2', 'mp3', 'tp', 'ore', 'bless', 'usta_parsomen', 'busta_parsomen'];
 
 // ---------- Taş Mühürler (Bronz Taş Tapınağı 6-10. kat ödülü) ----------
 // Ekipmana takılan, normal geliştirmeden (+0…+9) bağımsız ilerleme katmanı. Her ekipman parçasında 1 yuva (it.seal = mühür
@@ -2425,220 +2425,265 @@ function sellPrice(it) {
   return Math.round((it.tier * it.tier * 9 + 8) * RARITY[it.rarity].sell * (1 + it.plus * 0.35) * (JS ? JS.mul * 2 : 1));
 }
 // ---------- 3B eşya ikonları (three.js) ----------
-// Her eşya türü için küçük prosedürel model; ana renderer ile 256 px render hedefine çizilir, 2B tuvalde 112 px'e
-// küçültülür (yumuşak kenar), nadirlik halesi eklenir, data URL önbelleğe alınır (anahtar: tür + renkler). Ana sahneye ve
-// ışık havuzuna dokunmaz (ayrı sahne + kendi ışıkları). Renderer hazır değilse eski 2B ikon döner.
-// Data URL'deki `i3=1` parametresi CSS'te pikselleştirmeyi kapatır (img[src^="data:image/png;i3"]).
-const ICON3D = { cache: {}, scene: null };
+// Her eşya türü için küçük prosedürel model. Kendi küçük renderer'ı (256 px, MSAA, ACES ton eşleme, sRGB) ve PMREM ortam
+// yansıması (metal / taş parlaklığı) ile çizilir; 2B tuvalde 128 px'e indirilir: nadirlik halesi + koyu dış hat + ışıltı.
+// Sonuç data URL olarak önbelleğe alınır (anahtar: tür + renkler). Ana sahneye ve ışık havuzuna dokunmaz. WebGL açılamazsa
+// eski 2B ikon döner. Data URL'deki `i3=1` parametresi CSS'te pikselleştirmeyi kapatır (img[src^="data:image/png;i3"]).
+const ICON3D = { cache: {}, r: null, failed: false };
 const IC_TIER = [ // kademe metali / taş rengi / ışıma
-  { metal: 0x8a7462, gem: 0x9a8a7a, glow: 0 }, { metal: 0xb8c0cc, gem: 0x9ab8e0, glow: 0 }, { metal: 0x7aa860, gem: 0x8aff5a, glow: 0.4 },
-  { metal: 0xe2d8bc, gem: 0xd8d0b0, glow: 0 }, { metal: 0xd8642a, gem: 0xff8a3a, glow: 0.7 }, { metal: 0x9fd8f0, gem: 0x8fdcff, glow: 0.6 },
-  { metal: 0x4a3e5a, gem: 0xc055e8, glow: 0.9 }, { metal: 0xffb04a, gem: 0xff5a3a, glow: 1.0 },
+  { metal: 0x8a7462, gem: 0x9a8a7a, glow: 0 }, { metal: 0xc4ccd8, gem: 0x7ab0ff, glow: 0.1 }, { metal: 0x7aa860, gem: 0x8aff5a, glow: 0.45 },
+  { metal: 0xe2d8bc, gem: 0xe8dcb8, glow: 0.1 }, { metal: 0xd8642a, gem: 0xff7a2a, glow: 0.75 }, { metal: 0xa8dcf4, gem: 0x7ad8ff, glow: 0.65 },
+  { metal: 0x4a3e5a, gem: 0xc055e8, glow: 0.95 }, { metal: 0xffb04a, gem: 0xff4a2a, glow: 1.1 },
 ];
-// adlı set / silah görünümü: metal, taş, ışıma, işaret (ek parça)
+// adlı set / silah görünümü: metal, taş, ışıma, ek parça (kürk, boynuz, kanat, taş, kumaş)
 const IC_SET = {
-  bez: { metal: 0xd8c8a0, gem: 0xa8885a, cloth: true }, kurt: { metal: 0xb8b0a0, gem: 0xe8e0c8, fur: true }, bronzz: { metal: 0xc9a45a, gem: 0xe0a050, glow: 0.3 },
-  nihai: { metal: 0xa8b4c8, gem: 0x5a8aff, glow: 0.5 }, efsane: { metal: 0xff8a5a, gem: 0xffd040, glow: 1.0, wing: true },
-  bronzm: { metal: 0xc88a40, gem: 0xffb040, glow: 0.9 }, ulumuhur: { metal: 0xdce8ff, gem: 0x5ad8ff, glow: 1.2, wing: true },
-  tas: { metal: 0x9a948c, gem: 0x7a746c, stone: true }, kurtb: { metal: 0xb8b0a0, gem: 0xe8e0c8, fur: true }, bronz: { metal: 0xc9a45a, gem: 0xe0a050, glow: 0.3 },
-  ebalta: { metal: 0xff8a5a, gem: 0xffd040, glow: 1.0 }, tkilic: { metal: 0x9a948c, gem: 0x7a746c, stone: true }, dkilic: { metal: 0xc8ccd4, gem: 0x9ab8e0 },
-  kkilic: { metal: 0xe8e0c8, gem: 0xd8c8a8, fur: true }, gkilic: { metal: 0xb8c4b0, gem: 0x8a6a4a, antler: true }, okilic: { metal: 0x2a2232, gem: 0xb05aff, glow: 1.0 },
-  ekilic: { metal: 0xffc860, gem: 0x5ad8ff, glow: 1.1 },
+  bez: { metal: 0xd8c8a0, gem: 0xa8885a, cloth: true }, kurt: { metal: 0xb8b0a0, gem: 0xe8e0c8, fur: true }, bronzz: { metal: 0xc9a45a, gem: 0xe0a050, glow: 0.35 },
+  nihai: { metal: 0xa8b4c8, gem: 0x5a8aff, glow: 0.55 }, efsane: { metal: 0xff8a5a, gem: 0xffd040, glow: 1.1, wing: true },
+  bronzm: { metal: 0xc88a40, gem: 0xffb040, glow: 0.95 }, ulumuhur: { metal: 0xe4eeff, gem: 0x4ad8ff, glow: 1.3, wing: true },
+  tas: { metal: 0x9a948c, gem: 0x7a746c, stone: true }, kurtb: { metal: 0xb8b0a0, gem: 0xe8e0c8, fur: true }, bronz: { metal: 0xc9a45a, gem: 0xe0a050, glow: 0.35 },
+  ebalta: { metal: 0xff8a5a, gem: 0xffd040, glow: 1.1 }, tkilic: { metal: 0x9a948c, gem: 0x7a746c, stone: true }, dkilic: { metal: 0xc8ccd4, gem: 0x7ab0ff, glow: 0.1 },
+  kkilic: { metal: 0xe8e0c8, gem: 0xd8c8a8, fur: true }, gkilic: { metal: 0xb8c4b0, gem: 0x8a6a4a, antler: true }, okilic: { metal: 0x2a2232, gem: 0xb05aff, glow: 1.1 },
+  ekilic: { metal: 0xffc860, gem: 0x4ad8ff, glow: 1.2 },
 };
-function icMats(metal, gem, glow) {
+function icMats(sp) {
+  const soft = sp.cloth || sp.stone, gl = sp.glow || 0;
+  const S = (o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 1.1 }, o));
   return {
-    metal: new THREE.MeshPhongMaterial({ color: metal, specular: 0xb8b8b8, shininess: 70 }),
-    metalD: new THREE.MeshPhongMaterial({ color: new THREE.Color(metal).multiplyScalar(0.55), specular: 0x707070, shininess: 50 }),
-    gem: new THREE.MeshPhongMaterial({ color: gem, specular: 0xffffff, shininess: 120, emissive: gem, emissiveIntensity: 0.25 + (glow || 0) * 0.55 }),
-    leather: new THREE.MeshLambertMaterial({ color: 0x5a3a22 }), wood: new THREE.MeshLambertMaterial({ color: 0x8a5a32 }),
-    cloth: new THREE.MeshLambertMaterial({ color: metal }), dark: new THREE.MeshLambertMaterial({ color: 0x2a2228 }),
-    bone: new THREE.MeshLambertMaterial({ color: 0xece2c8 }),
+    metal: S({ color: sp.metal, metalness: soft ? 0.05 : 0.85, roughness: sp.stone ? 0.85 : sp.cloth ? 0.9 : 0.3 }),
+    metalD: S({ color: new THREE.Color(sp.metal).multiplyScalar(0.5), metalness: soft ? 0.1 : 0.8, roughness: 0.45 }),
+    trim: S({ color: sp.trim || 0xe8c060, metalness: 1, roughness: 0.22 }),
+    gem: new THREE.MeshPhysicalMaterial({ color: new THREE.Color(sp.gem).multiplyScalar(0.8), metalness: 0.15, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05, emissive: sp.gem, emissiveIntensity: 0.12 + gl * 0.4, flatShading: true, envMapIntensity: 0.9 }),
+    leather: S({ color: 0x5a3a22, roughness: 0.75, metalness: 0 }), leatherL: S({ color: 0x8a5a36, roughness: 0.7, metalness: 0 }),
+    wood: S({ color: 0x8a5a32, roughness: 0.7, metalness: 0 }), cloth: S({ color: sp.metal, roughness: 0.92, metalness: 0 }),
+    dark: S({ color: 0x1e1a1e, roughness: 0.6, metalness: 0.2 }), bone: S({ color: 0xece2c8, roughness: 0.55, metalness: 0 }),
+    glass: new THREE.MeshPhysicalMaterial({ color: 0xd8eef4, metalness: 0, roughness: 0.05, clearcoat: 1, transparent: true, opacity: 0.24, envMapIntensity: 2.4, depthWrite: false }),
+    paper: S({ color: 0xf0e2bc, roughness: 0.85, metalness: 0 }),
   };
 }
 const icAdd = (g, geo, m, x, y, z, rx, ry, rz) => { const o = new THREE.Mesh(geo, m); o.position.set(x || 0, y || 0, z || 0); o.rotation.set(rx || 0, ry || 0, rz || 0); g.add(o); return o; };
-const icExtrude = (pts, depth, bevel) => {
-  const sh = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? sh.lineTo(x, y) : sh.moveTo(x, y)));
-  const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: !!bevel, bevelThickness: bevel || 0, bevelSize: bevel || 0, bevelSegments: 2 });
+const icShape = (pts) => { const sh = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? sh.lineTo(x, y) : sh.moveTo(x, y))); return sh; };
+const icExtrude = (pts, depth, bevel, bsize) => {
+  const g = new THREE.ExtrudeGeometry(Array.isArray(pts) ? icShape(pts) : pts, { depth, bevelEnabled: !!bevel, bevelThickness: bevel || 0, bevelSize: bsize != null ? bsize : bevel || 0, bevelSegments: 2, curveSegments: 16 });
   g.translate(0, 0, -depth / 2); return g;
 };
+// fasetli (pırlanta kesim) taş: taç + kuşak + köşk, 8 yüz
+const icGem = (r, seg) => new THREE.LatheGeometry([[0, -0.9 * r], [r, 0], [r, 0.14 * r], [0.58 * r, 0.42 * r], [0, 0.42 * r]].map(([x, y]) => new THREE.Vector2(x, y)), seg || 8);
+const icRivets = (g, m, pts, r) => pts.forEach(([x, y, z]) => icAdd(g, new THREE.SphereGeometry(r || 0.04, 8, 6), m, x, y, z));
+const icRing = (n, rad, y, z, fn) => { for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2; fn(Math.cos(a) * rad, y + Math.sin(a) * rad, z, a); } };
 // ---- modeller (yerel: yukarı +y; çerçeveye sığdırma icon3DRender'da) ----
 const IC_BUILD = {
   sword(g, M, o) {
-    icAdd(g, icExtrude([[-0.12, 0], [0.12, 0], [0.11, 1.75], [0, 2.05], [-0.11, 1.75]], 0.05, 0.025), M.metal, 0, 0.25, 0);
-    icAdd(g, new THREE.BoxGeometry(0.05, 1.55, 0.1), M.metalD, 0, 1.05, 0);
-    icAdd(g, new THREE.BoxGeometry(0.85, 0.12, 0.16), M.metal, 0, 0.2, 0);
-    for (const s of [-1, 1]) icAdd(g, new THREE.SphereGeometry(0.09, 12, 8), M.gem, s * 0.45, 0.2, 0);
-    icAdd(g, new THREE.CylinderGeometry(0.065, 0.065, 0.5, 10), M.leather, 0, -0.08, 0);
-    for (let k = 0; k < 4; k++) icAdd(g, new THREE.TorusGeometry(0.07, 0.016, 6, 12), M.metalD, 0, -0.26 + k * 0.12, 0, Math.PI / 2);
-    icAdd(g, new THREE.OctahedronGeometry(0.13), M.gem, 0, -0.42, 0);
-    icAdd(g, new THREE.OctahedronGeometry(0.1), M.gem, 0, 0.32, 0.06);
-    if (o.fur) for (let k = 0; k < 3; k++) icAdd(g, new THREE.ConeGeometry(0.05, 0.22, 5), M.bone, -0.13 - k * 0.0, 0.6 + k * 0.35, 0, 0, 0, 1.2);
-    if (o.antler) for (const s of [-1, 1]) icAdd(g, new THREE.ConeGeometry(0.05, 0.4, 5), M.bone, s * 0.5, 0.36, 0, 0, 0, -s * 0.6);
-    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.5, 0.25], [s * 0.38, 0.05], [s * 0.55, -0.05]], 0.04), M.gem, s * 0.38, 0.2, 0);
+    const blade = icAdd(g, icExtrude([[-0.1, 0], [0.1, 0], [0.095, 1.7], [0, 2.02], [-0.095, 1.7]], 0.01, 0.035, 0.05), o.stone ? M.metal : M.metal, 0, 0.3, 0);
+    blade.scale.z = 1.2;
+    for (const z of [-0.05, 0.05]) icAdd(g, new THREE.BoxGeometry(0.045, 1.35, 0.012), M.metalD, 0, 1.05, z);
+    // kabza: kavisli siper, ortada taşlı yuva, uçlarda kıvrık uç
+    const guard = new THREE.Shape(); guard.moveTo(-0.55, 0.12); guard.quadraticCurveTo(-0.3, -0.02, 0, 0.0); guard.quadraticCurveTo(0.3, -0.02, 0.55, 0.12);
+    guard.lineTo(0.5, 0.2); guard.quadraticCurveTo(0.28, 0.1, 0, 0.12); guard.quadraticCurveTo(-0.28, 0.1, -0.5, 0.2); guard.lineTo(-0.55, 0.12);
+    icAdd(g, icExtrude(guard, 0.1, 0.025), M.trim, 0, 0.18, 0);
+    icAdd(g, new THREE.CylinderGeometry(0.13, 0.13, 0.14, 12), M.trim, 0, 0.28, 0, Math.PI / 2);
+    icAdd(g, icGem(0.09), M.gem, 0, 0.28, 0.08, Math.PI / 2);
+    for (const s of [-1, 1]) icAdd(g, new THREE.SphereGeometry(0.06, 10, 8), M.gem, s * 0.54, 0.24, 0);
+    icAdd(g, new THREE.CylinderGeometry(0.06, 0.065, 0.5, 12), M.leather, 0, -0.06, 0);
+    for (let k = 0; k < 6; k++) icAdd(g, new THREE.TorusGeometry(0.066, 0.014, 6, 14), M.leatherL, 0, -0.27 + k * 0.08, 0, Math.PI / 2 + 0.35, 0, 0);
+    icAdd(g, new THREE.SphereGeometry(0.11, 14, 10), M.trim, 0, -0.38, 0);
+    icAdd(g, icGem(0.07), M.gem, 0, -0.38, 0.09, Math.PI / 2);
+    if (o.fur) for (let k = 0; k < 4; k++) icAdd(g, new THREE.ConeGeometry(0.045, 0.22, 6), M.bone, -0.12, 0.55 + k * 0.32, 0, 0, 0, 1.25);
+    if (o.antler) for (const s of [-1, 1]) { icAdd(g, new THREE.ConeGeometry(0.05, 0.45, 6), M.bone, s * 0.55, 0.42, 0, 0, 0, -s * 0.55); icAdd(g, new THREE.ConeGeometry(0.035, 0.22, 6), M.bone, s * 0.62, 0.3, 0, 0, 0, -s * 1.3); }
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.5, 0.28], [s * 0.4, 0.1], [s * 0.6, 0.02], [s * 0.42, -0.06]], 0.03, 0.01), M.gem, s * 0.36, 0.22, 0);
     g.rotation.z = -Math.PI / 4;
   },
   axe(g, M, o) {
-    icAdd(g, new THREE.CylinderGeometry(0.07, 0.08, 2.1, 10), o.stone ? M.wood : M.wood, 0, 0.6, 0);
-    for (let k = 0; k < 3; k++) icAdd(g, new THREE.TorusGeometry(0.085, 0.018, 6, 12), M.leather, 0, -0.1 + k * 0.1, 0, Math.PI / 2);
-    const head = icExtrude([[0.05, 0.35], [0.45, 0.55], [0.75, 0.42], [0.8, 0], [0.75, -0.42], [0.45, -0.55], [0.05, -0.35]], 0.09, 0.03);
-    icAdd(g, head, M.metal, 0.02, 1.35, 0);
-    icAdd(g, new THREE.BoxGeometry(0.2, 0.36, 0.2), M.metalD, 0, 1.35, 0);
-    icAdd(g, new THREE.ConeGeometry(0.08, 0.35, 6), M.metal, -0.24, 1.35, 0, 0, 0, Math.PI / 2);
-    icAdd(g, new THREE.OctahedronGeometry(0.1), M.gem, 0, 1.35, 0.12);
-    icAdd(g, new THREE.SphereGeometry(0.1, 10, 8), M.metalD, 0, -0.45, 0);
-    if (o.fur) for (let k = 0; k < 4; k++) icAdd(g, new THREE.ConeGeometry(0.05, 0.25, 5), M.bone, -0.12, 1.1 + k * 0.12, 0, 0, 0, 1.3);
-    if (o.wing || o.glow > 0.8) icAdd(g, new THREE.TorusGeometry(0.16, 0.025, 6, 16), M.gem, 0.42, 1.35, 0.08);
+    icAdd(g, new THREE.CylinderGeometry(0.065, 0.08, 2.15, 12), M.wood, 0, 0.6, 0);
+    for (let k = 0; k < 4; k++) icAdd(g, new THREE.TorusGeometry(0.082, 0.016, 6, 14), M.leather, 0, -0.18 + k * 0.08, 0, Math.PI / 2 + 0.3, 0, 0);
+    const hd = new THREE.Shape(); hd.moveTo(0.08, 0.26); hd.quadraticCurveTo(0.42, 0.34, 0.7, 0.62); hd.quadraticCurveTo(0.98, 0.1, 0.7, -0.62); hd.quadraticCurveTo(0.42, -0.34, 0.08, -0.26); hd.lineTo(0.08, 0.26);
+    icAdd(g, icExtrude(hd, 0.05, 0.035, 0.03), M.metal, 0.02, 1.38, 0);
+    const ed = new THREE.Shape(); ed.moveTo(0.66, 0.6); ed.quadraticCurveTo(0.96, 0.1, 0.66, -0.6); ed.quadraticCurveTo(0.84, 0.0, 0.66, 0.6);
+    icAdd(g, icExtrude(ed, 0.03, 0.02, 0.01), M.trim, 0.02, 1.38, 0);
+    icAdd(g, new THREE.BoxGeometry(0.22, 0.42, 0.2), M.metalD, 0, 1.38, 0);
+    icRivets(g, M.trim, [[0, 1.5, 0.11], [0, 1.26, 0.11], [0.3, 1.38, 0.06]], 0.035);
+    icAdd(g, new THREE.ConeGeometry(0.09, 0.4, 6), M.metal, -0.26, 1.38, 0, 0, 0, Math.PI / 2);
+    icAdd(g, icGem(0.08), M.gem, 0.3, 1.38, 0.07, Math.PI / 2);
+    icAdd(g, new THREE.SphereGeometry(0.1, 12, 8), M.trim, 0, -0.48, 0);
+    if (o.fur) for (let k = 0; k < 5; k++) icAdd(g, new THREE.ConeGeometry(0.05, 0.26, 6), M.bone, -0.1, 1.05 + k * 0.1, 0, 0, 0, 1.3);
+    if (o.glow > 0.8) icAdd(g, new THREE.TorusGeometry(0.15, 0.02, 6, 20), M.gem, 0.3, 1.38, 0.07);
     g.rotation.z = -Math.PI / 4;
   },
   head(g, M, o) {
-    icAdd(g, new THREE.SphereGeometry(0.62, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), o.cloth ? M.cloth : M.metal, 0, 0, 0);
-    icAdd(g, new THREE.TorusGeometry(0.6, 0.06, 8, 24), M.metalD, 0, -0.05, 0, Math.PI / 2);
-    icAdd(g, new THREE.BoxGeometry(0.1, 0.5, 0.08), M.metalD, 0, -0.18, 0.6);
-    for (const s of [-1, 1]) icAdd(g, new THREE.BoxGeometry(0.1, 0.45, 0.32), M.metal, s * 0.56, -0.3, 0.22, 0, s * 0.35, 0);
-    icAdd(g, new THREE.BoxGeometry(0.08, 0.16, 1.0), M.metalD, 0, 0.6, -0.05);
-    icAdd(g, new THREE.OctahedronGeometry(0.11), M.gem, 0, 0.32, 0.56);
-    if (o.fur) for (let k = 0; k < 7; k++) icAdd(g, new THREE.ConeGeometry(0.07, 0.3, 5), M.bone, Math.cos(k / 6 * Math.PI) * 0.55, 0.05, Math.sin(k / 6 * Math.PI) * -0.3, 0, 0, Math.cos(k / 6 * Math.PI) * 1.1);
-    else if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.6, 0.45], [s * 0.45, 0.12], [s * 0.7, 0.05], [s * 0.3, -0.08]], 0.05), M.gem, s * 0.5, 0.15, 0);
-    else for (let k = 0; k < 5; k++) icAdd(g, new THREE.ConeGeometry(0.06, 0.4 - Math.abs(k - 2) * 0.08, 6), new THREE.MeshLambertMaterial({ color: o.plume }), 0, 0.72, 0.3 - k * 0.15, -0.3 + k * 0.15);
+    const shell = o.cloth ? M.cloth : M.metal;
+    icAdd(g, new THREE.SphereGeometry(0.62, 32, 18, 0, Math.PI * 2, 0, Math.PI * 0.56), shell, 0, 0, 0);
+    icAdd(g, new THREE.TorusGeometry(0.61, 0.06, 10, 40), M.trim, 0, -0.08, 0, Math.PI / 2);
+    for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; icAdd(g, new THREE.SphereGeometry(0.035, 6, 5), M.trim, Math.cos(a) * 0.63, 0.04, Math.sin(a) * 0.63); }
+    icAdd(g, new THREE.BoxGeometry(0.09, 0.55, 0.08), M.trim, 0, -0.2, 0.61);
+    icAdd(g, new THREE.BoxGeometry(0.62, 0.06, 0.06), M.dark, 0, -0.02, 0.58);
+    for (const s of [-1, 1]) icAdd(g, new THREE.BoxGeometry(0.1, 0.5, 0.36), shell, s * 0.56, -0.32, 0.2, 0, s * 0.35, 0);
+    icAdd(g, new THREE.BoxGeometry(0.07, 0.14, 1.05), M.trim, 0, 0.6, -0.04);
+    icAdd(g, icGem(0.1), M.gem, 0, 0.32, 0.57, Math.PI / 2);
+    if (o.fur) for (let k = 0; k < 9; k++) { const a = (k / 8) * Math.PI; icAdd(g, new THREE.ConeGeometry(0.065, 0.32, 6), M.bone, Math.cos(a) * 0.56, 0.06, -Math.sin(a) * 0.32, 0, 0, Math.cos(a) * 1.15); }
+    else if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.62, 0.48], [s * 0.46, 0.16], [s * 0.74, 0.08], [s * 0.34, -0.08]], 0.03, 0.015), M.gem, s * 0.5, 0.16, 0);
+    else { const pm = new THREE.MeshStandardMaterial({ color: o.plume, roughness: 0.8 }); for (let k = 0; k < 7; k++) icAdd(g, new THREE.ConeGeometry(0.06, 0.42 - Math.abs(k - 3) * 0.06, 6), pm, 0, 0.72, 0.36 - k * 0.12, -0.45 + k * 0.15); }
     g.rotation.set(0.2, -0.5, 0);
   },
   chest(g, M, o) {
-    const pts = [[0.42, -0.75], [0.55, -0.4], [0.62, 0.1], [0.58, 0.55], [0.3, 0.75], [0.0, 0.78]].map(([x, y]) => new THREE.Vector2(x, y));
-    const body = icAdd(g, new THREE.LatheGeometry(pts, 20), o.cloth ? M.cloth : M.metal, 0, 0, 0); body.scale.set(1, 1, 0.62);
-    icAdd(g, new THREE.BoxGeometry(0.08, 1.2, 0.1), M.metalD, 0, 0.05, 0.38);
-    for (const s of [-1, 1]) { const p = icAdd(g, new THREE.SphereGeometry(0.32, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), M.metal, s * 0.6, 0.55, 0); p.rotation.z = -s * 0.5; p.scale.set(1, 0.8, 1); }
-    icAdd(g, new THREE.TorusGeometry(0.5, 0.06, 8, 24), M.leather, 0, -0.45, 0, Math.PI / 2).scale.set(1, 0.66, 1);
-    icAdd(g, new THREE.BoxGeometry(0.2, 0.16, 0.06), M.metalD, 0, -0.45, 0.34);
-    icAdd(g, new THREE.OctahedronGeometry(0.14), M.gem, 0, 0.3, 0.4);
-    if (o.fur) for (let k = 0; k < 9; k++) icAdd(g, new THREE.ConeGeometry(0.07, 0.26, 5), M.bone, -0.5 + k * 0.125, 0.72, 0.15, 0.6, 0, 0);
-    if (o.wing) for (const s of [-1, 1]) icAdd(g, new THREE.ConeGeometry(0.08, 0.45, 6), M.gem, s * 0.7, 0.85, 0, 0, 0, -s * 0.5);
+    const pts = [[0.42, -0.75], [0.56, -0.4], [0.63, 0.1], [0.58, 0.55], [0.3, 0.75], [0.0, 0.78]].map(([x, y]) => new THREE.Vector2(x, y));
+    const body = icAdd(g, new THREE.LatheGeometry(pts, 32), o.cloth ? M.cloth : M.metal, 0, 0, 0); body.scale.set(1, 1, 0.62);
+    icAdd(g, new THREE.BoxGeometry(0.07, 1.2, 0.1), M.trim, 0, 0.05, 0.37);
+    for (const y of [0.35, -0.05]) icAdd(g, new THREE.TorusGeometry(0.6, 0.025, 6, 32, Math.PI), M.metalD, 0, y, 0, Math.PI / 2, 0, 0).scale.set(1, 0.62, 1);
+    for (const s of [-1, 1]) {
+      const p = icAdd(g, new THREE.SphereGeometry(0.34, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.6), o.cloth ? M.cloth : M.metal, s * 0.6, 0.55, 0); p.rotation.z = -s * 0.5; p.scale.set(1, 0.8, 1);
+      icAdd(g, new THREE.TorusGeometry(0.3, 0.03, 6, 20), M.trim, s * 0.62, 0.5, 0, Math.PI / 2, 0, -s * 0.5);
+      icRivets(g, M.trim, [[s * 0.42, 0.72, 0.18], [s * 0.6, 0.78, 0.2], [s * 0.76, 0.66, 0.16]], 0.03);
+    }
+    icAdd(g, new THREE.TorusGeometry(0.52, 0.065, 8, 32), M.leather, 0, -0.45, 0, Math.PI / 2).scale.set(1, 0.64, 1);
+    icAdd(g, new THREE.BoxGeometry(0.22, 0.17, 0.06), M.trim, 0, -0.45, 0.35);
+    icAdd(g, new THREE.CylinderGeometry(0.16, 0.16, 0.05, 16), M.trim, 0, 0.3, 0.38, Math.PI / 2);
+    icAdd(g, icGem(0.12), M.gem, 0, 0.3, 0.42, Math.PI / 2);
+    if (o.fur) for (let k = 0; k < 11; k++) icAdd(g, new THREE.ConeGeometry(0.065, 0.28, 6), M.bone, -0.55 + k * 0.11, 0.74, 0.12, 0.6, 0, 0);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, new THREE.ConeGeometry(0.08, 0.5, 6), M.gem, s * 0.72, 0.88, 0, 0, 0, -s * 0.5);
     g.rotation.y = -0.35;
   },
   feet(g, M, o) {
     const mm = o.cloth ? M.cloth : M.metal;
-    icAdd(g, new THREE.CylinderGeometry(0.28, 0.3, 0.9, 14), mm, 0, 0.35, 0);
-    icAdd(g, new THREE.BoxGeometry(0.56, 0.32, 0.95), mm, 0, -0.18, 0.25);
-    icAdd(g, new THREE.BoxGeometry(0.6, 0.1, 1.0), M.dark, 0, -0.38, 0.25);
-    icAdd(g, new THREE.TorusGeometry(0.3, 0.05, 8, 20), M.metalD, 0, 0.75, 0, Math.PI / 2);
-    icAdd(g, new THREE.TorusGeometry(0.3, 0.035, 8, 20), M.metalD, 0, 0.2, 0, Math.PI / 2);
-    icAdd(g, new THREE.OctahedronGeometry(0.1), M.gem, 0, 0.2, 0.32);
-    icAdd(g, new THREE.BoxGeometry(0.5, 0.22, 0.4), M.metalD, 0, -0.1, 0.55);
-    if (o.fur) for (let k = 0; k < 8; k++) icAdd(g, new THREE.ConeGeometry(0.06, 0.2, 5), M.bone, Math.cos(k / 8 * Math.PI * 2) * 0.3, 0.86, Math.sin(k / 8 * Math.PI * 2) * 0.3);
-    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.4, 0.3], [s * 0.3, 0.05]], 0.04), M.gem, s * 0.3, 0.55, -0.1);
-    g.rotation.set(0.25, -0.75, 0);
+    icAdd(g, new THREE.CylinderGeometry(0.27, 0.3, 0.92, 20), mm, 0, 0.36, 0);
+    const toe = new THREE.Shape(); toe.moveTo(-0.3, -0.36); toe.lineTo(0.62, -0.36); toe.quadraticCurveTo(0.78, -0.3, 0.7, -0.1); toe.quadraticCurveTo(0.45, 0.05, 0.2, 0.0); toe.lineTo(-0.3, 0.05);
+    const foot = icAdd(g, icExtrude(toe, 0.46, 0.05), mm, 0, 0, 0, 0, -Math.PI / 2, 0);
+    foot.position.set(0, 0.0, 0.05);
+    icAdd(g, new THREE.BoxGeometry(0.56, 0.08, 1.02), M.dark, 0, -0.4, 0.24);
+    icAdd(g, new THREE.SphereGeometry(0.26, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), M.metalD, 0, -0.32, 0.6, 0.2, 0, 0).scale.set(1, 0.7, 1);
+    icAdd(g, new THREE.TorusGeometry(0.3, 0.05, 8, 28), M.trim, 0, 0.78, 0, Math.PI / 2);
+    for (const y of [0.42, 0.18]) { icAdd(g, new THREE.TorusGeometry(0.3, 0.03, 6, 28), M.leather, 0, y, 0, Math.PI / 2); icAdd(g, new THREE.BoxGeometry(0.1, 0.08, 0.04), M.trim, 0.16, y, 0.27); }
+    icAdd(g, icGem(0.08), M.gem, 0, 0.6, 0.3, Math.PI / 2);
+    if (o.fur) for (let k = 0; k < 10; k++) icAdd(g, new THREE.ConeGeometry(0.055, 0.2, 6), M.bone, Math.cos(k / 10 * Math.PI * 2) * 0.3, 0.88, Math.sin(k / 10 * Math.PI * 2) * 0.3);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.42, 0.32], [s * 0.3, 0.06]], 0.03, 0.01), M.gem, s * 0.3, 0.6, -0.1);
+    g.rotation.set(0.25, -0.85, 0);
   },
   shield(g, M, o) {
     if (o.round) {
-      icAdd(g, new THREE.CylinderGeometry(0.8, 0.8, 0.12, 24), M.wood, 0, 0, 0, Math.PI / 2);
-      for (let k = -2; k <= 2; k++) icAdd(g, new THREE.BoxGeometry(0.03, 1.5, 0.14), M.leather, k * 0.3, 0, 0);
-      icAdd(g, new THREE.TorusGeometry(0.8, 0.06, 8, 32), M.metalD, 0, 0, 0);
+      icAdd(g, new THREE.CylinderGeometry(0.8, 0.8, 0.12, 32), M.wood, 0, 0, 0, Math.PI / 2);
+      for (let k = -2; k <= 2; k++) icAdd(g, new THREE.BoxGeometry(0.02, 1.52, 0.135), M.leather, k * 0.3, 0, 0);
+      icAdd(g, new THREE.TorusGeometry(0.8, 0.06, 8, 40), M.metalD, 0, 0, 0);
+      for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; icAdd(g, new THREE.SphereGeometry(0.035, 6, 5), M.metal, Math.cos(a) * 0.72, Math.sin(a) * 0.72, 0.07); }
     } else {
-      const kite = [[0, 1.0], [0.72, 0.72], [0.66, -0.1], [0, -1.05], [-0.66, -0.1], [-0.72, 0.72]];
-      icAdd(g, icExtrude(kite, 0.12, 0.04), M.metalD, 0, 0, -0.04).scale.set(1.06, 1.05, 1);
-      icAdd(g, icExtrude(kite, 0.12, 0.03), M.metal, 0, 0, 0.04);
-      icAdd(g, icExtrude([[0, 0.45], [0.3, 0], [0, -0.55], [-0.3, 0]], 0.06), M.gem, 0, 0.05, 0.13);
+      const kite = new THREE.Shape(); kite.moveTo(0, 1.0); kite.quadraticCurveTo(0.5, 0.95, 0.74, 0.7); kite.quadraticCurveTo(0.72, 0.1, 0, -1.05); kite.quadraticCurveTo(-0.72, 0.1, -0.74, 0.7); kite.quadraticCurveTo(-0.5, 0.95, 0, 1.0);
+      icAdd(g, icExtrude(kite, 0.1, 0.05, 0.05), M.trim, 0, 0, -0.04).scale.set(1.07, 1.06, 1);
+      icAdd(g, icExtrude(kite, 0.1, 0.04), M.metal, 0, 0, 0.04);
+      icAdd(g, icExtrude([[0, 0.5], [0.3, 0.05], [0, -0.6], [-0.3, 0.05]], 0.04, 0.02), M.metalD, 0, 0.05, 0.1);
+      icAdd(g, icExtrude([[0, 0.36], [0.2, 0.05], [0, -0.44], [-0.2, 0.05]], 0.04, 0.02), M.gem, 0, 0.05, 0.14);
+      for (const [x, y] of [[0, 0.88], [0.6, 0.62], [-0.6, 0.62], [0.42, -0.28], [-0.42, -0.28], [0, -0.85]]) icAdd(g, new THREE.SphereGeometry(0.04, 8, 6), M.trim, x, y, 0.1);
     }
-    icAdd(g, new THREE.SphereGeometry(0.18, 14, 10), M.metal, 0, 0.05, 0.12);
-    if (o.fur) for (let k = 0; k < 5; k++) icAdd(g, new THREE.ConeGeometry(0.07, 0.3, 5), M.bone, -0.5 + k * 0.25, 0.95 - Math.abs(k - 2) * 0.1, 0, 0, 0, 0);
-    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.55, 0.4], [s * 0.4, 0.1], [s * 0.6, 0.0]], 0.05), M.gem, s * 0.6, 0.55, 0);
-    g.rotation.set(-0.15, -0.35, 0);
+    icAdd(g, new THREE.SphereGeometry(0.17, 16, 12), M.trim, 0, 0.05, 0.14);
+    if (o.fur) for (let k = 0; k < 6; k++) icAdd(g, new THREE.ConeGeometry(0.065, 0.32, 6), M.bone, -0.5 + k * 0.2, 0.98 - Math.abs(k - 2.5) * 0.08, 0);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.58, 0.42], [s * 0.42, 0.12], [s * 0.64, 0.02]], 0.03, 0.01), M.gem, s * 0.62, 0.58, 0);
+    g.rotation.set(-0.15, -0.38, 0);
   },
   ring(g, M, o) {
-    icAdd(g, new THREE.TorusGeometry(0.55, 0.12, 14, 36), M.metal, 0, 0, 0);
-    icAdd(g, new THREE.CylinderGeometry(0.2, 0.14, 0.18, 8), M.metalD, 0, 0.62, 0);
-    for (let k = 0; k < 4; k++) icAdd(g, new THREE.ConeGeometry(0.04, 0.16, 4), M.metal, Math.cos(k * Math.PI / 2 + 0.78) * 0.18, 0.76, Math.sin(k * Math.PI / 2 + 0.78) * 0.18);
-    const gem = icAdd(g, new THREE.OctahedronGeometry(0.26), M.gem, 0, 0.85, 0); gem.scale.set(1, 0.9, 1);
-    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.35, 0.28], [s * 0.28, 0.05]], 0.04), M.metal, s * 0.22, 0.62, 0);
-    g.rotation.set(0.5, 0.3, 0);
+    icAdd(g, new THREE.TorusGeometry(0.55, 0.11, 18, 56), M.metal, 0, 0, 0);
+    icAdd(g, new THREE.TorusGeometry(0.55, 0.035, 8, 56), M.trim, 0, 0, 0.1);
+    icAdd(g, new THREE.CylinderGeometry(0.24, 0.16, 0.2, 16), M.trim, 0, 0.62, 0);
+    for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; icAdd(g, new THREE.ConeGeometry(0.035, 0.2, 5), M.trim, Math.cos(a) * 0.22, 0.78, Math.sin(a) * 0.22, Math.sin(a) * 0.35, 0, -Math.cos(a) * 0.35); }
+    icAdd(g, icGem(0.27), M.gem, 0, 0.82, 0);
+    for (const s of [-1, 1]) icAdd(g, icGem(0.07), M.gem, s * 0.3, 0.52, 0.05, Math.PI / 2);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.36, 0.3], [s * 0.28, 0.06]], 0.03, 0.01), M.metal, s * 0.24, 0.62, 0);
+    g.rotation.set(0.55, 0.3, 0);
   },
   neck(g, M, o) {
-    for (let k = 0; k < 15; k++) {
-      const a = Math.PI * 0.08 + (k / 14) * Math.PI * 0.84;
-      icAdd(g, new THREE.TorusGeometry(0.07, 0.025, 6, 10), M.metal, Math.cos(a) * 0.72, 0.15 + Math.sin(a) * 0.6, 0, 0, k % 2 ? Math.PI / 2 : 0);
+    for (let k = 0; k < 21; k++) {
+      const a = Math.PI * 0.06 + (k / 20) * Math.PI * 0.88;
+      icAdd(g, new THREE.TorusGeometry(0.055, 0.02, 6, 12), M.trim, Math.cos(a) * 0.74, 0.18 + Math.sin(a) * 0.62, 0, 0, k % 2 ? Math.PI / 2 : 0, a);
     }
-    icAdd(g, new THREE.TorusGeometry(0.32, 0.05, 8, 20), M.metal, 0, -0.38, 0);
-    const p = icAdd(g, new THREE.OctahedronGeometry(0.27), M.gem, 0, -0.38, 0); p.scale.set(0.9, 1.25, 0.7);
-    icAdd(g, new THREE.SphereGeometry(0.06, 8, 6), M.metalD, 0, -0.02, 0);
-    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.38, 0.22], [s * 0.3, 0.0], [s * 0.4, -0.12]], 0.04), M.metal, s * 0.3, -0.36, 0);
+    icAdd(g, new THREE.TorusGeometry(0.34, 0.05, 10, 32), M.trim, 0, -0.38, 0);
+    icAdd(g, new THREE.TorusGeometry(0.42, 0.02, 6, 32), M.metal, 0, -0.38, -0.02);
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; icAdd(g, new THREE.SphereGeometry(0.035, 6, 5), M.gem, Math.cos(a) * 0.42, -0.38 + Math.sin(a) * 0.42, 0.02); }
+    const p = icAdd(g, icGem(0.27, 10), M.gem, 0, -0.38, 0.02, Math.PI / 2); p.scale.set(0.9, 1, 1.25);
+    icAdd(g, new THREE.SphereGeometry(0.06, 8, 6), M.trim, 0, -0.02, 0);
+    if (o.wing) for (const s of [-1, 1]) icAdd(g, icExtrude([[0, 0], [s * 0.4, 0.24], [s * 0.3, 0.0], [s * 0.42, -0.12]], 0.03, 0.01), M.metal, s * 0.36, -0.36, 0);
     g.rotation.set(-0.25, 0.2, 0);
   },
   charm(g, M, o) {
-    icAdd(g, new THREE.CylinderGeometry(0.6, 0.6, 0.14, o.wing ? 6 : 24), M.metal, 0, 0, 0, Math.PI / 2);
-    icAdd(g, new THREE.CylinderGeometry(0.42, 0.42, 0.16, 24), M.metalD, 0, 0, 0.02, Math.PI / 2);
-    icAdd(g, new THREE.TorusGeometry(0.28, 0.05, 8, 20), M.gem, 0, 0, 0.12);
-    for (let k = 0; k < 3; k++) icAdd(g, new THREE.BoxGeometry(0.05, 0.36, 0.04), M.gem, 0, 0, 0.12, 0, 0, k * Math.PI / 3);
-    icAdd(g, new THREE.TorusGeometry(0.12, 0.04, 8, 14), M.metal, 0, 0.7, 0);
-    for (let k = 0; k < 8; k++) icAdd(g, new THREE.SphereGeometry(0.045, 6, 5), M.gem, Math.cos(k / 8 * Math.PI * 2) * 0.52, Math.sin(k / 8 * Math.PI * 2) * 0.52, 0.08);
+    const sides = o.wing ? 6 : 32;
+    icAdd(g, new THREE.CylinderGeometry(0.62, 0.62, 0.14, sides), M.metal, 0, 0, 0, Math.PI / 2);
+    icAdd(g, new THREE.TorusGeometry(0.62, 0.04, 8, sides === 6 ? 6 : 48), M.trim, 0, 0, 0.07, 0, 0, sides === 6 ? Math.PI / 6 : 0);
+    icAdd(g, new THREE.CylinderGeometry(0.44, 0.44, 0.16, 32), M.metalD, 0, 0, 0.02, Math.PI / 2);
+    for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; icAdd(g, new THREE.BoxGeometry(0.04, 0.12, 0.04), M.trim, Math.cos(a) * 0.52, Math.sin(a) * 0.52, 0.09, 0, 0, a + Math.PI / 2); }
+    for (let k = 0; k < 4; k++) icAdd(g, new THREE.BoxGeometry(0.04, 0.62, 0.03), M.gem, 0, 0, 0.11, 0, 0, k * Math.PI / 4);
+    icAdd(g, icGem(0.17, 8), M.gem, 0, 0, 0.13, Math.PI / 2);
+    icAdd(g, new THREE.TorusGeometry(0.12, 0.04, 8, 16), M.trim, 0, 0.72, 0);
+    for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + 0.26; icAdd(g, icGem(0.05, 6), M.gem, Math.cos(a) * 0.36, Math.sin(a) * 0.36, 0.1, Math.PI / 2); }
     g.rotation.set(0.15, -0.4, 0);
   },
   potion(g, M, o) {
     const r = o.size || 1;
-    const pts = [[0.0, -0.6], [0.45, -0.55], [0.6, -0.25], [0.55, 0.15], [0.22, 0.4], [0.17, 0.75], [0.0, 0.75]].map(([x, y]) => new THREE.Vector2(x * r, y));
-    const glass = new THREE.MeshPhongMaterial({ color: 0xdcecf0, specular: 0xffffff, shininess: 120 });
-    icAdd(g, new THREE.LatheGeometry(pts, 24), M.gem, 0, 0, 0); // dolu şişe: sıvı renkli gövde
-    icAdd(g, new THREE.CylinderGeometry(0.2 * r, 0.24 * r, 0.42, 16), glass, 0, 0.55, 0);
-    icAdd(g, new THREE.TorusGeometry(0.21 * r, 0.04, 8, 18), glass, 0, 0.74, 0, Math.PI / 2);
-    icAdd(g, new THREE.TorusGeometry(0.5 * r, 0.03, 6, 24), glass, 0, 0.02, 0, Math.PI / 2);
-    icAdd(g, new THREE.CylinderGeometry(0.17 * r, 0.15 * r, 0.24, 12), M.wood, 0, 0.82, 0);
-    if (o.band) icAdd(g, new THREE.TorusGeometry(0.2 * r, 0.04, 8, 18), new THREE.MeshPhongMaterial({ color: 0xe8c547, specular: 0xffffff, shininess: 90 }), 0, 0.5, 0, Math.PI / 2);
-    icAdd(g, new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), -0.25 * r, -0.1, 0.42 * r);
-    g.rotation.set(0.15, 0, -0.18);
+    const outer = [[0.0, -0.62], [0.46, -0.57], [0.62, -0.26], [0.57, 0.15], [0.24, 0.42], [0.19, 0.78], [0.23, 0.82], [0.0, 0.82]].map(([x, y]) => new THREE.Vector2(x * r, y));
+    const inner = [[0.0, -0.57], [0.42, -0.53], [0.56, -0.25], [0.53, 0.12], [0.24, 0.36], [0.0, 0.38]].map(([x, y]) => new THREE.Vector2(x * r, y));
+    icAdd(g, new THREE.LatheGeometry(inner, 32), M.gem, 0, 0, 0);
+    icAdd(g, new THREE.LatheGeometry(outer, 32), M.glass, 0, 0, 0);
+    icAdd(g, new THREE.CylinderGeometry(0.17 * r, 0.15 * r, 0.26, 16), M.wood, 0, 0.92, 0);
+    icAdd(g, new THREE.TorusGeometry(0.21 * r, 0.03, 8, 24), M.trim, 0, 0.8, 0, Math.PI / 2);
+    icAdd(g, new THREE.CylinderGeometry(0.15 * r, 0.2 * r, 0.42, 16), new THREE.MeshStandardMaterial({ color: 0xc4dce4, roughness: 0.15, metalness: 0.1 }), 0, 0.58, 0); // cam boyun
+    icAdd(g, new THREE.CylinderGeometry(0.5 * r, 0.52 * r, 0.22, 32, 1, true), M.paper, 0, -0.18, 0).scale.set(1.13, 1, 1.13);
+    if (o.band) { icAdd(g, new THREE.TorusGeometry(0.22 * r, 0.04, 8, 24), M.trim, 0, 0.55, 0, Math.PI / 2); icAdd(g, icGem(0.08), M.gem, 0, -0.18, 0.6 * r, Math.PI / 2); }
+    icAdd(g, new THREE.SphereGeometry(0.08, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }), -0.25 * r, 0.0, 0.46 * r).scale.set(0.7, 1.4, 0.5);
+    g.rotation.set(0.12, 0, -0.18);
   },
   scroll(g, M, o) {
-    const paper = new THREE.MeshLambertMaterial({ color: 0xeedfb8 });
-    icAdd(g, new THREE.CylinderGeometry(0.28, 0.28, 1.6, 20), paper, 0, 0, 0, 0, 0, Math.PI / 2);
-    icAdd(g, new THREE.BoxGeometry(1.5, 0.04, 0.7), paper, 0, -0.27, 0.35, 0.25);
-    for (const s of [-1, 1]) { icAdd(g, new THREE.CylinderGeometry(0.1, 0.1, 0.2, 10), o.gold ? new THREE.MeshPhongMaterial({ color: 0xe8c547, specular: 0xffffff, shininess: 90 }) : M.wood, s * 0.88, 0, 0, 0, 0, Math.PI / 2); icAdd(g, new THREE.SphereGeometry(0.12, 10, 8), M.wood, s * 1.0, 0, 0); }
-    icAdd(g, new THREE.TorusGeometry(0.3, 0.05, 8, 20), M.gem, 0, 0, 0, 0, Math.PI / 2);
-    icAdd(g, new THREE.CylinderGeometry(0.17, 0.17, 0.06, 16), M.gem, 0, -0.05, 0.3, Math.PI / 2);
-    icAdd(g, new THREE.BoxGeometry(0.08, 0.35, 0.03), M.gem, -0.06, -0.3, 0.3, 0, 0, 0.2); icAdd(g, new THREE.BoxGeometry(0.08, 0.35, 0.03), M.gem, 0.06, -0.3, 0.3, 0, 0, -0.2);
+    icAdd(g, new THREE.CylinderGeometry(0.27, 0.27, 1.6, 28), M.paper, 0, 0, 0, 0, 0, Math.PI / 2);
+    icAdd(g, new THREE.CylinderGeometry(0.2, 0.2, 1.62, 28), M.paper, 0, -0.27, 0.12, 0, 0, Math.PI / 2); // ikinci sarım
+    for (const s of [-1, 1]) {
+      icAdd(g, new THREE.CylinderGeometry(0.09, 0.09, 0.22, 12), o.gold ? M.trim : M.wood, s * 0.9, 0, 0, 0, 0, Math.PI / 2);
+      icAdd(g, new THREE.SphereGeometry(0.12, 12, 10), o.gold ? M.trim : M.wood, s * 1.03, 0, 0);
+    }
+    for (const x of [-0.12, 0.12]) icAdd(g, new THREE.TorusGeometry(0.29, 0.06, 8, 28), M.gem, x, 0, 0, 0, Math.PI / 2);
+    icAdd(g, new THREE.CylinderGeometry(0.22, 0.25, 0.09, 16), M.gem, 0, -0.04, 0.3, Math.PI / 2);
+    icAdd(g, new THREE.TorusGeometry(0.1, 0.02, 6, 14), M.trim, 0, -0.04, 0.34);
+    icAdd(g, new THREE.BoxGeometry(0.1, 0.42, 0.025), M.gem, -0.08, -0.34, 0.3, 0, 0, 0.25); icAdd(g, new THREE.BoxGeometry(0.1, 0.42, 0.025), M.gem, 0.08, -0.34, 0.3, 0, 0, -0.25);
     g.rotation.set(0.35, 0.2, 0.35);
   },
   ore(g, M, o) {
-    const rock = new THREE.MeshPhongMaterial({ color: o.rock || 0x6a6470, specular: 0x444444, shininess: 20, flatShading: true });
-    for (const [x, y, z, r] of [[0, 0, 0, 0.55], [0.45, -0.2, 0.1, 0.38], [-0.45, -0.18, 0.15, 0.36], [0.1, 0.42, -0.1, 0.32]]) icAdd(g, new THREE.DodecahedronGeometry(r, 0), rock, x, y, z, x * 3, y * 2, z);
-    const fl = new THREE.MeshPhongMaterial({ color: o.tint, specular: 0xffffff, shininess: 100, emissive: o.tint, emissiveIntensity: 0.3, flatShading: true });
-    for (let k = 0; k < 7; k++) icAdd(g, new THREE.OctahedronGeometry(0.1 + (k % 3) * 0.04, 0), fl, Math.cos(k * 2.3) * 0.42, Math.sin(k * 1.7) * 0.32, 0.38 + (k % 2) * 0.08, k, k * 2, 0);
+    const rock = new THREE.MeshStandardMaterial({ color: o.rock || 0x6a6470, roughness: 0.85, metalness: 0.1, flatShading: true });
+    for (const [x, y, z, r] of [[0, 0, 0, 0.55], [0.45, -0.2, 0.1, 0.38], [-0.45, -0.18, 0.15, 0.36], [0.1, 0.42, -0.1, 0.32], [-0.2, -0.4, 0.3, 0.22]]) icAdd(g, new THREE.DodecahedronGeometry(r, 1), rock, x, y, z, x * 3, y * 2, z).geometry.computeVertexNormals();
+    const fl = new THREE.MeshStandardMaterial({ color: o.tint, metalness: 0.9, roughness: 0.2, emissive: o.tint, emissiveIntensity: 0.25, flatShading: true });
+    for (let k = 0; k < 9; k++) icAdd(g, new THREE.OctahedronGeometry(0.09 + (k % 3) * 0.04, 0), fl, Math.cos(k * 2.3) * 0.44, Math.sin(k * 1.7) * 0.34, 0.36 + (k % 2) * 0.1, k, k * 2, 0);
     g.rotation.set(0.3, 0.3, 0);
   },
   crystal(g, M, o) {
-    const cm = new THREE.MeshPhongMaterial({ color: o.tint, specular: 0xffffff, shininess: 140, emissive: o.tint, emissiveIntensity: 0.45, flatShading: true });
-    const shape = o.shape || 0;
-    const geo = shape === 1 ? new THREE.IcosahedronGeometry(0.42, 0) : shape === 2 ? new THREE.DodecahedronGeometry(0.42, 0) : new THREE.OctahedronGeometry(0.42, 0);
-    icAdd(g, geo, cm, 0, 0.18, 0).scale.set(0.8, 1.7, 0.8);
-    icAdd(g, new THREE.OctahedronGeometry(0.26, 0), cm, 0.42, -0.25, 0.1, 0, 0, -0.5).scale.set(0.8, 1.6, 0.8);
-    icAdd(g, new THREE.OctahedronGeometry(0.22, 0), cm, -0.4, -0.3, 0.05, 0, 0, 0.5).scale.set(0.8, 1.5, 0.8);
-    icAdd(g, new THREE.DodecahedronGeometry(0.45, 0), new THREE.MeshLambertMaterial({ color: 0x4a4450, flatShading: true }), 0, -0.62, 0).scale.set(1.3, 0.45, 1);
+    const cm = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(o.tint).multiplyScalar(0.75), metalness: 0.1, roughness: 0.1, clearcoat: 1, emissive: o.tint, emissiveIntensity: 0.28, flatShading: true, envMapIntensity: 1.0 });
+    const shard = (h, r) => { const geo = new THREE.CylinderGeometry(r * 0.75, r, h, o.shape === 1 ? 5 : o.shape === 2 ? 7 : 6, 1); const tip = new THREE.ConeGeometry(r * 0.75, h * 0.35, o.shape === 1 ? 5 : o.shape === 2 ? 7 : 6); tip.translate(0, h * 0.675, 0); return [geo, tip]; };
+    for (const [x, y, z, h, r, rz] of [[0, 0.1, 0, 1.0, 0.28, 0], [0.4, -0.18, 0.12, 0.6, 0.18, -0.55], [-0.38, -0.2, 0.08, 0.55, 0.17, 0.55], [0.12, -0.3, 0.32, 0.4, 0.13, -0.2]]) {
+      const grp = new THREE.Group(); grp.position.set(x, y, z); grp.rotation.z = rz; g.add(grp);
+      for (const geo of shard(h, r)) icAdd(grp, geo, cm, 0, 0, 0);
+    }
+    icAdd(g, new THREE.DodecahedronGeometry(0.48, 0), new THREE.MeshStandardMaterial({ color: 0x4a4450, roughness: 0.9, flatShading: true }), 0, -0.6, 0).scale.set(1.3, 0.42, 1);
     g.rotation.set(0.2, 0.4, 0);
   },
   bone(g, M, o) {
-    const bm = new THREE.MeshLambertMaterial({ color: o.tint });
-    icAdd(g, new THREE.CylinderGeometry(0.12, 0.12, 1.3, 12), bm, 0, 0, 0);
-    for (const s of [-1, 1]) for (const x of [-0.13, 0.13]) icAdd(g, new THREE.SphereGeometry(0.19, 12, 10), bm, x, s * 0.68, 0);
+    const bm = new THREE.MeshStandardMaterial({ color: o.tint, roughness: 0.55 });
+    icAdd(g, new THREE.CylinderGeometry(0.11, 0.13, 1.3, 16), bm, 0, 0, 0);
+    for (const s of [-1, 1]) for (const x of [-0.13, 0.13]) icAdd(g, new THREE.SphereGeometry(0.19, 16, 12), bm, x, s * 0.68, 0);
+    for (let k = 0; k < 3; k++) icAdd(g, new THREE.TorusGeometry(0.125, 0.012, 4, 14), new THREE.MeshStandardMaterial({ color: new THREE.Color(o.tint).multiplyScalar(0.75) }), 0, -0.2 + k * 0.2, 0, Math.PI / 2);
     g.rotation.set(0.3, 0, -Math.PI / 4);
   },
   seal(g, M, o) {
-    const st = new THREE.MeshPhongMaterial({ color: 0x5a5662, specular: 0x555555, shininess: 30, flatShading: true });
+    const st = new THREE.MeshStandardMaterial({ color: 0x5a5662, roughness: 0.75, metalness: 0.1, flatShading: true });
     icAdd(g, new THREE.CylinderGeometry(0.62, 0.68, 0.22, 8), st, 0, 0, 0, Math.PI / 2);
-    icAdd(g, new THREE.TorusGeometry(0.5, 0.05, 6, 8), M.gem, 0, 0, 0.12, 0, 0, Math.PI / 8);
+    icAdd(g, new THREE.TorusGeometry(0.52, 0.045, 6, 8), M.gem, 0, 0, 0.12, 0, 0, Math.PI / 8);
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2 + Math.PI / 8; icAdd(g, new THREE.BoxGeometry(0.06, 0.06, 0.06), M.gem, Math.cos(a) * 0.62, Math.sin(a) * 0.62, 0.1); }
     const rune = { atk: [[0, 0.3], [0.2, -0.25], [-0.2, -0.25]], def: [[0, 0.32], [0.28, 0.12], [0.2, -0.28], [-0.2, -0.28], [-0.28, 0.12]], hp: [[0, -0.3], [0.3, 0.05], [0.15, 0.3], [0, 0.15], [-0.15, 0.3], [-0.3, 0.05]], crit: [[0, 0.34], [0.1, 0.1], [0.34, 0], [0.1, -0.1], [0, -0.34], [-0.1, -0.1], [-0.34, 0], [-0.1, 0.1]], skill: [[0.05, 0.35], [0.25, 0.0], [0.05, 0.0], [0.15, -0.35], [-0.2, 0.08], [-0.02, 0.08]] }[o.stat] || [[0, 0.3], [0.3, 0], [0, -0.3], [-0.3, 0]];
-    icAdd(g, icExtrude(rune, 0.08), M.gem, 0, 0, 0.14);
-    for (let k = 0; k < o.grade; k++) icAdd(g, new THREE.SphereGeometry(0.07, 8, 6), M.gem, -0.2 + k * 0.2, -0.5, 0.12);
+    icAdd(g, icExtrude(rune, 0.05, 0.02), M.gem, 0, 0, 0.14);
+    for (let k = 0; k < o.grade; k++) icAdd(g, icGem(0.06, 6), M.gem, -0.2 + k * 0.2, -0.48, 0.12, Math.PI / 2);
     g.rotation.set(-0.2, -0.3, 0);
   },
 };
-// eşya → model tanımı (tür + renkler + seçenekler) ve önbellek anahtarı
+// eşya → model tanımı (tür + renkler + seçenekler); önbellek anahtarı bu tanımdan
 function iconSpec(it) {
   if (it.type === 'stack') {
     const s = STACKS[it.id], tint = parseInt((s.tint || '#cccccc').slice(1), 16);
     const q = sealParse(it.id);
-    if (q) return { kind: 'seal', metal: 0x5a5662, gem: parseInt(q.G.tint.slice(1), 16), glow: 0.6 + q.g * 0.2, stat: q.stat, grade: q.g };
-    if (s.icon === 'potion') return { kind: 'potion', metal: 0x888888, gem: tint, glow: 0.5, size: 0.8 + (s.lv >= 28 ? 0.35 : s.lv >= 12 ? 0.18 : 0), band: s.lv >= 28 };
-    if (s.icon === 'scroll') return { kind: 'scroll', metal: 0x888888, gem: tint, glow: it.id === 'bless' || it.id === 'busta_parsomen' ? 0.8 : 0.3, gold: it.id === 'bless' || it.id === 'busta_parsomen' };
+    if (q) return { kind: 'seal', metal: 0x5a5662, gem: parseInt(q.G.tint.slice(1), 16), glow: 0.6 + q.g * 0.25, stat: q.stat, grade: q.g };
+    if (s.icon === 'potion') return { kind: 'potion', metal: 0x888888, gem: tint, glow: 0.45, size: 0.8 + (s.lv >= 28 ? 0.35 : s.lv >= 12 ? 0.18 : 0), band: s.lv >= 28 };
+    if (s.icon === 'scroll') { const gold = it.id === 'bless' || it.id === 'busta_parsomen'; return { kind: 'scroll', metal: 0x888888, gem: tint, glow: gold ? 0.9 : 0.35, gold }; }
     if (s.icon === 'ore') return { kind: 'ore', metal: 0x888888, gem: tint, tint, rock: it.id === 'j4' ? 0x3a2a24 : it.id === 'j6' ? 0x2a2230 : it.id === 'bronzparca' ? 0x6a5a48 : 0x6a6470 };
     if (s.icon === 'bone') return { kind: 'bone', metal: 0x888888, gem: tint, tint: it.id === 'j7' ? 0xd8f0d8 : tint };
     let h = 0; for (const c of it.id) h = (h * 31 + c.charCodeAt(0)) % 997;
-    return { kind: 'crystal', metal: 0x888888, gem: tint, tint, shape: h % 3 };
+    return { kind: 'crystal', metal: 0x888888, gem: tint, tint, shape: h % 3, glow: 0.7 };
   }
   const T = IC_TIER[Math.min(7, it.tier)], S = it.set && IC_SET[it.set];
   const kind = it.slot === 'weapon' ? (CLASSES[it.cls] && CLASSES[it.cls].icon === 'axe' ? 'axe' : 'sword') : it.slot;
@@ -2646,70 +2691,92 @@ function iconSpec(it) {
   if (!S && it.tier === 0 && SET_SLOTS.includes(it.slot) && it.slot !== 'shield') sp.cloth = true;
   if (!S && it.tier === 3) sp.fur = true; // kemik kademesi
   if (!S && it.tier >= 6) sp.wing = true;
+  if (sp.metal > 0xd0a000 && sp.metal < 0xffd000) sp.trim = 0xfff0c0; // altın metalde açık süs
   return sp;
 }
 function icon3DInit() {
-  if (ICON3D.scene) return true;
-  if (typeof W3 === 'undefined' || !W3.renderer) return false;
-  const sc = new THREE.Scene();
-  sc.add(new THREE.HemisphereLight(0xfff2e0, 0x40364a, 0.75));
-  const key = new THREE.DirectionalLight(0xffffff, 1.15); key.position.set(2, 3.5, 4); sc.add(key);
-  const rim = new THREE.DirectionalLight(0xa8d0ff, 0.7); rim.position.set(-3, 1.5, -2.5); sc.add(rim);
-  const fill = new THREE.DirectionalLight(0xffd8a8, 0.35); fill.position.set(-2, -2, 3); sc.add(fill);
-  ICON3D.scene = sc;
-  ICON3D.cam = new THREE.PerspectiveCamera(26, 1, 0.1, 50); ICON3D.cam.position.set(0, 0, 7); ICON3D.cam.lookAt(0, 0, 0);
-  ICON3D.rt = new THREE.WebGLRenderTarget(256, 256);
-  ICON3D.buf = new Uint8Array(256 * 256 * 4);
-  ICON3D.c1 = document.createElement('canvas'); ICON3D.c1.width = ICON3D.c1.height = 256;
-  ICON3D.c2 = document.createElement('canvas'); ICON3D.c2.width = ICON3D.c2.height = 112;
-  const lut = ICON3D.lut = new Uint8Array(256); // doğrusal → sRGB (render hedefi doğrusal yazar)
-  for (let i = 0; i < 256; i++) { const v = i / 255; lut[i] = Math.round(255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055)); }
-  return true;
+  if (ICON3D.r) return true;
+  if (ICON3D.failed || typeof THREE === 'undefined') return false;
+  try {
+    const cv = document.createElement('canvas');
+    const r = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
+    r.setPixelRatio(1); r.setSize(256, 256, false);
+    r.useLegacyLights = false;
+    r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.1; r.outputColorSpace = THREE.SRGBColorSpace;
+    r.setClearColor(0x000000, 0);
+    // ortam yansıması: sıcak üst / koyu alt degrade + üç parlak panel → PMREM
+    const env = new THREE.Scene();
+    env.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide,
+      vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'varying vec3 vP; void main(){ float h = normalize(vP).y; vec3 c = h > 0.0 ? mix(vec3(0.32,0.3,0.34), vec3(1.0,0.94,0.86), pow(h, 0.7)) : mix(vec3(0.32,0.3,0.34), vec3(0.05,0.045,0.06), pow(-h, 0.5)); gl_FragColor = vec4(c, 1.0); }' })));
+    const panel = (x, y, z, w, h, c, k) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(k), side: THREE.DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); env.add(m); };
+    panel(4, 6, 6, 6, 3, 0xffffff, 4); panel(-7, 2, -3, 3, 6, 0x9ac8ff, 2.5); panel(0, -6, 5, 7, 2, 0xffc890, 1.4); panel(6, -1, -5, 2, 4, 0xffffff, 2);
+    const pm = new THREE.PMREMGenerator(r); ICON3D.env = pm.fromScene(env, 0.02).texture; pm.dispose();
+    const sc = new THREE.Scene(); sc.environment = ICON3D.env;
+    const key = new THREE.DirectionalLight(0xfff2e0, 2.6); key.position.set(2, 4, 5); sc.add(key);
+    const rim = new THREE.DirectionalLight(0x9ac8ff, 2.2); rim.position.set(-4, 2, -3); sc.add(rim);
+    const fill = new THREE.DirectionalLight(0xffc890, 0.7); fill.position.set(-2, -3, 3); sc.add(fill);
+    sc.add(new THREE.HemisphereLight(0xffffff, 0x302830, 0.5));
+    ICON3D.r = r; ICON3D.scene = sc;
+    ICON3D.cam = new THREE.PerspectiveCamera(24, 1, 0.1, 50); ICON3D.cam.position.set(0, 0, 7.6); ICON3D.cam.lookAt(0, 0, 0);
+    const mk = (n) => { const c = document.createElement('canvas'); c.width = c.height = n; return c; };
+    ICON3D.sil = mk(256); ICON3D.out = mk(128); ICON3D.ring = mk(128);
+    return true;
+  } catch (e) { console.error('3B ikon renderer açılamadı:', e); ICON3D.failed = true; return false; }
 }
-function icon3DRender(sp, halo) {
-  const key = JSON.stringify(sp) + '|' + (halo || '');
+function icon3DRender(sp, halo, sparkle) {
+  const key = JSON.stringify(sp) + '|' + (halo || '') + '|' + (sparkle ? 1 : 0);
   if (ICON3D.cache[key]) return ICON3D.cache[key];
   if (!icon3DInit()) return null;
-  const R = W3.renderer, g = new THREE.Group();
-  const M = icMats(sp.metal, sp.gem, sp.glow);
+  const R = ICON3D.r, g = new THREE.Group(), M = icMats(sp);
   try { IC_BUILD[sp.kind](g, M, sp); } catch (e) { console.error('ikon modeli:', sp.kind, e); return null; }
-  // çerçeveye sığdır: kutu merkezini ortala, en büyük boyutu ~2.5 birime ölçekle
+  // çerçeveye sığdır: kutu merkezini ortala, en büyük boyutu ölçekle (çapraz silah kutusu boş alan bırakır)
   const wrap = new THREE.Group(); wrap.add(g); ICON3D.scene.add(wrap);
   wrap.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(wrap), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
-  const k = (sp.kind === 'sword' || sp.kind === 'axe' ? 3.45 : 2.85) / Math.max(size.x, size.y, size.z * 0.7); // çapraz silah kutusu boş alan bırakır
+  const k = (sp.kind === 'sword' || sp.kind === 'axe' ? 3.55 : 2.95) / Math.max(size.x, size.y, size.z * 0.7);
   wrap.scale.setScalar(k); wrap.position.set(-c.x * k, -c.y * k, -c.z * k);
-  const prevRT = R.getRenderTarget(), prevCol = R.getClearColor(new THREE.Color()), prevA = R.getClearAlpha(), prevShadow = R.shadowMap.autoUpdate;
-  R.shadowMap.autoUpdate = false;
-  R.setRenderTarget(ICON3D.rt); R.setClearColor(0x000000, 0); R.clear(true, true, true);
   R.render(ICON3D.scene, ICON3D.cam);
-  R.readRenderTargetPixels(ICON3D.rt, 0, 0, 256, 256, ICON3D.buf);
-  R.setRenderTarget(prevRT); R.setClearColor(prevCol, prevA); R.shadowMap.autoUpdate = prevShadow;
   ICON3D.scene.remove(wrap);
-  wrap.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); } });
+  wrap.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
   for (const m of Object.values(M)) m.dispose();
-  // pikseller: dikey çevir + sRGB → tuval
-  const c1 = ICON3D.c1.getContext('2d'), img = c1.createImageData(256, 256), b = ICON3D.buf, lut = ICON3D.lut;
-  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
-    const s = ((255 - y) * 256 + x) * 4, d = (y * 256 + x) * 4;
-    img.data[d] = lut[b[s]]; img.data[d + 1] = lut[b[s + 1]]; img.data[d + 2] = lut[b[s + 2]]; img.data[d + 3] = b[s + 3];
+  // 2B son işlem: hale → koyu dış hat (siluet 8 yöne kaydırılır) → model → ışıltı yıldızları
+  const sil = ICON3D.sil.getContext('2d');
+  sil.globalCompositeOperation = 'source-over'; sil.clearRect(0, 0, 256, 256); sil.drawImage(R.domElement, 0, 0);
+  sil.globalCompositeOperation = 'source-in'; sil.fillStyle = 'rgba(12,8,6,0.9)'; sil.fillRect(0, 0, 256, 256);
+  const o2 = ICON3D.out.getContext('2d');
+  o2.clearRect(0, 0, 128, 128); o2.imageSmoothingEnabled = true; o2.imageSmoothingQuality = 'high';
+  if (halo) { const gr = o2.createRadialGradient(64, 64, 8, 64, 64, 62); gr.addColorStop(0, halo + '55'); gr.addColorStop(0.6, halo + '22'); gr.addColorStop(1, halo + '00'); o2.fillStyle = gr; o2.fillRect(0, 0, 128, 128); }
+  const rg = ICON3D.ring.getContext('2d');
+  rg.globalCompositeOperation = 'source-over'; rg.clearRect(0, 0, 128, 128);
+  for (let a = 0; a < 8; a++) rg.drawImage(ICON3D.sil, Math.cos(a * Math.PI / 4) * 1.6, Math.sin(a * Math.PI / 4) * 1.6 + 0.6, 128, 128);
+  rg.globalCompositeOperation = 'destination-out'; rg.drawImage(ICON3D.sil, 0, 0, 128, 128);
+  o2.drawImage(ICON3D.ring, 0, 0);
+  o2.drawImage(R.domElement, 0, 0, 128, 128);
+  if (sparkle) {
+    o2.globalCompositeOperation = 'lighter';
+    const star = (x, y, s) => { const gr = o2.createRadialGradient(x, y, 0, x, y, s); gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); o2.fillStyle = gr; o2.beginPath(); o2.moveTo(x, y - s); o2.lineTo(x + s * 0.18, y - s * 0.18); o2.lineTo(x + s, y); o2.lineTo(x + s * 0.18, y + s * 0.18); o2.lineTo(x, y + s); o2.lineTo(x - s * 0.18, y + s * 0.18); o2.lineTo(x - s, y); o2.lineTo(x - s * 0.18, y - s * 0.18); o2.closePath(); o2.fill(); };
+    star(96, 30, 13); star(30, 92, 9); star(104, 98, 6);
+    o2.globalCompositeOperation = 'source-over';
   }
-  c1.putImageData(img, 0, 0);
-  const c2 = ICON3D.c2.getContext('2d');
-  c2.clearRect(0, 0, 112, 112);
-  if (halo) { const gr = c2.createRadialGradient(56, 56, 6, 56, 56, 54); gr.addColorStop(0, halo + '4d'); gr.addColorStop(1, halo + '00'); c2.fillStyle = gr; c2.fillRect(0, 0, 112, 112); }
-  c2.shadowColor = 'rgba(0,0,0,0.55)'; c2.shadowBlur = 5; c2.shadowOffsetY = 2;
-  c2.imageSmoothingEnabled = true; c2.imageSmoothingQuality = 'high';
-  c2.drawImage(ICON3D.c1, 0, 0, 112, 112);
-  c2.shadowColor = 'transparent';
-  const url = 'data:image/png;i3=1;' + ICON3D.c2.toDataURL('image/png').slice('data:image/png;'.length);
+  const url = 'data:image/png;i3=1;' + ICON3D.out.toDataURL('image/png').slice('data:image/png;'.length);
   ICON3D.cache[key] = url;
   return url;
+}
+// Ön ısıtma: düzey kurulduktan sonra çanta / giyili / depo eşyalarının ikonları arka planda tek tek çizilir (çanta ilk
+// açıldığında takılma olmasın). Her adım bir ikon, aralarda 40 ms.
+function icon3DPrewarm() {
+  if (ICON3D.warm || typeof P === 'undefined' || !P) return;
+  const list = [...(P.inv || []), ...Object.values(P.equip || {}), ...(P.depot || [])].filter(Boolean);
+  ICON3D.warm = true;
+  const step = () => { const it = list.shift(); if (!it) { ICON3D.warm = false; return; } try { itemIcon(it); } catch (e) { /* ikon hatası oyunu durdurmasın */ } setTimeout(step, 40); };
+  setTimeout(step, 600);
 }
 // yığın kimliğinden ikon (çanta dışındaki listeler: dükkân, malzeme satırları)
 function stackIcon(id) { return (STACKS[id] && icon3DRender(iconSpec({ type: 'stack', id }))) || spriteIcon(STACKS[id].icon, STACKS[id].tint); }
 function itemIcon(it) {
-  const u3 = icon3DRender(iconSpec(it), it.type === 'gear' && it.rarity > 0 ? RARITY[it.rarity].color : null); // 3B ikon (yedek: 2B)
+  const u3 = icon3DRender(iconSpec(it), it.type === 'gear' && it.rarity > 0 ? RARITY[it.rarity].color : null,
+    it.type === 'gear' ? it.rarity >= 3 || it.tier >= 7 : it.id === 'bless' || it.id === 'busta_parsomen'); // 3B ikon (yedek: 2B)
   if (u3) return u3;
   if (it.type === 'stack') { const s = STACKS[it.id]; return spriteIcon(s.icon, s.tint); }
   if (it.set && !GEAR_SETS[it.set].jewel) return spriteIcon(it.set + '_' + it.slot); // sete / adlı eşyaya özel ikon (02c)
@@ -19262,6 +19329,7 @@ function setLevel(L) {
     W3.scene.add(G.targetRing);
   }
   G.targetRing.visible = false;
+  icon3DPrewarm(); // envanter ikonları arka planda
 }
 function placePlayer(x, z) {
   G.player = new PlayerEnt(G.level, x, z);
