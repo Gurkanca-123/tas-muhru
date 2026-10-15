@@ -10,7 +10,7 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
-## 2026-10-15 (23) — Parşömenler Tüccar'da 100.000 / 150.000 + ikon kalitesi 2. geçiş · dal `ozellik/takiset-ikon`
+## 2026-10-15 (23) — Parşömenler Tüccar'da 100.000 / 150.000 + ikon kalitesi 2. geçiş · dal `ozellik/takiset-ikon` → main'e alındı (kullanıcı onayı)
 - Kullanıcı düzeltmesi: ustalık parşömenleri Tüccar'da satılır (`SHOP_LIST`), fiyat Usta 100.000 / Büyük Usta 150.000; çantadan satış fiyatın %25'i (25.000 / 37.500, alım-satım açığı yok). Kabus düşüşleri (`PARCH_KABUS`) aynen kaldı.
 - İkonlar: ayrı küçük WebGL renderer (256 px, MSAA, ACES ton eşleme, sRGB, fiziksel ışık) + PMREM ortam yansıması (degrade gök + parlak paneller) → PBR metal (`MeshStandardMaterial`), fasetli pırlanta taşlar (`icGem`, `MeshPhysicalMaterial` clearcoat),
   perçinler, altın süs kenarları, kavisli kılıç siperi, hilal balta ağzı, kemer/toka, zincir halkaları, şişe camı + etiket, çift kurdeleli mühürlü parşömen, kristal kümeleri. 2B son işlem: nadirlik halesi, koyu dış hat (yalnız halka;
