@@ -998,23 +998,23 @@ const GEAR_SETS = {
   // Bronz Taş Zırh: son oyun seti (Sv 45). Normal zindan düşüşünde çıkmaz; yalnız `endgame` kaynaklarından
   // (7. zindan Kemik Taht ve Kadim Mühür) düşer — rank → şans (09_combat.js rollLoot / 03_items.js rollGear).
   bronzz: { name: 'Bronz Taş Zırh Seti', tier: 6, lv: 45, body: 'bronzz', mat: 'j7', color: '#c9a45a', endgame: { normal: 0.05, elite: 0.12, boss: 0.45, metin: 0.35 },
-    bonus: { 2: { hpPct: 0.08 }, 3: { defPct: 0.14 }, 4: { atkPct: 0.12, mob: 8 } },
+    bonus: { 2: { hpPct: 0.08 }, 3: { defPct: 0.14 }, 4: { atkPct: 0.12, mob: 8, fx: 'tasKabuk' } },
     names: { head: 'Bronz Taş Miğfer', chest: 'Bronz Taş Göğüslük', feet: 'Bronz Taş Çizme', shield: 'Bronz Taş Kalkan' } },
   // Nihai Zırh (Sv 35): 5.-7. zindanlarda nadir. Efsanevi Zırh (Sv 55): yalnız Zor/Kabus son oyun kaynaklarından (minDiff).
   nihai: { name: 'Nihai Zırh Seti', tier: 5, lv: 35, body: 'nihai', mat: 'j5', color: '#a8b4c8', drop: [0, 0, 0, 0, 0, 0.04, 0.08, 0.12],
-    bonus: { 2: { hpPct: 0.07 }, 3: { defPct: 0.12 }, 4: { atkPct: 0.1, crit: 4 } },
+    bonus: { 2: { hpPct: 0.07 }, 3: { defPct: 0.12 }, 4: { atkPct: 0.1, crit: 4, fx: 'keskinRitim' } },
     names: { head: 'Nihai Miğfer', chest: 'Nihai Zırh', feet: 'Nihai Çizme', shield: 'Nihai Kalkan' } },
   efsane: { name: 'Efsanevi Zırh Seti', tier: 7, lv: 55, body: 'efsane', mat: 'j7', color: '#ff8a5a', endgame: { normal: 0.015, elite: 0.05, boss: 0.25, metin: 0.2 }, minDiff: 1,
-    bonus: { 2: { hpPct: 0.1 }, 3: { defPct: 0.18 }, 4: { atkPct: 0.16, mob: 12 } },
+    bonus: { 2: { hpPct: 0.1 }, 3: { defPct: 0.18 }, 4: { atkPct: 0.16, mob: 12, fx: 'efsaneOfke' } },
     names: { head: 'Efsanevi Miğfer', chest: 'Efsanevi Zırh', feet: 'Efsanevi Çizme', shield: 'Efsanevi Kalkan' } },
   // Adlı takı setleri (jewel: yüzük + kolye + tılsım; kademe 7 temel değerleri × mul). Rastgele düşmez, yalnız özel kaynaklar:
   // bronzm (Sv 55): Bronz Taş Tapınağı 6. kat patronu (TEMPLE_REWARDS[5].jset) · ulumuhur (Sv 65): tapınak 8-10. kat
   // (TEMPLE_REWARDS[7..9].jset) ve Kara Taş Tapınağı Kabus'ta Kırık Taş Mühür (rollLoot JSET_KABUS).
   bronzm: { name: 'Bronz Mühür Takı Seti', jewel: true, tier: 7, lv: 55, mat: 'j7', color: '#e0a050', mul: 1.15, crit: 1,
-    bonus: { 2: { crit: 5, mob: 5 }, 3: { atkPct: 0.12, hpPct: 0.12 } },
+    bonus: { 2: { crit: 5, mob: 5 }, 3: { atkPct: 0.12, hpPct: 0.12, fx: 'muhurYanki' } },
     names: { ring: 'Bronz Mühür Yüzüğü', neck: 'Bronz Mühür Kolyesi', charm: 'Bronz Mühür Tılsımı' } },
   ulumuhur: { name: 'Ulu Mühür Takı Seti', jewel: true, tier: 7, lv: 65, mat: 'j7', color: '#7ad8ff', mul: 1.38, crit: 2,
-    bonus: { 2: { crit: 7, mob: 8 }, 3: { atkPct: 0.17, hpPct: 0.17, defPct: 0.06 } },
+    bonus: { 2: { crit: 7, mob: 8 }, 3: { atkPct: 0.17, hpPct: 0.17, defPct: 0.06, fx: 'muhurKalkan' } },
     names: { ring: 'Ulu Mühür Yüzüğü', neck: 'Ulu Mühür Kolyesi', charm: 'Ulu Mühür Tılsımı' } },
   tas: { name: 'Taş Balta', tier: 0, lv: 1, mat: 'j1', look: 'baltaci_balta', cls: 'baltaci', names: { weapon: 'Taş Balta' } },
   kurtb: { name: 'Kurt Başlı Balta', tier: 2, lv: 10, mat: 'j2', look: 'baltaci_kurt_balta', cls: 'baltaci', drop: [0, 0, 0.3, 0.4, 0.4, 0.4, 0.4, 0.35], names: { weapon: 'Kurt Başlı Balta' } },
@@ -1046,7 +1046,16 @@ const ARMOR_NAMES = {
 const JEWEL_SET_NAMES = ['Bakır', 'Gümüş', 'Zehir', 'Kemik', 'Kor', 'Buz', 'Kara Taş', 'Efsane'].map((n) => n + ' Takı Seti');
 const jewelSetBonus = (t) => ({ 2: { crit: 1 + Math.floor(t / 2) }, 3: { atkPct: 0.03 + 0.01 * t, hpPct: 0.03 + 0.01 * t } });
 const SET_BONUS_LABEL = { hpPct: ['Maks. can', true], defPct: ['Savunma', true], atkPct: ['Saldırı', true], crit: ['Kritik şansı', false, '%'], mob: ['Canavarlara karşı güç', false, '%'] };
-const setBonusText = (b) => Object.keys(b).map((k) => { const L = SET_BONUS_LABEL[k]; return L[0] + ' +' + (L[1] ? Math.round(b[k] * 100) + '%' : b[k] + (L[2] || '')); }).join(', ');
+// Set etkileri (en üst kademede, oynanışı değiştiren özel güçler). Çalışma zamanı: SETFX (recalc `on`'u doldurur), kancalar Combat'ta.
+const SET_FX = {
+  tasKabuk: { name: 'Taş Kabuk', text: 'her 8 sn\'de bir alınan ilk darbe yarıya iner' },
+  keskinRitim: { name: 'Keskin Ritim', text: 'kritik vuruş 4 sn boyunca saldırı hızını +%15 artırır' },
+  efsaneOfke: { name: 'Efsane Öfke', text: 'her öldürme 6 sn boyunca +%4 hasar verir (en çok 5 kat)' },
+  muhurYanki: { name: 'Mühür Yankısı', text: 'her 5. temel vuruş çevreye mühür dalgası yayar (%120 hasar)' },
+  muhurKalkan: { name: 'Mühür Kalkanı', text: 'can %30\'un altına inince 5 sn hasar %70 azalır ve %15 can dolar (60 sn bekleme)' },
+};
+const SETFX = { on: {}, kabukAt: 0, ritimUntil: 0, ofkeUntil: 0, ofkeN: 0, yankiN: 0, kalkanUntil: 0, kalkanAt: -99 };
+const setBonusText = (b) => Object.keys(b).map((k) => { if (k === 'fx') return '✦ ' + SET_FX[b[k]].name + ': ' + SET_FX[b[k]].text; const L = SET_BONUS_LABEL[k]; return L[0] + ' +' + (L[1] ? Math.round(b[k] * 100) + '%' : b[k] + (L[2] || '')); }).join(', ');
 // temel değerler (tier 0..7; 7 = Sv 55 son oyun: Efsanevi set / silahlar / Efsane takılar)
 const BASE_STATS = {
   weapon: { atk: [5, 10, 20, 34, 52, 74, 100, 134] },
@@ -1067,6 +1076,12 @@ const BONUS_POOL = {
   spd: { name: 'Hareket Hızı', max: (t) => 3 + Math.ceil(t * 0.5), pct: true },
   mob: { name: 'Canavarlara Karşı Güç', max: (t) => 3 + t * 2, pct: true },
   regen: { name: 'Can Yenileme', max: (t) => 1 + t, pct: false },
+  // Efsun çeşitliliği (kalite/derinlik güncellemesi): saldırı ritmi, kritik hasarı, can çalma, zırh delme, patron hasarı
+  aspd: { name: 'Saldırı Hızı', max: (t) => 2 + Math.ceil(t * 0.7), pct: true },
+  cdmg: { name: 'Kritik Hasarı', max: (t) => 4 + 3 * t, pct: true },
+  steal: { name: 'Can Çalma', max: (t) => 1 + Math.ceil(t * 0.3), pct: true },
+  pierce: { name: 'Savunma Delme', max: (t) => 2 + Math.ceil(t * 0.8), pct: true },
+  boss: { name: 'Patronlara Karşı Güç', max: (t) => 3 + t * 2, pct: true },
 };
 const STAT_LABEL = { atk: 'Saldırı', def: 'Savunma', hp: 'Maks. Can', mp: 'Maks. Mana', crit: 'Kritik %', spd: 'Hareket Hızı %' };
 
@@ -2388,22 +2403,22 @@ function setInfoOf(it, equip) {
 // giyili eşyalardan etkin set bonusları: [{name, have, bonus: birleşik}] + toplam (recalc)
 function activeSets(equip) {
   equip = equip || P.equip;
-  const seen = {}, list = [], sum = { hpPct: 0, defPct: 0, atkPct: 0, crit: 0, mob: 0 };
+  const seen = {}, list = [], fx = [], sum = { hpPct: 0, defPct: 0, atkPct: 0, crit: 0, mob: 0 };
   for (const sl of SLOTS) {
     const S = setInfoOf(equip[sl], equip);
     if (!S || seen[S.key]) continue;
     seen[S.key] = 1;
     const on = {};
-    for (const n in S.bonus) if (S.have >= +n) for (const k in S.bonus[n]) { on[k] = (on[k] || 0) + S.bonus[n][k]; sum[k] += S.bonus[n][k]; }
+    for (const n in S.bonus) if (S.have >= +n) for (const k in S.bonus[n]) { if (k === 'fx') { on.fx = S.bonus[n][k]; fx.push(S.bonus[n][k]); continue; } on[k] = (on[k] || 0) + S.bonus[n][k]; sum[k] += S.bonus[n][k]; }
     if (Object.keys(on).length) list.push({ name: S.name, color: S.color, have: S.have, total: S.total, bonus: on });
   }
-  return { list, sum };
+  return { list, sum, fx };
 }
 const setBonusHTML = (S) => `<div class="setb"><b style="color:${S.color}">${S.name}</b> · giyili ${S.have}/${S.total}${Object.keys(S.bonus).map((n) => `<span class="${S.have >= +n ? 'on' : ''}">(${n}) ${setBonusText(S.bonus[n])}</span>`).join('')}</div>`;
 const itemColor = (it) => (it.type === 'gear' ? RARITY[it.rarity].color : STACKS[it.id].kind === 'ess' ? STACKS[it.id].tint : it.id === 'soul' ? '#c89aff' : it.id === 'bless' ? '#ffd07a' : '#e8e2d2');
 
 function gearStats(it) {
-  const out = { atk: 0, def: 0, hp: 0, mp: 0, crit: 0, spd: 0, mob: 0, regen: 0 };
+  const out = { atk: 0, def: 0, hp: 0, mp: 0, crit: 0, spd: 0, mob: 0, regen: 0, aspd: 0, cdmg: 0, steal: 0, pierce: 0, boss: 0 };
   const base = BASE_STATS[it.slot];
   const JS = it.set && GEAR_SETS[it.set] && GEAR_SETS[it.set].jewel ? GEAR_SETS[it.set] : null; // adlı takı: × mul, + kritik
   const m = RARITY[it.rarity].mult * (1 + UPG.bonus[it.plus]) * (JS ? JS.mul : 1);
@@ -3163,7 +3178,7 @@ function applySave(o) {
 const buffs = []; // {id, icon, until, atkPct, defPct, speedPct, critAdd, regenPct}
 function recalc() {
   const c = CLASSES[P.cls], s = P.stats;
-  const add = { atk: 0, def: 0, hp: 0, mp: 0, crit: 0, spd: 0, mob: 0, regen: 0 };
+  const add = { atk: 0, def: 0, hp: 0, mp: 0, crit: 0, spd: 0, mob: 0, regen: 0, aspd: 0, cdmg: 0, steal: 0, pierce: 0, boss: 0 };
   for (const sl of SLOTS) {
     const it = P.equip[sl];
     if (!it) continue;
@@ -3174,6 +3189,7 @@ function recalc() {
   // set bonusları (zırh seti 2/3/4 parça, takı seti 2/3 parça)
   const sets = activeSets(P.equip), sb = sets.sum;
   D.sets = sets.list;
+  SETFX.on = {}; for (const id of sets.fx) SETFX.on[id] = 1;
   atkPct += sb.atkPct; defPct += sb.defPct; critAdd += sb.crit; add.mob += sb.mob;
   // Taş Mühürler (yuvaya takılı, giyili eşyalardan; tür başına üst sınırlı): geliştirmeden ayrı ilerleme katmanı
   const sealB = sealBonusOf(P.equip), ss = sealB.sum;
@@ -3193,6 +3209,7 @@ function recalc() {
   D.dodge = Math.min(18, s.dex * 0.12);
   D.spd = 5.4 * (1 + add.spd / 100 + spdPct);
   D.mob = add.mob;
+  D.aspd = Math.min(40, add.aspd); D.cdmg = Math.min(80, add.cdmg); D.steal = Math.min(12, add.steal); D.pierce = Math.min(40, add.pierce); D.bossP = add.boss;
   D.regen = add.regen;
   D.regenPct = regenPct;
   if (P.hp > D.maxHp) P.hp = D.maxHp;
@@ -17341,10 +17358,21 @@ const Combat = {
     }
     return best;
   },
+  // Mühür Yankısı: vurulan canavarın çevresine mühür dalgası
+  sealEcho(src) {
+    FX.ring(src.x, src.z, 3.2, 0x7ad8ff, 0.5, 0.2); FX.burst(src.x, 0.8, src.z, 0x9fe8ff, 22, 6); SFX.play('boom');
+    for (const m of G.level.mobs) {
+      if (m === src || m.dead || m.puppet || m.duelFoe || dist(src.x, src.z, m.x, m.z) > 3.2 + m.r) continue;
+      this.hitMob(m, 1.2, { color: 'crit', noCrit: true });
+    }
+  },
+  critMul() { return 1.8 + (D.cdmg || 0) / 100; },
   calc(mult, target, critAdd) {
     const crit = Math.random() * 100 < D.crit + (critAdd || 0);
-    let dmg = D.atk * mult * rand(0.92, 1.08) * (1 + D.mob / 100) * (100 / (100 + target.def));
-    if (crit) dmg *= 1.8;
+    let dmg = D.atk * mult * rand(0.92, 1.08) * (1 + D.mob / 100) * (100 / (100 + target.def * (1 - (D.pierce || 0) / 100)));
+    if (target.rank === 'boss' && D.bossP) dmg *= 1 + D.bossP / 100;
+    if (crit) dmg *= this.critMul();
+    if (SETFX.on.efsaneOfke && G.time < SETFX.ofkeUntil) dmg *= 1 + 0.04 * SETFX.ofkeN;
     return { dmg: Math.max(1, Math.round(dmg)), crit };
   },
   hitMob(m, mult, o) {
@@ -17352,9 +17380,12 @@ const Combat = {
     if (m.dead) return;
     if (m.duelFoe) return Duel.hitFoe(m, mult, o); // düello: hasarı rakibin telefonu hesaplar
     const r = this.calc(mult, m, o.critAdd);
-    if (o.noCrit && r.crit) { r.crit = false; r.dmg = Math.round(r.dmg / 1.8); }
+    if (o.noCrit && r.crit) { r.crit = false; r.dmg = Math.round(r.dmg / this.critMul()); }
     if (m.dmgK != null && m.dmgK !== 1) r.dmg = Math.max(1, Math.round(r.dmg * m.dmgK)); // tapınak patronu: mühür kalkanı / son öfke
+    if (r.crit && SETFX.on.keskinRitim) SETFX.ritimUntil = G.time + 4;
+    if (o.echo) this.sealEcho(m);
     m.hp -= r.dmg;
+    if (D.steal && !o.dot && P.hp > 0) P.hp = Math.min(D.maxHp, P.hp + Math.max(1, Math.round(r.dmg * D.steal / 100))); // Can Çalma
     m.hitT = 0; m.lastHit = 0;
     if (!o.dot) { m.flash(); FX.burst(m.x, 1, m.z, r.crit ? 0xffd84a : 0xfff0d0, r.crit ? 10 : 5, 4, 0.1, 0.35); }
     FX.num(m.x, (m.barH || 2) * 0.8, m.z, r.dmg, r.crit ? 'crit' : o.color || '');
@@ -17368,6 +17399,10 @@ const Combat = {
   },
   killMob(m) {
     m.dead = true; m.hp = 0;
+    if (SETFX.on.efsaneOfke && !m.puppet) { // Efsane Öfke
+      SETFX.ofkeN = G.time < SETFX.ofkeUntil ? Math.min(5, SETFX.ofkeN + 1) : 1; SETFX.ofkeUntil = G.time + 6;
+      FX.num(G.player.x, 2.9, G.player.z, 'ÖFKE ×' + SETFX.ofkeN, 'exp');
+    }
     Coop.onKill(m); // ortak zindan (host): misafirler de ödüllerini alsın
     const L = G.level;
     if (G.player.target === m) G.player.target = null;
@@ -17499,6 +17534,18 @@ const Combat = {
     if (!o.raw && Math.random() * 100 < D.dodge) { FX.num(pl.x, 2.2, pl.z, 'ISKA', 'miss'); return; }
     let dmg = o.raw ? raw : raw * rand(0.9, 1.1) * (120 / (120 + D.def));
     dmg = Math.max(1, Math.round(dmg));
+    if (SETFX.on.tasKabuk && G.time >= SETFX.kabukAt && !o.poisonTick) { // Taş Kabuk
+      SETFX.kabukAt = G.time + 8; dmg = Math.max(1, Math.round(dmg * 0.5));
+      FX.ring(pl.x, pl.z, 1.6, 0xd8b070, 0.45, 0.2); FX.burst(pl.x, 1, pl.z, 0xd8b070, 10, 3); FX.num(pl.x, 2.9, pl.z, 'TAŞ KABUK', 'exp');
+    }
+    if (SETFX.on.muhurKalkan) { // Mühür Kalkanı
+      if (G.time < SETFX.kalkanUntil) dmg = Math.max(1, Math.round(dmg * 0.3));
+      else if (G.time - SETFX.kalkanAt >= 60 && P.hp - dmg < D.maxHp * 0.3 && P.hp > 0) {
+        SETFX.kalkanAt = G.time; SETFX.kalkanUntil = G.time + 5; dmg = Math.max(1, Math.round(dmg * 0.3));
+        P.hp = Math.min(D.maxHp, P.hp + Math.round(D.maxHp * 0.15));
+        FX.ring(pl.x, pl.z, 2.4, 0x7ad8ff, 0.7, 0.2); FX.burst(pl.x, 1, pl.z, 0x7ad8ff, 24, 5); banner('Mühür Kalkanı', '5 sn hasar azalır, can doldu', 1.8);
+      }
+    }
     P.hp -= dmg;
     pl.combatT = 0;
     if (!o.poisonTick) { pl.flash(); SFX.play('hurt'); }
@@ -17524,20 +17571,22 @@ const Combat = {
   },
   basicAttack(t) {
     const pl = G.player, c = CLASSES[P.cls];
-    pl.atkT = c.atkCd;
-    pl.swing = pl.swingDur = Math.min(0.32, c.atkCd * 0.8);
+    const cd = c.atkCd / (1 + ((D.aspd || 0) + (SETFX.on.keskinRitim && G.time < SETFX.ritimUntil ? 15 : 0)) / 100); // Saldırı Hızı
+    pl.atkT = cd;
+    pl.swing = pl.swingDur = Math.min(0.32, cd * 0.8);
     pl.swingAlt = !pl.swingAlt;
     pl.swingN = G.time - (pl.lastSwingT == null ? -9 : pl.lastSwingT) > 1.4 ? 0 : (pl.swingN | 0) + 1; // kombo (ara verince baştan)
     pl.lastSwingT = G.time;
     if (P.cls === 'warrior') FX.bladeOn(pl, 0.5, buffs.some((b) => SKILLS[b.id] && SKILLS[b.id].swordGlow) ? 0xffd890 : 0xdfeaff, 0.55);
     SFX.play(c.ranged ? 'magic' : 'swing');
+    const echo = !!SETFX.on.muhurYanki && (SETFX.yankiN = (SETFX.yankiN | 0) + 1) % 5 === 0; // Mühür Yankısı: her 5. vuruş
     if (c.ranged) {
-      Proj.playerShot(pl, t, 0x7af0e0, (m) => this.hitMob(m, 1), 18, 0.18);
+      Proj.playerShot(pl, t, 0x7af0e0, (m) => this.hitMob(m, 1, { echo }), 18, 0.18);
     } else {
       later(c.hitDelay || 0.12, () => {
         if (t.dead || pl.dead) return;
         if (dist(pl.x, pl.z, t.x, t.z) <= c.atkRange + t.r + 0.8) {
-          this.hitMob(t, 1);
+          this.hitMob(t, 1, { echo });
           FX.slash(pl.x, 1.2, pl.z, pl.rot, 0xfff4d8, 1.8);
         }
       });
@@ -18649,7 +18698,7 @@ const UI = {
     const rows = [
       ['Saldırı', D.atk], ['Savunma', D.def], ['Maks. can', D.maxHp], ['Maks. mana', D.maxMp],
       ['Kritik', D.crit.toFixed(1) + '%'], ['Kaçınma', D.dodge.toFixed(1) + '%'], ['Hareket hızı', D.spd.toFixed(1)],
-      ['Canavarlara karşı', '+' + D.mob + '%'], ['EXP', P.lv >= MAX_LV ? 'MAKS' : fmtFull(P.exp) + ' / ' + fmtFull(expNeed(P.lv))],
+      ['Canavarlara karşı', '+' + D.mob + '%'], ['Saldırı hızı', '+' + (D.aspd || 0) + '%'], ['Kritik hasarı', '×' + (1.8 + (D.cdmg || 0) / 100).toFixed(2)], ['EXP', P.lv >= MAX_LV ? 'MAKS' : fmtFull(P.exp) + ' / ' + fmtFull(expNeed(P.lv))],
       ['Kesilen canavar', fmtFull(P.kills)], ['Yenilen boss', P.bosses], ['Ölüm', P.deaths], ['En yüksek +', '+' + P.bestPlus], ['Oyun süresi', `${hrs} sa ${mins} dk`],
     ];
     kv.innerHTML = rows.map(([a, v]) => `<span>${a}</span><span>${v}</span>`).join('');
@@ -19844,7 +19893,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
