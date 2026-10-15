@@ -4,6 +4,7 @@ Her görev sonunda kısa kayıt: tarih ve görev · değişen dosyalar · öneml
 Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 
 ## Önceki işler (özet, git geçmişinden)
+- (30) Açık dünya altyapısı + 1. bölge «Fener Ovası» (dal `ozellik/acik-dunya`, yedek `yedek/acik-dunya-oncesi`): `WILD_ZONES` veri tablosu, `buildWild` (yükseklik haritası, 280×280, tepeler/göl/gölcük, yol ağı: ana yol + 5 dal + 1 döngü, orman/dik yamaç/su/sınır sırtı engelleri, tabelalar, Gözcü Tepesi/Taş Çember/Göl Kampı/Seyir Taşı, mühürlü geçit). Köy güney kapısı gerçek geçit (`kind:'wild'`), dönüş `wback`. Oyuncu/kamera/güneş `groundY` ile zemini izler. Mini haritaya dokununca büyük harita + yön işareti (bayrak, ışık sütunu, mesafe). Canavar yok. Doğrulama: başsız tarayıcı (7 nokta erişilebilir, tüm yollar çarpışmayla yürünebildi, zindan regresyonu geçti); gerçek cihazda denenmedi.
 - (29) Köy sadeleştirme (dal `ozellik/koy-sadelestir`, yedek `yedek/koy-sadelestir-oncesi`): 6 oturma bankası, tüm köy/yapı fıçıları (Tüccar, Demirci, kulübe, Usta, Simyacı çevresi) ve anıtın etrafındaki 4 mangal kaldırıldı; ilgili `blockAt` çarpışmaları da silindi (karakter takılmasın). `propBarrel/propBench` fonksiyonları duruyor. Doğrulama: sözdizimi + başsız ekran görüntüsü; gerçek cihazda denenmedi.
 - `1889fb6` Savaşçı sınıfı (5 gövde GLB, yeniden rig + animasyon), Sv 70 ve son oyun dengesi.
 - `d9f1acd` · `f65921b` · `032b90e` · `12e578b` · `0c38673`: Savaşçı kılıçları, hareket yakalama animasyonları, yeni yetenek

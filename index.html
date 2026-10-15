@@ -521,6 +521,21 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
 #banner{top:13%}
 #banner h2{font-size:clamp(15px,2.4vw,22px);text-shadow:2px 2px 0 var(--ink),-1px -1px 0 var(--ink)}
 #banner p{font-size:12px;margin-top:2px}
+
+/* Büyük harita (mini haritaya dokununca) */
+#minimap{cursor:pointer}
+#bigmap{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;background:rgba(8,6,12,.78);padding:calc(8px + var(--st,0px)) calc(8px + var(--sr,0px)) calc(8px + var(--sb,0px)) calc(8px + var(--sl,0px))}
+#bigmap[hidden]{display:none}
+#bigmap .bm{display:flex;flex-direction:column;gap:6px;padding:8px;background:rgba(18,13,22,.94);border:1px solid rgba(200,155,90,.55);border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.6);max-width:100%;max-height:100%}
+#bigmap .bmh{display:flex;align-items:center;gap:10px;color:#f1e3c6;font-size:13px;line-height:1.2}
+#bigmap .bmh b{font-size:15px;color:#ffe9b0}
+#bigmap .bmh #bm-hint{flex:1;opacity:.7;font-size:12px}
+#bigmap button{font:inherit;font-size:12px;color:#f1e3c6;background:rgba(60,44,30,.9);border:1px solid rgba(200,155,90,.55);border-radius:6px;padding:5px 9px;min-height:30px;cursor:pointer}
+#bigmap button[disabled]{opacity:.4}
+#bigmap #bm-x{min-width:34px}
+#bigmap canvas{display:block;border-radius:6px;background:#0b0810;touch-action:none;image-rendering:pixelated}
+#bigmap .bmf{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:#cdbfa4}
+#bigmap .bmf i{display:inline-block;width:9px;height:9px;margin-right:4px;border-radius:2px;vertical-align:-1px}
 </style>
 
 <div id="game">
@@ -577,6 +592,13 @@ ul.efs{margin:4px 0 2px;padding-left:14px;font-size:12px}
     <div id="expbar"><i></i><b id="exptxt"></b></div>
     <div id="banner"><h2></h2><p></p></div>
     <div id="toast" class="px"></div>
+  </div>
+  <div id="bigmap" hidden>
+    <div class="bm">
+      <div class="bmh"><b id="bm-name"></b><span id="bm-hint">Dokun: yön işareti koy</span><button id="bm-clear" type="button">İşareti kaldır</button><button id="bm-x" type="button" aria-label="Kapat">✕</button></div>
+      <canvas id="bmc" width="640" height="640"></canvas>
+      <div class="bmf" id="bm-leg"></div>
+    </div>
   </div>
   <div id="modal" hidden>
     <div id="panel" class="px" role="dialog" aria-modal="true" aria-labelledby="ptitle">
@@ -1276,6 +1298,7 @@ const dailyReward = (lv) => ({ gold: Math.round(60 + lv * lv * 5), exp: lv < 50 
 // ---------- Görsel temalar ----------
 const THEMES = {
   village: { fog: 0x9c8c88, fogDensity: 0.0058, hemiSky: 0xb8c4e4, hemiGround: 0x7a5e48, hemiI: 0.68, sun: 0xffb070, sunI: 0.54, exposure: 1.0, vignette: 0.32, ambient: 'firefly', ambientN: 24 },
+  wild: { fog: 0xa9c8dc, fogDensity: 0.0042, hemiSky: 0xcfe4ff, hemiGround: 0x6f7a48, hemiI: 0.7, sun: 0xfff0d0, sunI: 0.74, exposure: 1.0, vignette: 0.2, grade: { bloom: 0.2, thr: 0.97, sat: 1.04, con: 1.05, tint: [1.0, 1.0, 0.985], vig: 0.1 } },
   forest: { floor: 0x7a7458, wall: 0x5c5644, wallTop: 0x4c4838, fog: 0x2a3322, fogNear: 12, fogFar: 46, hemiSky: 0xd8e6c4, hemiGround: 0x6a6a4e, hemiI: 1.05, sun: 0xe8f0d0, sunI: 0.55, exposure: 1.2, light: 0xffd49a, lightI: 1.7, torch: 0xffa040, deco: 'forest', vignette: 0.24, ambient: 'firefly', ambientN: 34 },
   spider: { floor: 0x685a72, wall: 0x4c4058, wallTop: 0x62547a, fog: 0x281e32, fogNear: 12, fogFar: 44, hemiSky: 0xd4c4ec, hemiGround: 0x54466a, hemiI: 1.05, sun: 0xd8ccff, sunI: 0.5, exposure: 1.2, light: 0xc8ff9a, lightI: 1.7, torch: 0x9aff4a, deco: 'spider', vignette: 0.26, ambient: 'spore', ambientN: 30 },
   grave: { floor: 0x747884, wall: 0x565a66, wallTop: 0x6a7288, fog: 0x222838, fogNear: 12, fogFar: 46, hemiSky: 0xc4d2ee, hemiGround: 0x505a70, hemiI: 1.05, sun: 0xc8d8ff, sunI: 0.55, exposure: 1.2, light: 0xa8c0ff, lightI: 1.7, torch: 0x6ab0ff, deco: 'grave', vignette: 0.26, ambient: 'dust', ambientN: 26 },
@@ -9300,7 +9323,7 @@ const Net = {
   },
   // Combat.useSkill çağırır (yalnız animasyon bilgisi)
   onSkill(id) { this.sk++; this.skId = id; this.idleT = 99; },
-  levelKey(L) { L = L || G.level; return !L ? '' : L.type === 'village' ? 'v' : 'd' + L.dIdx + '-' + L.floorIdx; },
+  levelKey(L) { L = L || G.level; return !L ? '' : L.type === 'village' ? 'v' : L.wild ? 'w' + L.wildIdx : 'd' + L.dIdx + '-' + L.floorIdx; },
   levelName(k) {
     if (k === 'v') return 'Köyde';
     const m = /^d(\d+)-(\d+)$/.exec(k || '');
@@ -12131,8 +12154,9 @@ function updateSun(tx, tz, zoom) {
   if (c.right !== half) { c.left = -half; c.right = half; c.top = half; c.bottom = -half; c.updateProjectionMatrix(); }
   const texel = (half * 2) / s.shadow.mapSize.x;
   const sx = Math.round(tx / texel) * texel, sz = Math.round(tz / texel) * texel;
-  s.target.position.set(sx, 0, sz);
-  s.position.set(sx + SUN_DIR.x * 45, SUN_DIR.y * 45, sz + SUN_DIR.z * 45);
+  const gy0 = G.camGY || 0;
+  s.target.position.set(sx, gy0, sz);
+  s.position.set(sx + SUN_DIR.x * 45, gy0 + SUN_DIR.y * 45, sz + SUN_DIR.z * 45);
   s.target.updateMatrixWorld();
 }
 // Fener/meşale noktaları arasında 3 PointLight'ı en yakınlara dağıtır (ışık sayısı sabit → shader yeniden derlenmez)
@@ -13772,7 +13796,8 @@ function buildDungeonHall(L, C) {
   for (const sx of [-1, 1]) propBrazier(L, C + sx * 3.7, 10.8, 1.1);
 }
 // Köy çıkışı: iki taş sütun, üstte ahşap kiriş, bayraklar, mangallar, basamaklar
-function buildExitGate(L, C, zz) {
+function buildExitGate(L, C, zz, dir, yo, day) { // day: gündüz (açık dünya) — parıltı sprite'ı ve ışık noktası yok
+  dir = dir || 1; yo = yo || 0;
   const stone = mat(0xa89c86), beam = mat(0x5a3a22);
   for (const sx of [-1, 1]) {
     const x = C + sx * 3.7;
@@ -13780,14 +13805,14 @@ function buildExitGate(L, C, zz) {
     box(L.group, 0.95, 3.2, 0.95, stone, x, 2.0, zz);
     box(L.group, 1.2, 0.3, 1.2, mat(0xb8ab94), x, 3.75, zz);
     part(L.group, cylGeo(0.5, 0.32, 0.3, 8), mat(0x2e2a30), x, 4.05, zz);
-    addFlameInst(L, x, 4.15, zz, 0.8);
-    addGlowSprite(L, x, 4.6, zz, 0xffa040, 3.4);
+    addFlameInst(L, x, 4.15 + yo, zz, 0.8);
+    if (!day) addGlowSprite(L, x, 4.6 + yo, zz, 0xffa040, 3.4);
   }
   box(L.group, 8.6, 0.35, 0.45, beam, C, 3.55, zz);
   box(L.group, 7.4, 0.25, 0.4, beam, C, 3.1, zz);
-  for (const sx of [-1, 1]) propBannerCloth(L.group, C + sx * 2.4, 3.4, zz - 0.28, 1.0, 2.2);
-  for (const [dz, hh] of [[-2.9, 0.08], [-2.25, 0.16], [-1.6, 0.24]]) box(L.group, 5.2, hh, 0.65, 0xa89c86, C, hh / 2, zz + dz);
-  addLightSpot(L, C, 4.0, zz - 0.8, 0xffa040, 1.0, 9);
+  for (const sx of [-1, 1]) propBannerCloth(L.group, C + sx * 2.4, 3.4, zz - 0.28 * dir, 1.0, 2.2, dir < 0 ? Math.PI : 0);
+  for (const [dz, hh] of [[-2.9, 0.08], [-2.25, 0.16], [-1.6, 0.24]]) box(L.group, 5.2, hh, 0.65, 0xa89c86, C, hh / 2, zz + dz * dir);
+  if (!day) addLightSpot(L, C, 4.0 + yo, zz - 0.8 * dir, 0xffa040, 1.0, 9);
 }
 
 // ---------- Köy yapıları (kutu tabanlı düşük poli; referans görsellerin diliyle: arduvaz/kiremit çatı, taş baca, ahşap çerçeve) ----------
@@ -14186,6 +14211,8 @@ function buildVillage() {
   // --- Köy çıkışı (güney): sütunlu kapı ---
   buildExitGate(L, C, H * T - 4.4);
   blockAt(C - 3.7, H * T - 4.4); blockAt(C + 3.7, H * T - 4.4);
+  L.interact.push({ kind: 'wild', zone: 0, x: C, z: H * T - 6.6, r: 3.6, label: 'Vahşi Diyar\'a çık: ' + WILD_ZONES[0].name, active: true });
+  addLabel(L, WILD_ZONES[0].name, 'Vahşi Diyar · çıkış', C, 5.2, H * T - 4.4, '#e8d8a8');
 
   // --- Fenerler ---
   for (const [x, z, ry] of [[24, 27, 0], [24, 35, 0], [38, 27, Math.PI], [38, 35, Math.PI], [27.3, 21.5, 0], [34.7, 21.5, Math.PI], [27.3, 40.5, 0], [34.7, 40.5, Math.PI]]) buildLantern(L, x, z, ry);
@@ -14273,12 +14300,387 @@ function buildVillage() {
   }
   L.spawn = { x: C, z: 36 };
   L.spawnPortal = { x: C, z: 16.4 };
+  L.spawnGate = { x: C, z: H * T - 8.6 }; // açık dünyadan dönüş
   flushFoliage(L, F);
   flushFlames(L);
   mergeStatic(L);
   markShadows(L);
   LightPool.reset(L.lightSpots);
   return L;
+}
+
+// ---------- AÇIK DÜNYA (Vahşi Diyar) ----------
+// Her bölge bir WILD_ZONES kaydıdır: yükseklik haritası (tepeler, göl, yol boyunca yumuşak yamaçlar), yol ağı (ana yol + dallar),
+// engeller (orman, dik yamaç, su, sınır sırtı) ve ilgi noktaları. Bölge 'dungeon' türündedir (savaş, doğma, mini harita aynen çalışır).
+// Zemin yüksekliği: groundY(L, x, z); oyuncu / kamera / güneş bunu izler. Canavarlar henüz düz y=0: canavar eklerken Mob.animate'e uygula.
+const WILD_M = 40; // yükseklik haritası kenar payı (oynanabilir alanın dışında yükselen sırt)
+const WILD_ZONES = [
+  {
+    id: 'w1', name: 'Fener Ovası', theme: 'wild', lv: [1, 8], seed: 7311, size: 280,
+    start: [140, 250], back: [140, 262], gate: [160, 24],
+    // yollar: 'main' ana yol (köy kapısından mühürlü geçide); diğerleri ana yoldan ayrılan dallar (ilk nokta kavşak)
+    paths: [
+      { id: 'main', pts: [[140, 256], [138, 238], [124, 222], [112, 204], [116, 188], [134, 176], [156, 164], [168, 146], [166, 128], [150, 110], [130, 98], [122, 80], [128, 64], [142, 48], [152, 34], [160, 24]] },
+      { id: 'tower', poi: 'Gözcü Tepesi', pts: [[116, 188], [96, 184], [74, 176], [54, 164], [44, 152]] },
+      { id: 'north', poi: 'Kuzey Patikası', pts: [[74, 176], [70, 150], [62, 126], [60, 100], [70, 80], [84, 64]] },
+      { id: 'circle', poi: 'Taş Çember', pts: [[128, 64], [108, 60], [84, 64], [66, 56], [54, 52]] },
+      { id: 'lake', poi: 'Gümüş Göl Kampı', pts: [[166, 128], [190, 136], [212, 150], [230, 166], [236, 174]] },
+      { id: 'ridge', poi: 'Seyir Taşı', pts: [[150, 110], [176, 98], [204, 92], [230, 84], [244, 78]] },
+    ],
+    hills: [
+      { x: 42, z: 146, r: 24, h: 8.5 }, { x: 246, z: 74, r: 20, h: 7.5 }, { x: 98, z: 156, r: 20, h: 3.6 }, { x: 196, z: 52, r: 24, h: 5 },
+      { x: 208, z: 246, r: 26, h: 4 }, { x: 58, z: 232, r: 24, h: 3.6 }, { x: 176, z: 188, r: 22, h: 3.2 }, { x: 100, z: 36, r: 20, h: 3.6 },
+    ],
+    lakes: [{ x: 246, z: 208, r: 28, depth: -5.6 }, { x: 94, z: 118, r: 10, depth: -5 }],
+    waterY: -0.35,
+    // düzlükler (bina/kamp zemini): level yoksa o noktanın doğal yüksekliği (+dh)
+    pads: [
+      { x: 140, z: 258, r: 13, dh: 0 }, { x: 160, z: 24, r: 12, dh: 0 }, { x: 54, z: 52, r: 11, dh: 0 },
+      { x: 236, z: 176, r: 9, dh: 0 }, { x: 43, z: 148, r: 7, dh: 0 }, { x: 244, z: 76, r: 7, dh: 0 },
+    ],
+  },
+];
+
+function wildNoise(seed) {
+  const r = mulberry32(seed), N = 64, tab = new Float32Array(N * N);
+  for (let i = 0; i < tab.length; i++) tab[i] = r() * 2 - 1;
+  const f = (t) => t * t * (3 - 2 * t);
+  return (x, z) => {
+    const xi = Math.floor(x), zi = Math.floor(z), tx = f(x - xi), tz = f(z - zi);
+    const a = tab[(zi & 63) * N + (xi & 63)], b = tab[(zi & 63) * N + ((xi + 1) & 63)];
+    const c = tab[((zi + 1) & 63) * N + (xi & 63)], d = tab[((zi + 1) & 63) * N + ((xi + 1) & 63)];
+    return lerp(lerp(a, b, tx), lerp(c, d, tx), tz);
+  };
+}
+const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+// Catmull-Rom ile kontrol noktalarından geçen yumuşak yol (her `step` birimde örnek)
+function wildSpline(pts, step) {
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const n = Math.max(2, Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / step));
+    for (let k = 0; k < n; k++) {
+      const t = k / n, t2 = t * t, t3 = t2 * t;
+      const c = (a) => 0.5 * (2 * p1[a] + (-p0[a] + p2[a]) * t + (2 * p0[a] - 5 * p1[a] + 4 * p2[a] - p3[a]) * t2 + (-p0[a] + 3 * p1[a] - 3 * p2[a] + p3[a]) * t3);
+      out.push([c(0), c(1)]);
+    }
+  }
+  out.push(pts[pts.length - 1].slice());
+  return out;
+}
+// Zemin yüksekliği (yükseklik haritası varsa çift doğrusal örnekleme; yoksa 0)
+function groundY(L, x, z) {
+  const hg = L && L.hg;
+  if (!hg) return 0;
+  const N = L.hgN, fx = clamp(x + WILD_M, 0, N - 1.001), fz = clamp(z + WILD_M, 0, N - 1.001);
+  const ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz, k = iz * N + ix;
+  return lerp(lerp(hg[k], hg[k + 1], tx), lerp(hg[k + N], hg[k + N + 1], tx), tz);
+}
+
+function buildWild(zi) {
+  const Z = WILD_ZONES[zi | 0] || WILD_ZONES[0];
+  const L = newLevel('dungeon');
+  L.theme = THEMES[Z.theme]; L.wild = Z; L.wildIdx = WILD_ZONES.indexOf(Z);
+  L.dg = { id: Z.id, name: Z.name, theme: Z.theme, lv: Z.lv, floors: 1, mobs: [], elite: 'alphawolf', boss: null, junk: 'j1' };
+  L.dIdx = 0; L.floorIdx = 0; L.diff = 0; L.lastFloor = true;
+  L.floorLv = Z.lv[0];
+  setAtmosphere(L.theme);
+  const S = Z.size, M = WILD_M, N = S + 2 * M + 1, W = S / T, H = S / T;
+  L.W = W; L.H = H; L.grid = new Uint8Array(W * H);
+  const rr = mulberry32(Z.seed + 5), rv = () => rr();
+  const n1 = wildNoise(Z.seed), n2 = wildNoise(Z.seed + 91), n3 = wildNoise(Z.seed + 177), nF = wildNoise(Z.seed + 333);
+
+  // --- yol örnekleri + uzaklık kovaları ---
+  const splines = Z.paths.map((p) => wildSpline(p.pts, 1.5));
+  const buck = new Map(), BK = 8;
+  const bkey = (bx, bz) => (bx + 16) * 64 + (bz + 16);
+  splines.forEach((pp) => pp.forEach(([x, z]) => {
+    const k = bkey(Math.floor(x / BK), Math.floor(z / BK));
+    let a = buck.get(k); if (!a) buck.set(k, a = []);
+    a.push(x, z);
+  }));
+  const pathDist = (x, z) => {
+    const bx = Math.floor(x / BK), bz = Math.floor(z / BK);
+    let best = 99;
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+      const a = buck.get(bkey(bx + i, bz + j));
+      if (!a) continue;
+      for (let q = 0; q < a.length; q += 2) { const d = Math.hypot(a[q] - x, a[q + 1] - z); if (d < best) best = d; }
+    }
+    return best;
+  };
+
+  // --- yükseklik ---
+  const lowH = (x, z) => {
+    let h = 2.6 + 2.3 * n1(x / 62 + 3.1, z / 62 + 7.7) + 1.1 * n2(x / 31 + 11, z / 31 + 5);
+    for (const k of Z.hills) h += k.h * Math.exp((-1.6 * ((x - k.x) ** 2 + (z - k.z) ** 2)) / (k.r * k.r));
+    for (const k of Z.lakes) {
+      const wob = 1 + 0.3 * n2(x / 18 + 5, z / 18 + 2), d2 = ((x - k.x) ** 2 + (z - k.z) ** 2) * wob * wob;
+      h += k.depth * Math.exp((-1.2 * d2) / (k.r * k.r));
+    }
+    return h;
+  };
+  for (const p of Z.pads) p.level = p.level != null ? p.level : lowH(p.x, p.z) + (p.dh || 0);
+  const fullH = (x, z, d) => {
+    let h = lowH(x, z) + (0.5 * n3(x / 14 + 2, z / 14 + 9) + 0.22 * n3(x / 6.5 + 40, z / 6.5 + 3)) * sstep(2.5, 8, d); // yol boyunca ayrıntı sönümü: yumuşak yamaç
+    h += 9 * sstep(16, -6, Math.min(x, z, S - x, S - z)); // kenar sırtı
+    for (const p of Z.pads) { const dd = Math.hypot(x - p.x, z - p.z); if (dd < p.r) h = lerp(h, p.level, sstep(p.r, p.r * 0.55, dd)); }
+    return h;
+  };
+  const hg = new Float32Array(N * N);
+  for (let iz = 0; iz < N; iz++) for (let ix = 0; ix < N; ix++) {
+    const x = ix - M, z = iz - M;
+    hg[iz * N + ix] = fullH(x, z, pathDist(x, z));
+  }
+  L.hg = hg; L.hgN = N;
+  const gy = (x, z) => groundY(L, x, z);
+
+  // --- ızgara: engeller ---
+  const forestAt = (x, z) => nF(x / 36 + 17, z / 36 + 5) * 0.5 + 0.5;
+  const cellType = new Uint8Array(W * H); // 0 çayır · 1 yol · 2 su · 3 orman · 4 kaya/dik · 5 sınır
+  const protect = new Uint8Array(W * H);
+  const poi = [
+    { x: Z.back[0], z: Z.back[1], name: Z.back[2] || 'Fener Köyü', gate: 'back' },
+    { x: Z.gate[0], z: Z.gate[1], name: 'Mühürlü Geçit', gate: 'next' },
+  ];
+  for (const p of Z.paths) if (p.poi) { const e = p.pts[p.pts.length - 1]; poi.push({ x: e[0], z: e[1], name: p.poi }); }
+  L.poi = poi;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const x = (i + 0.5) * T, z = (j + 0.5) * T, k = j * W + i;
+    const e = Math.min(x, z, S - x, S - z), h = gy(x, z), d = pathDist(x, z);
+    const sl = Math.hypot(gy(x + 1, z) - gy(x - 1, z), gy(x, z + 1) - gy(x, z - 1)) / 2;
+    let prot = d < 3.4;
+    for (const q of poi) if (Math.hypot(x - q.x, z - q.z) < 7) prot = true;
+    protect[k] = prot ? 1 : 0;
+    let ty = d < 2.6 ? 1 : 0, ok = 1;
+    if (e < 12) { ty = 5; ok = 0; }
+    else if (!prot) {
+      if (h < Z.waterY + 0.25) { ty = 2; ok = 0; }
+      else if (sl > 0.62) { ty = 4; ok = 0; }
+      else if (forestAt(x, z) > 0.64 && d > 6.5) { ty = 3; ok = 0; }
+    }
+    L.grid[k] = ok; cellType[k] = ty;
+  }
+
+  // --- zemin ağı: köşe renkli, dokulu ---
+  // ağ: oynanabilir alanda 1 birim, dış sırtta 4 birim aralık (üçgen tasarrufu); yükseklik haritasından örneklenir
+  const xs = []; for (let x = -M; x < 0; x += 4) xs.push(x); for (let x = 0; x <= S; x++) xs.push(x); for (let x = S + 4; x <= S + M; x += 4) xs.push(x);
+  const NX = xs.length;
+  const idx = new Uint32Array((NX - 1) * (NX - 1) * 6), pos = new Float32Array(NX * NX * 3), col = new Float32Array(NX * NX * 3), uv = new Float32Array(NX * NX * 2);
+  const cGrassLo = new THREE.Color(0x5b8a38), cGrassHi = new THREE.Color(0x92a84a), cDark = new THREE.Color(0x3d6a2e), cDirt = new THREE.Color(0xa98558),
+    cDirtD = new THREE.Color(0x8a6a44), cRock = new THREE.Color(0x8e887c), cSand = new THREE.Color(0xd0bf8e), cMud = new THREE.Color(0x4a6a5a), cTop = new THREE.Color(0x6a8a3e);
+  const tmp = new THREE.Color(), tmp2 = new THREE.Color();
+  for (let b = 0; b < NX; b++) for (let a = 0; a < NX; a++) {
+    const x = xs[a], z = xs[b], ix = x + M, iz = z + M, k = b * NX + a, h = hg[iz * N + ix];
+    pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z;
+    uv[k * 2] = x / 7; uv[k * 2 + 1] = z / 7;
+    const hx = hg[iz * N + Math.min(N - 1, ix + 1)] - hg[iz * N + Math.max(0, ix - 1)], hz = hg[Math.min(N - 1, iz + 1) * N + ix] - hg[Math.max(0, iz - 1) * N + ix];
+    const sl = Math.hypot(hx, hz) / 2, d = pathDist(x, z), fo = forestAt(x, z);
+    const vv = 0.5 + 0.5 * n3(x / 9 + 60, z / 9 + 30);
+    tmp.copy(cGrassLo).lerp(cGrassHi, clamp((h - 1.5) / 6 + vv * 0.35 - 0.1, 0, 1));
+    tmp.lerp(cDark, clamp((fo - 0.5) * 3.2, 0, 0.8));
+    if (h > 6) tmp.lerp(cTop, clamp((h - 6) / 4, 0, 0.5));
+    tmp.lerp(cRock, sstep(0.44, 0.7, sl) * 0.8);
+    if (h < 0.55) tmp.lerp(cSand, sstep(0.55, -0.05, h) * 0.9);
+    if (h < Z.waterY) tmp.lerp(cMud, sstep(Z.waterY, Z.waterY - 1.2, h));
+    const road = 1 - sstep(1.7, 3.1, d);
+    if (road > 0) tmp.lerp(tmp2.copy(cDirt).lerp(cDirtD, vv * 0.5), road * 0.92);
+    col[k * 3] = tmp.r; col[k * 3 + 1] = tmp.g; col[k * 3 + 2] = tmp.b;
+  }
+  let q = 0;
+  for (let iz = 0; iz < NX - 1; iz++) for (let ix = 0; ix < NX - 1; ix++) {
+    const a = iz * NX + ix, b = a + 1, c = a + NX, d = c + 1;
+    idx[q++] = a; idx[q++] = c; idx[q++] = b; idx[q++] = b; idx[q++] = c; idx[q++] = d;
+  }
+  const tg = new THREE.BufferGeometry();
+  tg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  tg.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  tg.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  tg.setIndex(new THREE.BufferAttribute(idx, 1));
+  tg.computeVertexNormals();
+  const tex = grassTex().clone(); tex.needsUpdate = true; tex.repeat.set(1, 1); tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  const tm = new THREE.MeshLambertMaterial({ vertexColors: true, map: tex });
+  const terrain = new THREE.Mesh(tg, tm);
+  terrain.userData.dyn = true; terrain.userData.noCast = true; terrain.receiveShadow = true;
+  L.group.add(terrain); L.disposables.push(tg, tm, tex);
+
+  // --- göl / gölcük suyu ---
+  for (const k of Z.lakes) {
+    const wg = new THREE.CircleGeometry(k.r * 1.45, 40), wm = new THREE.MeshPhongMaterial({ color: 0x3b8cc0, specular: 0xbfe6ff, shininess: 90, transparent: true, opacity: 0.84 });
+    const w = new THREE.Mesh(wg, wm); w.rotation.x = -Math.PI / 2; w.position.set(k.x, Z.waterY, k.z);
+    w.userData.dyn = true; w.userData.noCast = true; w.receiveShadow = true; w.renderOrder = 1;
+    L.group.add(w); L.disposables.push(wg, wm);
+    const ph = rv() * 6;
+    L.anims.push((t) => { wm.opacity = 0.8 + Math.sin(t * 1.3 + ph) * 0.04; w.position.y = Z.waterY + Math.sin(t * 0.8 + ph) * 0.03; });
+  }
+
+  // --- bitki örtüsü (instanced) ---
+  const F = Foliage();
+  const lift = (a0, a1, a2, h) => { for (let i = a0; i < F.trunks.length; i++) F.trunks[i].y += h - 0.2; for (let i = a1; i < F.cones.length; i++) F.cones[i].y += h - 0.1; for (let i = a2; i < F.blobs.length; i++) F.blobs[i].y += h; };
+  const tree = (x, z, s, cheap) => {
+    const a0 = F.trunks.length, a1 = F.cones.length, a2 = F.blobs.length, h = gy(x, z);
+    (cheap ? rv() < 0.9 : h > 4.2 || forestAt(x, z) > 0.55 ? rv() < 0.7 : rv() < 0.35) ? fTreePine(F, x, z, s) : fTreeRound(F, x, z, s);
+    lift(a0, a1, a2, h);
+  };
+  const blockCell = (x, z) => { const i = Math.floor(x / T), j = Math.floor(z / T); if (i >= 0 && j >= 0 && i < W && j < H && !protect[j * W + i]) L.grid[j * W + i] = 0; };
+  // yoğun orman / sınır sırtı: 2×2 karo bloklarına ağaç
+  for (let bj = 0; bj < H; bj += 2) for (let bi = 0; bi < W; bi += 2) {
+    let forest = 0, border = 0, any = 0;
+    for (let j = bj; j < bj + 2; j++) for (let i = bi; i < bi + 2; i++) { const t = cellType[j * W + i]; if (t === 3) forest++; if (t === 5) border++; if (L.grid[j * W + i] === 0 && t !== 2) any++; }
+    if (forest + border === 0) continue;
+    const x0 = bi * T, z0 = bj * T;
+    tree(x0 + 1 + rv() * 2, z0 + 1 + rv() * 2, 1.3 + rv() * 0.7, true);
+    if (rv() < 0.15) tree(x0 + rv() * 4, z0 + rv() * 4, 0.9 + rv() * 0.6, true);
+  }
+  // sınır dışı (sırt üstü) ağaçlar
+  for (let z = -M + 4; z < S + M - 4; z += 8) for (let x = -M + 4; x < S + M - 4; x += 8) {
+    if (x >= -2 && x <= S + 2 && z >= -2 && z <= S + 2) continue;
+    if (rv() < 0.6) tree(x + rv() * 6, z + rv() * 6, 2.0 + rv() * 1.0, true);
+  }
+  // çayırlardaki seyrek ağaçlar + çalılar + otlar
+  const keepClear = (x, z, d) => { if (d < 5.2) return true; for (const p of poi) if (Math.hypot(x - p.x, z - p.z) < 9) return true; return false; };
+  for (let z = 14; z < S - 14; z += 5.5) for (let x = 14; x < S - 14; x += 5.5) {
+    const px = x + (rv() - 0.5) * 4.4, pz = z + (rv() - 0.5) * 4.4, i = Math.floor(px / T), j = Math.floor(pz / T);
+    if (i < 0 || j < 0 || i >= W || j >= H) continue;
+    const t = cellType[j * W + i];
+    if (t >= 2 || keepClear(px, pz, pathDist(px, pz))) continue;
+    const fo = forestAt(px, pz), r = rv();
+    if (r < 0.1 + fo * 0.34) { tree(px, pz, 0.95 + rv() * 0.7); blockCell(px, pz); }
+    else if (r < 0.5) { const a1 = F.blobs.length, a2 = F.flowers.length, h = gy(px, pz); fBush(F, px, pz, 0.8 + rv() * 0.5); for (let k2 = a1; k2 < F.blobs.length; k2++) F.blobs[k2].y += h; for (let k2 = a2; k2 < F.flowers.length; k2++) F.flowers[k2].y += h; }
+  }
+  for (let z = 12; z < S - 12; z += 2.7) for (let x = 12; x < S - 12; x += 2.7) {
+    if (rv() > 0.7) continue;
+    const px = x + rv() * 2.4, pz = z + rv() * 2.4, i = Math.floor(px / T), j = Math.floor(pz / T), t = cellType[j * W + i];
+    if (t >= 2) continue;
+    const a0 = F.tufts.length; fTuft(F, px, pz); F.tufts[a0].y += gy(px, pz);
+  }
+  flushFoliage(L, F);
+  // kayalar: dik yamaç blokları + yol kenarı
+  const rocks = [];
+  for (let bj = 0; bj < H; bj += 2) for (let bi = 0; bi < W; bi += 2) {
+    let steep = 0;
+    for (let j = bj; j < bj + 2; j++) for (let i = bi; i < bi + 2; i++) if (cellType[j * W + i] === 4) steep++;
+    if (!steep) continue;
+    const n = 1 + (rv() < 0.35 ? 1 : 0);
+    for (let k = 0; k < n; k++) { const x = bi * T + rv() * 4, z = bj * T + rv() * 4, s = 0.7 + rv() * 0.8; rocks.push({ x, y: gy(x, z) + 0.15 * s, z, sx: s * (1 + rv() * 0.5), sy: s * 0.7, sz: s * (1 + rv() * 0.5), c: pick([0x8e887c, 0x7e786e, 0x9a9488, 0x6f6a62]), ry: rv() * TAU }); }
+  }
+  for (let k = 0; k < 220; k++) {
+    const x = 12 + rv() * (S - 24), z = 12 + rv() * (S - 24), d = pathDist(x, z), i = Math.floor(x / T), j = Math.floor(z / T);
+    if (cellType[j * W + i] >= 2 || keepClear(x, z, d) || d > 14) continue;
+    const s = 0.35 + rv() * 0.55; rocks.push({ x, y: gy(x, z) + 0.1 * s, z, sx: s * 1.2, sy: s * 0.7, sz: s, c: pick([0x8e887c, 0x9a9488]), ry: rv() * TAU });
+  }
+  if (rocks.length) {
+    const rg = new THREE.IcosahedronGeometry(1, 0), rm = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
+    const im = new THREE.InstancedMesh(rg, rm, rocks.length), m4 = new THREE.Matrix4(), qq = new THREE.Quaternion(), ee = new THREE.Euler(), c4 = new THREE.Color();
+    rocks.forEach((r, i) => { ee.set(0, r.ry, 0); qq.setFromEuler(ee); m4.compose(new THREE.Vector3(r.x, r.y, r.z), qq, new THREE.Vector3(r.sx, r.sy, r.sz)); im.setMatrixAt(i, m4); im.setColorAt(i, c4.setHex(r.c)); });
+    im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; im.castShadow = true; im.receiveShadow = true; im.userData.dyn = true;
+    L.group.add(im); L.disposables.push(im, rg, rm);
+  }
+
+  // --- yapılar: kapılar, tabelalar, ilgi noktaları ---
+  const lift3 = (fn, y) => { const n0 = L.group.children.length; fn(); for (let i = n0; i < L.group.children.length; i++) L.group.children[i].position.y += y; };
+  // köy kapısı (güney) ve mühürlü geçit (kuzey)
+  const bh = gy(Z.back[0], Z.back[1]);
+  lift3(() => buildExitGate(L, Z.back[0], Z.back[1], 1, bh, true), bh);
+  addLabel(L, Z.back[2] || 'Fener Köyü', 'Köye dön', Z.back[0], bh + 5.4, Z.back[1], '#e8d8a8');
+  L.interact.push({ kind: 'wback', x: Z.back[0], z: Z.back[1] - 1.8, r: 3.4, label: 'Fener Köyü\'ne dön', active: true });
+  const gh = gy(Z.gate[0], Z.gate[1]);
+  lift3(() => buildExitGate(L, Z.gate[0], Z.gate[1], -1, gh, true), gh);
+  const nextOpen = !!WILD_ZONES[L.wildIdx + 1];
+  const gp = makePortal(L, Z.gate[0], Z.gate[1], nextOpen ? 0x7ad8ff : 0x6a6a8a);
+  gp.g.position.y = gh; gp.g.scale.setScalar(1.35); gp.active = nextOpen;
+  addLabel(L, nextOpen ? WILD_ZONES[L.wildIdx + 1].name : 'Mühürlü Geçit', nextOpen ? 'Sonraki bölge' : 'Sonraki bölge · yakında', Z.gate[0], gh + 5.6, Z.gate[1], nextOpen ? '#bfe8ff' : '#b8b0c8');
+  L.nextGate = { kind: 'wnext', x: Z.gate[0], z: Z.gate[1] + 2.6, r: 3.6, label: nextOpen ? 'Geçide gir: ' + WILD_ZONES[L.wildIdx + 1].name : 'Mühürlü Geçit', lockLabel: 'Mühürlü Geçit · sonraki bölge yakında', active: nextOpen, portal: gp };
+  L.interact.push(L.nextGate);
+
+  // yol tabelaları: her dalın başında ve ana yolun kavşaktaki devamında
+  const dirArrow = (dx, dz) => '→↘↓↙←↖↑↗'[((Math.round(Math.atan2(dz, dx) / (Math.PI / 4)) % 8) + 8) % 8];
+  const signAt = (jx, jz, tx, tz, text, color) => {
+    const dl = Math.hypot(tx - jx, tz - jz) || 1, dx = (tx - jx) / dl, dz = (tz - jz) / dl;
+    const sx = jx + dx * 4.5 - dz * 3.6, sz = jz + dz * 4.5 + dx * 3.6, h = gy(sx, sz);
+    const g = pivot(L.group, sx, h, sz);
+    g.rotation.y = Math.atan2(-dz, dx);
+    box(g, 0.2, 2.5, 0.2, mat(0x5a3a22), 0, 1.25, 0);
+    box(g, 1.7, 0.55, 0.1, mat(0x8a6a3a), 0, 2.2, -0.06);
+    box(g, 1.75, 0.07, 0.12, mat(0x4a321a), 0, 2.52, -0.06); box(g, 1.75, 0.07, 0.12, mat(0x4a321a), 0, 1.88, -0.06);
+    const tip = part(g, coneGeo(0.3, 0.5, 4), mat(0x8a6a3a), 0.95, 2.2, -0.06); tip.rotation.z = -Math.PI / 2; tip.rotation.y = Math.PI / 4;
+    addLabel(L, text, dirArrow(dx, dz), sx, h + 3.1, sz, color || '#f1e3c6');
+  };
+  const main = Z.paths[0];
+  const mainNext = (jx, jz) => { // kavşağın ana yoldaki bir sonraki kontrol noktası
+    for (let i = 0; i < main.pts.length - 1; i++) if (Math.hypot(main.pts[i][0] - jx, main.pts[i][1] - jz) < 1) return main.pts[i + 1];
+    return null;
+  };
+  const seenJ = new Set();
+  for (const p of Z.paths.slice(1)) {
+    const a = p.pts[0], b = p.pts[1], key = a.join(), nx = mainNext(a[0], a[1]);
+    signAt(a[0], a[1], b[0], b[1], p.poi, '#ffe9b0');
+    if (nx && !seenJ.has(key)) { seenJ.add(key); signAt(a[0], a[1], nx[0], nx[1], 'Mühürlü Geçit', '#cfc8e0'); }
+  }
+  signAt(Z.start[0], Z.start[1] - 4, Z.start[0], Z.start[1] - 14, 'Fener Ovası', '#e8d8a8');
+
+  // Gözcü Tepesi: yıkık kule + devrik duvar
+  { const tx = 42, tz = 146, th = gy(tx, tz); const g = buildTower(L, tx, tz, 6.4); g.position.y = th - 0.3;
+    for (let k = 0; k < 5; k++) { const a = rv() * TAU, rd = 3.4 + rv() * 2.2, b = box(L.group, 1.4 + rv(), 0.5 + rv() * 0.5, 0.5, mat(0x8f8472), tx + Math.cos(a) * rd, gy(tx + Math.cos(a) * rd, tz + Math.sin(a) * rd) + 0.3, tz + Math.sin(a) * rd); b.rotation.set(rv() * 0.2, rv() * TAU, rv() * 0.25); } }
+  // Taş Çember: dikili taşlar + merkez rün taşı
+  { const cx = 54, cz = 52, ch = gy(cx, cz), ring = [];
+    for (let k = 0; k < 9; k++) { const a = (k / 9) * TAU, x = cx + Math.cos(a) * 5.4, z = cz + Math.sin(a) * 5.4, hh = 2.4 + rv() * 1.4;
+      const g = pivot(L.group, x, gy(x, z), z); g.rotation.y = -a + Math.PI / 2;
+      const st = box(g, 1.1, hh, 0.7, mat(0x7a7a82), 0, hh / 2 - 0.1, 0); st.rotation.z = (rv() - 0.5) * 0.14;
+      box(g, 0.5, 0.5, 0.05, mat(0x6ad8ff, { e: 0x3ab8ff, ei: 1.1 }), 0, hh * 0.62, 0.38); ring.push(g); }
+    const g = pivot(L.group, cx, ch, cz);
+    part(g, cylGeo(1.5, 1.7, 0.4, 8), mat(0x6a6a74), 0, 0.2, 0);
+    const orb = part(g, sphGeo(0.4, 8, 6), mat(0x9ae8ff, { e: 0x5ad0ff, ei: 1.4 }), 0, 1.5, 0);
+    orb.userData.dyn = true; L.anims.push((t) => { orb.position.y = 1.5 + Math.sin(t * 1.6) * 0.18; orb.rotation.y = t; });
+    glowDecal(L.group, cx, ch + 0.45, cz, 4.2, 0x5ac8ff, 0.2).userData.dyn = true;
+    addGlowHalo(L, cx, ch + 1.6, cz, 0x5ac8ff, 4.2);
+    addLightSpot(L, cx, ch + 2.2, cz, 0x5ab8ff, 1.0, 10, { flicker: false }); }
+  // Gümüş Göl Kampı: çadır, kamp ateşi, kütük oturaklar
+  { const kx = 236, kz = 176, kh = gy(kx, kz);
+    const t = buildTent(L, kx - 4.5, kz - 3); t.position.y = kh;
+    const fx = kx + 2.2, fz = kz + 0.6, fh = gy(fx, fz);
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * TAU; part(L.group, sphGeo(0.22, 5, 4), mat(0x6e6a64), fx + Math.cos(a) * 0.85, fh + 0.12, fz + Math.sin(a) * 0.85); }
+    makeFlame(L, fx, fh + 0.1, fz, 0xff8a30, 1.4);
+    addLightSpot(L, fx, fh + 1.4, fz, 0xff9a40, 1.3, 11, { pri: 1.2 });
+    for (const [ox, oz, ry] of [[-1.7, 1.6, 0.4], [1.2, 2.1, -0.5], [-0.2, -2.0, 1.2]]) { const lg = part(L.group, cylGeo(0.3, 0.3, 1.5, 7), mat(0x6a4426), fx + ox, fh + 0.3, fz + oz); lg.rotation.z = Math.PI / 2; lg.rotation.y = ry; } }
+  // Seyir Taşı: taş yığını + bayrak
+  { const cx = 244, cz = 76, ch = gy(cx, cz), g = pivot(L.group, cx, ch, cz);
+    [[2.4, 0.5, 0], [1.8, 0.45, 0.5], [1.3, 0.4, 1.0], [0.9, 0.35, 1.45]].forEach(([w, hh, y], i) => { const b = box(g, w, hh, w * 0.9, mat(i % 2 ? 0x9a9488 : 0x7e786e), 0, y + hh / 2, 0); b.rotation.y = i * 0.7; });
+    box(g, 0.1, 3.6, 0.1, mat(0x5a3a22), 0, 3.0, 0);
+    propBannerCloth(g, 0.6, 4.2, 0, 1.2, 0.8); }
+
+  // --- mini harita renkleri + son işlemler ---
+  L.cellCol = new Uint32Array(W * H);
+  const MAPC = [0x4e7a38, 0xb89a68, 0x2f6a9a, 0x2a4a2a, 0x76726a, 0x1a2a1a];
+  for (let k = 0; k < W * H; k++) {
+    const x = ((k % W) + 0.5) * T, z = (((k / W) | 0) + 0.5) * T, h = gy(x, z);
+    let c = MAPC[cellType[k]];
+    if (cellType[k] === 0 && h > 6) c = 0x6e8a44;
+    L.cellCol[k] = c;
+  }
+  L.mapAll = document.createElement('canvas'); L.mapAll.width = W; L.mapAll.height = H;
+  { const g = L.mapAll.getContext('2d'); for (let k = 0; k < W * H; k++) { g.fillStyle = '#' + L.cellCol[k].toString(16).padStart(6, '0'); g.fillRect(k % W, (k / W) | 0, 1, 1); } }
+  L.spawn = { x: Z.start[0], z: Z.start[1] };
+  L.spawnGate = L.spawn;
+  flushFlames(L);
+  mergeStatic(L);
+  markShadows(L);
+  LightPool.reset(L.lightSpots || []);
+  return L;
+}
+// Bölgenin tüm önemli noktalarına yürünebilir mi? (test / doğrulama)
+function wildReach(L) {
+  const si = Math.floor(L.spawn.x / T), sj = Math.floor(L.spawn.z / T), W = L.W, H = L.H;
+  const seen = new Uint8Array(W * H), q = [sj * W + si]; seen[q[0]] = 1;
+  while (q.length) {
+    const c = q.pop(), ci = c % W, cj = (c / W) | 0;
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const ni = ci + di, nj = cj + dj, k = nj * W + ni;
+      if (ni < 0 || nj < 0 || ni >= W || nj >= H || seen[k] || L.grid[k] !== 1) continue;
+      seen[k] = 1; q.push(k);
+    }
+  }
+  return L.poi.map((p) => ({ name: p.name, ok: !!seen[Math.floor(p.z / T) * W + Math.floor(p.x / T)] }));
 }
 
 // ---------- ZİNDAN ÜRETİMİ ----------
@@ -17255,7 +17657,7 @@ class PlayerEnt {
   // alanlarını (this.moving, this.swing, this.swingAlt, this.spin, this.dead) kullanır.
   animateGltf(dt) {
     const H = this.H, C = H.clips;
-    H.root.position.set(this.x, 0, this.z);
+    H.root.position.set(this.x, groundY(G.level, this.x, this.z), this.z);
     H.root.rotation.y = this.rot;
     if (this.dead) {
       H.body.rotation.x = Math.max(-1.5, H.body.rotation.x - dt * 5);
@@ -17350,7 +17752,7 @@ class PlayerEnt {
   animate(dt) {
     const H = this.H, t = this.anim;
     if (H.gltf) { this.animateGltf(dt); return; }
-    H.root.position.set(this.x, 0, this.z);
+    H.root.position.set(this.x, groundY(G.level, this.x, this.z), this.z);
     H.root.rotation.y = this.rot;
     if (this.dead) {
       H.body.rotation.x = Math.max(-1.5, H.body.rotation.x - dt * 5);
@@ -18172,6 +18574,12 @@ const UI = {
       b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); SFX.init(); fn(e); });
     };
     tapBtn('#b-bag', () => this.open('bag'));
+    tapBtn('#minimap', () => this.openMap());
+    tapBtn('#bm-x', () => this.closeMap());
+    tapBtn('#bm-clear', () => this.clearWaypoint());
+    $('#bigmap').addEventListener('pointerdown', (e) => { if (e.target.id === 'bigmap') this.closeMap(); });
+    $('#bmc').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); this.mapTap(e); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && this.mapOpen) this.closeMap(); else if ((e.key === 'm' || e.key === 'M') && G.state === 'play' && !this.panel) { if (this.mapOpen) this.closeMap(); else this.openMap(); } });
     tapBtn('#b-zoom', () => setCamMode(P.settings.cam === 'tps' ? 'iso' : 'tps'));
     tapBtn('#b-char', () => this.open('char'));
     tapBtn('#b-menu', () => this.open('menu'));
@@ -18337,6 +18745,12 @@ const UI = {
     SFX.play('click');
     if (it.kind === 'npc') { Quest.ev('talk', { npc: it.id }); if (Quest.atNpc(it.id)) { this.qNpc = it.id; this.open('quest'); } else this.open(it.id); }
     else if (it.kind === 'exit') goVillage(true);
+    else if (it.kind === 'wild') goWild(it.zone | 0);
+    else if (it.kind === 'wback') goVillage('gate');
+    else if (it.kind === 'wnext') {
+      if (!it.active) { toast('Geçit mühürlü: sonraki bölge yakında açılacak'); SFX.play('deny'); return; }
+      goWild(G.level.wildIdx + 1);
+    }
     else if (it.kind === 'down') {
       if (!it.active) { toast('Portal mühürlü: önce kat muhafızını (elit) yen'); SFX.play('deny'); return; }
       goDungeon(G.level.dIdx, G.level.floorIdx + 1);
@@ -18413,13 +18827,13 @@ const UI = {
       const cb = $('#btn-ctx');
       if (it && !this.panel) {
         cb.hidden = false;
-        const lockable = it.kind === 'down' || it.kind === 'tup';
+        const lockable = it.kind === 'down' || it.kind === 'tup' || it.kind === 'wnext';
         const txt = lockable && !it.active ? it.lockLabel : it.label;
         if (cb.textContent !== txt) cb.textContent = txt;
         cb.classList.toggle('gold', !lockable || it.active);
       } else cb.hidden = true;
       const L = G.level;
-      $('#zone').innerHTML = L.type === 'village' ? 'Fener Köyü' : `${L.dg.name} · ${L.floorIdx + 1}. kat` + (L.diff ? ` · <b style="color:${DIFFS[L.diff].color}">${DIFFS[L.diff].name}</b>` : '') + (Coop.count() > 1 ? ` · <b style="color:#7ee0ff">${Coop.count()} kişi</b>` : '');
+      $('#zone').innerHTML = L.type === 'village' ? 'Fener Köyü' : L.wild ? L.wild.name : `${L.dg.name} · ${L.floorIdx + 1}. kat` + (L.diff ? ` · <b style="color:${DIFFS[L.diff].color}">${DIFFS[L.diff].name}</b>` : '') + (Coop.count() > 1 ? ` · <b style="color:#7ee0ff">${Coop.count()} kişi</b>` : '');
       const pt = $('#party');
       pt.hidden = !Net.room;
       if (Net.room) {
@@ -18467,7 +18881,7 @@ const UI = {
       L.mapG = L.mapCv.getContext('2d');
     }
     const pi = Math.floor(pl.x / T), pj = Math.floor(pl.z / T);
-    const RR = L.type === 'village' ? 40 : 7;
+    const RR = L.wild ? 15 : L.type === 'village' ? 40 : 7;
     for (let j = pj - RR; j <= pj + RR; j++) for (let i = pi - RR; i <= pi + RR; i++) {
       if (i < 0 || j < 0 || i >= L.W || j >= L.H) continue;
       const k = j * L.W + i;
@@ -18475,15 +18889,15 @@ const UI = {
       if ((i - pi) ** 2 + (j - pj) ** 2 > RR * RR) continue;
       L.seen[k] = 1;
       const v = L.grid[k];
-      L.mapG.fillStyle = v === 1 ? (L.type === 'village' ? '#6a6050' : '#5a5060') : v === 2 ? '#3a3040' : '#1a141e';
+      L.mapG.fillStyle = L.cellCol ? '#' + L.cellCol[k].toString(16).padStart(6, '0') : v === 1 ? (L.type === 'village' ? '#6a6050' : '#5a5060') : v === 2 ? '#3a3040' : '#1a141e';
       L.mapG.fillRect(i, j, 1, 1);
     }
-    const scale = L.type === 'village' ? 3.2 : 3.4;
+    const scale = L.wild ? 2.3 : L.type === 'village' ? 3.2 : 3.4;
     const ox = S / 2 - (pl.x / T) * scale, oy = S / 2 - (pl.z / T) * scale;
     g.drawImage(L.mapCv, ox, oy, L.W * scale, L.H * scale);
     const dot = (x, z, c, r) => { g.fillStyle = c; g.fillRect(Math.round(ox + (x / T) * scale - r), Math.round(oy + (z / T) * scale - r), r * 2, r * 2); };
     for (const it of L.interact) {
-      const c = it.kind === 'npc' ? (it.id === 'portal' && !it.model ? '#6ad8ff' : '#e8c547') : it.kind === 'exit' ? '#4ab0ff' : it.active ? '#c04aff' : '#6a4a7a';
+      const c = it.kind === 'npc' ? (it.id === 'portal' && !it.model ? '#6ad8ff' : '#e8c547') : (it.kind === 'exit' || it.kind === 'wild' || it.kind === 'wback') ? '#4ab0ff' : it.active ? '#c04aff' : '#6a4a7a';
       dot(it.x, it.z, c, 2.5);
     }
     for (const m of L.mobs) {
@@ -18492,10 +18906,115 @@ const UI = {
       if (!L.seen[k]) continue;
       dot(m.x, m.z, m.rank === 'boss' || m.rank === 'metin' ? '#e07aff' : m.rank === 'elite' ? '#ffa030' : '#e2554a', m.rank === 'normal' ? 1.5 : 2.5);
     }
+    // yön işareti (büyük haritadan konur): görüş içindeyse bayrak, dışındaysa kenarda ok + mesafe
+    if (L.wp) {
+      const wdx = L.wp.x - pl.x, wdz = L.wp.z - pl.z, wd = Math.hypot(wdx, wdz);
+      if (wd < 4) { this.clearWaypoint(); toast('Hedefe ulaştın'); }
+      else {
+        const px = S / 2 + (wdx / T) * scale, py = S / 2 + (wdz / T) * scale;
+        g.fillStyle = '#ffd24a'; g.strokeStyle = '#000'; g.lineWidth = 1;
+        if (px > 6 && px < S - 6 && py > 6 && py < S - 6) { g.beginPath(); g.moveTo(px, py - 6); g.lineTo(px + 4, py); g.lineTo(px, py + 6); g.lineTo(px - 4, py); g.closePath(); g.fill(); g.stroke(); }
+        else {
+          const a = Math.atan2(wdz, wdx), ex = S / 2 + Math.cos(a) * (S / 2 - 8), ey = S / 2 + Math.sin(a) * (S / 2 - 8);
+          g.save(); g.translate(ex, ey); g.rotate(a); g.beginPath(); g.moveTo(5, 0); g.lineTo(-4, 4); g.lineTo(-4, -4); g.closePath(); g.fill(); g.stroke(); g.restore();
+        }
+        g.font = 'bold 10px sans-serif'; g.textAlign = 'right'; g.fillStyle = '#ffe9b0'; g.strokeStyle = 'rgba(0,0,0,.85)'; g.lineWidth = 3;
+        const tx = Math.round(wd) + ' m'; g.strokeText(tx, S - 3, S - 4); g.fillText(tx, S - 3, S - 4);
+      }
+    }
     // oyuncu oku
     g.save(); g.translate(S / 2, S / 2); g.rotate(-pl.rot + Math.PI);
     g.fillStyle = '#fff4d8'; g.beginPath(); g.moveTo(0, -5); g.lineTo(4, 4); g.lineTo(-4, 4); g.closePath(); g.fill();
     g.restore();
+  },
+
+  // ---------- Büyük harita + yön işareti ----------
+  openMap() {
+    if (G.state !== 'play' || !G.level || !G.player || this.panel || G.transitioning || this.mapOpen) return;
+    this.mapOpen = true; G.paused = true;
+    Input.atkHeld = false; Input.jx = Input.jz = 0; Input.joyId = null;
+    if (this.joyRest) this.joyRest();
+    $('#btn-atk').classList.remove('held');
+    this.drawMinimap(); // keşif tuvali hazır olsun
+    $('#bigmap').hidden = false;
+    this.drawBigMap();
+  },
+  closeMap() {
+    if (!this.mapOpen) return;
+    this.mapOpen = false;
+    $('#bigmap').hidden = true;
+    G.paused = !!G.transitioning || !$('#ending').hidden || !!this.panel;
+    this.dirty = true;
+  },
+  setWaypoint(x, z) {
+    const L = G.level; if (!L) return;
+    this.clearWaypoint(true);
+    L.wp = { x, z };
+    const geo = new THREE.CylinderGeometry(0.28, 0.28, 46, 10, 1, true), m = basicMat(0xffd24a, 0.32, true);
+    const b = new THREE.Mesh(geo, m); b.position.set(x, groundY(L, x, z) + 22, z); b.renderOrder = 3; b.userData.dyn = true;
+    const rg = new THREE.RingGeometry(0.9, 1.25, 28), rm = basicMat(0xffd24a, 0.7, true), r = new THREE.Mesh(rg, rm);
+    r.rotation.x = -Math.PI / 2; r.position.set(x, groundY(L, x, z) + 0.12, z); r.userData.dyn = true;
+    L.group.add(b, r); L.disposables.push(geo, m, rg, rm);
+    L.beacon = { b, r, m, rm };
+    if (!L._wpAnim) { L._wpAnim = true; L.anims.push((t) => { const k = L.beacon; if (k) { k.m.opacity = 0.26 + 0.1 * Math.sin(t * 3); k.r.scale.setScalar(1 + 0.18 * Math.sin(t * 3)); } }); }
+  },
+  clearWaypoint(quiet) {
+    const L = G.level; if (!L) return;
+    if (L.beacon) { L.group.remove(L.beacon.b, L.beacon.r); L.beacon = null; }
+    L.wp = null;
+    if (!quiet && this.mapOpen) this.drawBigMap();
+  },
+  mapTap(e) {
+    const L = G.level, cv = $('#bmc'); if (!L) return;
+    const rc = cv.getBoundingClientRect(), span = Math.max(L.W, L.H) * T;
+    const wx = ((e.clientX - rc.left) / rc.width) * span, wz = ((e.clientY - rc.top) / rc.height) * span;
+    if (wx < 0 || wz < 0 || wx > L.W * T || wz > L.H * T) return;
+    if (L.wp && dist(wx, wz, L.wp.x, L.wp.z) < span * 0.04) this.clearWaypoint();
+    else { this.setWaypoint(wx, wz); SFX.play('click'); }
+    this.drawBigMap();
+  },
+  sizeBigMap() {
+    const cv = $('#bmc'), L = G.level;
+    const aw = window.innerWidth - 40, ah = window.innerHeight - 120;
+    const px = Math.max(220, Math.floor(Math.min(aw, ah, 760)));
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.style.width = cv.style.height = px + 'px';
+    if (cv.width !== Math.round(px * dpr)) cv.width = cv.height = Math.round(px * dpr);
+    return L;
+  },
+  drawBigMap() {
+    const L = G.level, pl = G.player; if (!L || !pl) return;
+    this.sizeBigMap();
+    const cv = $('#bmc'), g = cv.getContext('2d'), S = cv.width, span = Math.max(L.W, L.H), sc = S / span, k = sc * 1;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
+    g.fillStyle = '#0b0810'; g.fillRect(0, 0, S, S);
+    if (L.mapAll) { g.globalAlpha = 0.45; g.drawImage(L.mapAll, 0, 0, L.W * sc, L.H * sc); g.globalAlpha = 1; } // bilinmeyen kısım soluk
+    if (L.mapCv) g.drawImage(L.mapCv, 0, 0, L.W * sc, L.H * sc);
+    const px = (x) => (x / T) * sc, fs = Math.max(11, Math.round(S / 46));
+    g.font = `bold ${fs}px sans-serif`; g.textAlign = 'center'; g.lineJoin = 'round';
+    const label = (tx, x, y, col) => { g.strokeStyle = 'rgba(0,0,0,.9)'; g.lineWidth = 3; g.strokeText(tx, x, y); g.fillStyle = col; g.fillText(tx, x, y); };
+    if (L.poi) for (const p of L.poi) {
+      const seen = p.gate || (L.seen && L.seen[Math.floor(p.z / T) * L.W + Math.floor(p.x / T)]);
+      g.fillStyle = p.gate === 'next' ? '#c04aff' : p.gate ? '#4ab0ff' : '#ffe9b0';
+      g.beginPath(); g.arc(px(p.x), px(p.z), Math.max(3, S / 120), 0, TAU); g.fill();
+      g.strokeStyle = '#000'; g.lineWidth = 1.5; g.stroke();
+      label(seen ? p.name : '?', px(p.x), px(p.z) - Math.max(7, S / 70), seen ? '#fff4d8' : '#b0a890');
+    } else for (const it of L.interact) { g.fillStyle = it.kind === 'npc' ? '#e8c547' : it.kind === 'exit' ? '#4ab0ff' : '#c04aff'; g.fillRect(px(it.x) - 3, px(it.z) - 3, 6, 6); }
+    if (L.wp) {
+      const x = px(L.wp.x), y = px(L.wp.z);
+      g.fillStyle = '#ffd24a'; g.strokeStyle = '#000'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(x, y - fs * 1.2); g.lineTo(x + fs * 0.6, y); g.lineTo(x, y + fs * 0.5); g.lineTo(x - fs * 0.6, y); g.closePath(); g.fill(); g.stroke();
+      label(Math.round(dist(pl.x, pl.z, L.wp.x, L.wp.z)) + ' m', x, y + fs * 1.5, '#ffe9b0');
+    }
+    g.save(); g.translate(px(pl.x), px(pl.z)); g.rotate(-pl.rot + Math.PI);
+    g.fillStyle = '#fff4d8'; g.strokeStyle = '#000'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(0, -fs * 0.8); g.lineTo(fs * 0.6, fs * 0.6); g.lineTo(-fs * 0.6, fs * 0.6); g.closePath(); g.fill(); g.stroke(); g.restore();
+    label('K ↑', S - fs * 1.4, fs * 1.4, '#ffe9b0');
+    $('#bm-name').textContent = L.wild ? L.wild.name : L.type === 'village' ? 'Fener Köyü' : L.dg ? L.dg.name : 'Harita';
+    $('#bm-clear').disabled = !L.wp;
+    $('#bm-hint').textContent = L.wp ? 'İşarete yaklaştıkça mesafe küçülür' : 'Dokun: yön işareti koy';
+    const leg = $('#bm-leg');
+    if (leg && !leg._set) { leg._set = 1; leg.innerHTML = '<span><i style="background:#fff4d8"></i>Sen</span><span><i style="background:#ffd24a"></i>İşaret</span><span><i style="background:#4ab0ff"></i>Köy kapısı</span><span><i style="background:#c04aff"></i>Geçit</span><span><i style="background:#ffe9b0"></i>Yerler</span>'; }
   },
 
   // ---------- Paneller (ModalShell: başlık + sekme + kayan gövde + sabit alt) ----------
@@ -19537,7 +20056,7 @@ function setLevel(L) {
   Atmo.setTheme(L.theme);
   G.timers.length = 0;
   G.level = L;
-  G.player = null;
+  G.player = null; G.camGY = null;
   Coop.reset(); // ortak zindan örneği: goDungeon yenisini kurar
   if (!G.targetRing) {
     G.targetRing = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 20), basicMat(0xff4a3a, 0.8));
@@ -19550,7 +20069,7 @@ function setLevel(L) {
 function placePlayer(x, z) {
   G.player = new PlayerEnt(G.level, x, z);
   G.player.rot = Math.PI;
-  G.cam = null;
+  G.cam = null; G.camGY = null;
 }
 function transition(fn) {
   if (G.transitioning) return false; // çift dokunuşla iki kez seviye kurulmasın
@@ -19570,10 +20089,24 @@ function goVillage(fromPortal) {
   SFX.play('portal');
   return transition(() => {
     setLevel(buildVillage());
-    const s = fromPortal ? G.level.spawnPortal : G.level.spawn;
+    const s = fromPortal === 'gate' ? G.level.spawnGate : fromPortal ? G.level.spawnPortal : G.level.spawn; // 'gate': açık dünyadan dönüş (güney çıkış kapısı)
     placePlayer(s.x, s.z);
     if (P.hp <= 0) P.hp = D.maxHp;
     banner('Fener Köyü', 'Güvenli bölge', 1.6);
+    saveGame();
+  });
+}
+// Açık dünya: köyün güney kapısından Vahşi Diyar bölgesine geç (zi: WILD_ZONES dizini)
+function goWild(zi) {
+  if (G.transitioning) return false;
+  SFX.play('portal');
+  return transition(() => {
+    const L = buildWild(zi);
+    setLevel(L);
+    placePlayer(L.spawn.x, L.spawn.z);
+    if (P.hp <= 0) P.hp = D.maxHp;
+    computeFlow(L, G.player.x, G.player.z);
+    banner(L.wild.name, 'Vahşi Diyar · haritayı büyütmek için sağ üstteki haritaya dokun', 2.6);
     saveGame();
   });
 }
@@ -19681,6 +20214,7 @@ function updateCamera(dt) {
   if (!G.cam) G.cam = { x: tx, z: tz };
   const k = Math.min(1, dt * 8);
   G.cam.x = lerp(G.cam.x, tx, k); G.cam.z = lerp(G.cam.z, tz, k);
+  { const g0 = groundY(G.level, G.cam.x, G.cam.z); G.camGY = G.camGY == null ? g0 : lerp(G.camGY, g0, Math.min(1, dt * 4)); } // tepe/iniş: kamera zemini yumuşak izler
   // skill vuruşunda 2-3 karelik yakınlaşma (sarsıntı yok)
   let pk = 0;
   if (G.punch > 0) { G.punch -= dt; pk = Math.max(0, G.punch) / 0.08; }
@@ -19702,7 +20236,8 @@ function updateCamera(dt) {
     const fx = -Math.sin(yaw), fz = -Math.cos(yaw); // kameranın baktığı yatay yön
     const rx = -fz, rz = fx; // sağ
     const sh = 0.45; // omuz kayması (sağ omuz üstünden)
-    const tX = G.cam.x + rx * sh, tY = 1.65, tZ = G.cam.z + rz * sh;
+    const gyC = G.camGY || 0;
+    const tX = G.cam.x + rx * sh, tY = 1.65 + gyC, tZ = G.cam.z + rz * sh;
     // duvar/ev kamerayla karakter arasına girerse kamera öne kayar (ızgara üzerinde ışın)
     const hd = Math.cos(pitch);
     const blocked = (s) => { const x = tX - fx * s * hd, zq = tZ - fz * s * hd; return tileAt(G.level, x, zq) === 0 || (G.level.type === 'dungeon' && !walkable(G.level, x, zq)); };
@@ -19725,9 +20260,10 @@ function updateCamera(dt) {
   cd = Math.hypot(CAM_H, CAM_B) * zz * lerp(0.92, 0.28, f);
   const pitch = lerp(ISO_PITCH, 0.42, f), yaw = G.camYawS;
   const ly = lerp(0.8, 1.25, f), lz = lerp(-0.6, 0, f);
-  cam.position.set(G.cam.x + Math.cos(pitch) * Math.sin(yaw) * cd, ly + Math.sin(pitch) * cd, G.cam.z + lz + Math.cos(pitch) * Math.cos(yaw) * cd);
+  const gyC = G.camGY || 0;
+  cam.position.set(G.cam.x + Math.cos(pitch) * Math.sin(yaw) * cd, gyC + ly + Math.sin(pitch) * cd, G.cam.z + lz + Math.cos(pitch) * Math.cos(yaw) * cd);
   if (th && !th.fogDensity) { W3.fogLin.near = cd - 3; W3.fogLin.far = cd + (th.fogFar - th.fogNear) * 0.8 + 3; }
-  cam.lookAt(G.cam.x, ly, G.cam.z + lz);
+  cam.lookAt(G.cam.x, gyC + ly, G.cam.z + lz);
   if (W3.plLight.intensity > 0) W3.plLight.position.set(pl.x, 3.2, pl.z + 0.5);
   updateSun(G.cam.x, G.cam.z - 2, z);
   LightPool.update(dt, pl.x, pl.z, G.rt);
@@ -19964,7 +20500,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { buffs, SKILLS, toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { WILD_ZONES, buildWild, wildReach, groundY, goWild, goVillage, setLevel, placePlayer, buffs, SKILLS, toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;

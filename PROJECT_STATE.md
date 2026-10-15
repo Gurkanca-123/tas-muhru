@@ -91,6 +91,14 @@ her zaman `grep -n` ile doğrula.
 - Set etkileri: `SET_FX` (ad+metin) + `SETFX` (çalışma durumu; `recalc` `activeSets().fx` ile `SETFX.on`'u doldurur). Set `bonus[n].fx = '<id>'` ile bağlanır (toplama dışı). Etkiler: tasKabuk (bronzz 4), keskinRitim (nihai 4), efsaneOfke (efsane 4), muhurYanki (bronzm 3), muhurKalkan (ulumuhur 3). Kancalar: `damagePlayer`, `hitMob`, `killMob`, `basicAttack`, `sealEcho`. Süre/bekleme `G.time` ile.
 - Boss (d1–d6 normal patronlar): hepsine `enrage:true` (can %50). Yeni yetenekler `trySkill`'te: `lance` (hat atılımı, tek vuruş), `pool` (5–6 vuruşluk kalıcı alanlar, `later` ile tekrarlayan telegraph; renk `t.pool`, ad `t.poolName`). Yavru koruması: `summon` sonrası yavrular yaşadıkça `dmgK = 0.35`, ölünce dağılır (`minions`). Tapınak patronları (`t.phases`) bunun dışında. Ortak oyunda yer uyarıları `Coop.ev('t')` ile gider; banner'lar yalnız host'ta görünür.
 
+## Açık dünya (dal `ozellik/acik-dunya`)
+- Veri: `WILD_ZONES[]` (`paths` ana yol + dallar, `hills`, `lakes`, `pads`, `start/back/gate`). Yeni bölge = yeni kayıt + `THEMES` girdisi; `buildWild(zi)` kurar, `goWild(zi)` geçer. Bölge `type:'dungeon'` (savaş/doğma/mini harita çalışır), `L.wild` işaretli, `L.dg` sahte zindan kaydı (`L.dIdx=0`: ödül kademesi bölgeye göre ayarlanmalı). `Coop.levelKey` = `'w'+idx`; bölgede ortak oyun senkronu yok (tek oyunculu).
+- Zemin: `L.hg` (1 birim çözünürlük, kenar payı `WILD_M`=40) + `groundY(L,x,z)`; `PlayerEnt.animate*`, `updateCamera` (`G.camGY`), `updateSun` bunu izler. **Canavarlar henüz düz y=0**: canavar eklerken `Mob.animate`, ölüm batışı, yer uyarıları (`telegraph`), yer FX'leri ve loot y'si `groundY` ile düzeltilmeli.
+- Engeller ızgaradan (`L.grid`, T=2): sınır sırtı, su, dik yamaç (>0.62), yoğun orman; yol ve ilgi noktaları korumalı. `wildReach(L)` ilgi noktalarına yürünebilirliği doğrular.
+- Geçitler: `kind:'wback'` köye, `kind:'wnext'` sonraki bölge (`WILD_ZONES[idx+1]` varsa açık, yoksa mühürlü). Köy çıkışı `kind:'wild'`, dönüş `spawnGate`.
+- Büyük harita: `UI.openMap/closeMap/drawBigMap/mapTap`, `#bigmap`; mini haritaya dokun (veya M). Yön işareti `L.wp` + `L.beacon`, mini haritada bayrak/ok + mesafe. Bölge hücre renkleri `L.cellCol`, tam harita `L.mapAll`.
+- Üçgen: bölge ~0,85 M (zemin 180k, ağaçlar ~550k); ağır ise `tree()` yoğunluğu ve dış sırt ağaçları kıs.
+
 ## Bilinen sorunlar / kısıtlar
 - **Tapınak dengesi:** 2026-10-12'de yeniden dengelendi (simülasyon tabanlı; CHANGELOG_DEV.md). Gerçek oyuncu geri bildirimiyle ince ayar
   gerekir; kaldıraçlar `TEMPLE_POW`, `TEMPLE_FLOORS` dalgaları, `MOBS` çarpanları. Mühür / Efsanevi şansları `TEMPLE_REWARDS`.
