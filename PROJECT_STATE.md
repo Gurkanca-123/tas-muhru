@@ -99,7 +99,7 @@ her zaman `grep -n` ile doğrula.
 - Kamplar: yoldan 7–24 birim uzak açıklıklar, seviye köyden yürüme (BFS) uzaklığıyla `mobLv` aralığında; orman/su yakını kamplarda yarasa. En uzak 3 kampta elit. `L.camps`, `L.bossSpawn`.
 - Geçitler: `wback` köye, `wnext` sonraki bölge (`WILD_ZONES[idx+1]` yoksa mühürlü). Köy çıkışı `kind:'wild'`, dönüş `spawnGate`.
 - Büyük harita: `UI.openMap/closeMap/drawBigMap/mapTap`, `#bigmap`; mini haritaya dokun (veya M). Yön işareti `L.wp` + `L.beacon`. Hücre renkleri `L.cellCol`, tam harita `L.mapAll`, yerler `L.poi` (`gate/deco/boss`).
-- Üçgen: bölge ~1,75 M (ağaçlar ~1 M, otlar/çiçekler ~0,3 M, zemin 180k). Ağırsa: `tree()` yoğunluğu, ot adımı (1.65), dış sırt ağaçları.
+- Üçgen: bölge toplam ~1,75 M ama **görünürlük kesmesi için karelere bölünmüş**: örnekli listeler `WCHUNK` (30 birim) karelerinde ayrı `InstancedMesh`, zemin 40 birimlik karelerde ayrı `Mesh` (ortak köşe tamponu). Karede çizilen ~0,2–0,27 M (ölçüm: `renderer.info`). Karakter modeli (~60k üçgen) artık en büyük tek kalem. Yeni örnekli liste/büyük ağ eklerken tek parça yapma. `goWild` geçişte `renderer.compile` ile shader'ları önceden derler.
 
 ## Bilinen sorunlar / kısıtlar
 - **Tapınak dengesi:** 2026-10-12'de yeniden dengelendi (simülasyon tabanlı; CHANGELOG_DEV.md). Gerçek oyuncu geri bildirimiyle ince ayar

@@ -310,3 +310,12 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
   - Base64 / üçüncü taraf bölgeleri atlanır.
 - Testler: kod değişmediği için oyun testi çalıştırılmadı. Bölüm haritası ve semboller `grep` ile kaynaktan doğrulandı.
 - Açık: tapınak dengesi, tapınak ortak oyununun cihaz testi.
+
+## 2026-10-16 — Açık dünya: kasma düzeltmesi (görünürlük kesmesi)
+- Dosya: `index.html` (`buildWild` liste aktarımı + zemin ağı, `goWild`, yaprak animasyonu).
+- Neden: örnekli listeler ve zemin tek nesneydi; kamera ve gölge kesmesi hepsini her karede çiziyordu (~1,6 M üçgen, hep sabit).
+- Yapılan: listeler 30 birimlik karelere bölündü (`WCHUNK`, kare başına sınır küresi + 1,5 pay); zemin 40 birimlik dizin karelerine bölündü (ortak köşe/normal tamponu, elle sınır küresi); `goWild`'da `renderer.compile`; yapraklar bölge dışındayken her karede yeniden denemiyor.
+- Ölçüm (başsız, `renderer.info`): kare başına 1,6 M → ~0,21–0,27 M üçgen, çizim çağrısı ~95 → ~165–190. Görüntü aynı.
+- Testler: `wfin` (köy→vahşi→tüm yollar→geri→zindan) geçti, `wcomb` (kamp/patron) geçti. Gerçek telefonda kare hızı ölçülmedi.
+- Açık: karakter modeli ~60k üçgen (kullanıcı ileride değiştirebilir).
+- Yedek: `yedek/acik-dunya-performans-oncesi`.
