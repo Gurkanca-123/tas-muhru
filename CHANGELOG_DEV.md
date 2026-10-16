@@ -4,6 +4,7 @@ Her görev sonunda kısa kayıt: tarih ve görev · değişen dosyalar · öneml
 Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 
 ## Önceki işler (özet, git geçmişinden)
+- (32) Açık dünya kasma düzeltmesi (dal `ozellik/acik-dunya-performans`, yedek `yedek/acik-dunya-performans-oncesi`): örnekli listeler `WCHUNK`=30 karelerine, zemin 40 birimlik dizin karelerine bölündü (görünürlük/gölge kesmesi çalışsın); `goWild`'da `renderer.compile`; yaprak yeniden deneme beklemesi. Ölçüm (`renderer.info`): kare başı ~1,6 M → ~0,21–0,27 M üçgen, çizim çağrısı ~95 → ~165–190, görüntü aynı. `wfin` ve `wcomb` geçti; telefonda fps ölçülmedi. Açık: karakter modeli ~60k üçgen.
 - (31) Fener Ovası görsel zenginleştirme + Yosunlu İn canavarları (dal `ozellik/acik-dunya`): 8 ağaç türü (meşe, huş, sonbahar akçaağacı, sakura, çam, servi, söğüt, kuru) ve biyomlar (sonbahar korusu, sakura koruluğu, huş ormanı), rüzgâr salınımı (instanced gölgelendirici), bulut gölgesi, çiçek/lavanta tarlaları, buğday tarlaları + çit + korkuluk + saman, eğrelti/mantar/kütük, sazlar/nilüfer, köprülü dere (kaynaktan göle), yel değirmeni, harabeler, Kurt Lordu ini, korucu kampı + iskele, gökyüzü kubbesi + bulut + uzak dağlar (3. şahıs), kelebek, düşen yaprak/taç yaprağı, polen; kamera–oyuncu arasındaki ağaçlar noktalı saydamlaşır. Canavarlar: ~20 kamp (kurt/yarasa Sv 1–6, köyden uzaklaştıkça artar), 3 Alfa Kurt (Sv 7), Kurt Lordu Bozkır (Sv 8, inde, 5 dk'da yeniden doğar; d1 temizleme/görev kaydı). Tepelerde y düzeltmesi: Mob, FX (addG/spawn), yer uyarıları, mermi, loot, hedef halkası, Atmo. Doğrulama: başsız tarayıcı (8 nokta erişilebilir, tüm yollar + köprü yürünebilir, kamp saldırısı, patron öldürme → d1 temizlendi + yeniden doğma, zindan/köy regresyonu); gerçek cihazda denenmedi. Bölge ~1,75 M üçgen.
 - (30) Açık dünya altyapısı + 1. bölge «Fener Ovası» (dal `ozellik/acik-dunya`, yedek `yedek/acik-dunya-oncesi`): `WILD_ZONES` veri tablosu, `buildWild` (yükseklik haritası, 280×280, tepeler/göl/gölcük, yol ağı: ana yol + 5 dal + 1 döngü, orman/dik yamaç/su/sınır sırtı engelleri, tabelalar, Gözcü Tepesi/Taş Çember/Göl Kampı/Seyir Taşı, mühürlü geçit). Köy güney kapısı gerçek geçit (`kind:'wild'`), dönüş `wback`. Oyuncu/kamera/güneş `groundY` ile zemini izler. Mini haritaya dokununca büyük harita + yön işareti (bayrak, ışık sütunu, mesafe). Canavar yok. Doğrulama: başsız tarayıcı (7 nokta erişilebilir, tüm yollar çarpışmayla yürünebildi, zindan regresyonu geçti); gerçek cihazda denenmedi.
 - (29) Köy sadeleştirme (dal `ozellik/koy-sadelestir`, yedek `yedek/koy-sadelestir-oncesi`): 6 oturma bankası, tüm köy/yapı fıçıları (Tüccar, Demirci, kulübe, Usta, Simyacı çevresi) ve anıtın etrafındaki 4 mangal kaldırıldı; ilgili `blockAt` çarpışmaları da silindi (karakter takılmasın). `propBarrel/propBench` fonksiyonları duruyor. Doğrulama: sözdizimi + başsız ekran görüntüsü; gerçek cihazda denenmedi.
@@ -310,12 +311,3 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
   - Base64 / üçüncü taraf bölgeleri atlanır.
 - Testler: kod değişmediği için oyun testi çalıştırılmadı. Bölüm haritası ve semboller `grep` ile kaynaktan doğrulandı.
 - Açık: tapınak dengesi, tapınak ortak oyununun cihaz testi.
-
-## 2026-10-16 — Açık dünya: kasma düzeltmesi (görünürlük kesmesi)
-- Dosya: `index.html` (`buildWild` liste aktarımı + zemin ağı, `goWild`, yaprak animasyonu).
-- Neden: örnekli listeler ve zemin tek nesneydi; kamera ve gölge kesmesi hepsini her karede çiziyordu (~1,6 M üçgen, hep sabit).
-- Yapılan: listeler 30 birimlik karelere bölündü (`WCHUNK`, kare başına sınır küresi + 1,5 pay); zemin 40 birimlik dizin karelerine bölündü (ortak köşe/normal tamponu, elle sınır küresi); `goWild`'da `renderer.compile`; yapraklar bölge dışındayken her karede yeniden denemiyor.
-- Ölçüm (başsız, `renderer.info`): kare başına 1,6 M → ~0,21–0,27 M üçgen, çizim çağrısı ~95 → ~165–190. Görüntü aynı.
-- Testler: `wfin` (köy→vahşi→tüm yollar→geri→zindan) geçti, `wcomb` (kamp/patron) geçti. Gerçek telefonda kare hızı ölçülmedi.
-- Açık: karakter modeli ~60k üçgen (kullanıcı ileride değiştirebilir).
-- Yedek: `yedek/acik-dunya-performans-oncesi`.
