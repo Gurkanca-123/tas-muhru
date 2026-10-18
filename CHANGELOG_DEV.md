@@ -18,7 +18,7 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - 1–3. becerilerde karakterin altında daire yok: SkillVis'in başlangıç ve darbe halkaları yalnız ultide (w4, b4); rün dairesi zaten yalnız ultide.
 - Hamle (w1) G: kılıcın yere vurduğu noktada TEK, kalın yıldırım (`FX.bolt` yeni isteğe bağlı kalınlık / süre parametreleri; varsayılan davranış aynı).
 - Kılıç Çevirme (w3): alev hortumu daha yoğun (opaklık, yükseklik, kor sayısı, tabanda yayılan kor, bloom) + gövde alev kabuğu ×1.3.
-- Mühür Yemini (w4): yıldırımlar daha güçlü (M 3, G 7 adet; kalın ana yıldırım + dal, ışık sütunu, kıvılcım), Savaş Öfkesi (b4) G 5 adet.
+- Mühür Yemini (w4): yıldırımlar daha güçlü (M 3, G 5 adet — kullanıcı isteğiyle 7'den 5'e; kalın ana yıldırım + dal, ışık sütunu, kıvılcım), Savaş Öfkesi (b4) G 5 adet.
 
 ## 2026-10-18 (35) — Ustalık görselleri 3. geçiş: her beceriye ayrı kimlik (kullanıcı geri bildirimi) · dal `ozellik/ustalik-gorsel`
 - Yeni `SKILL_FX` tablosu (beceriye özel M / G renkleri ve bayraklar). Rün dairesi (ortası yıldızlı) artık yalnız ult becerilerinde (w4, b4); diğerlerinde ve darbelerde kaldırıldı.
