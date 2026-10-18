@@ -14,6 +14,13 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-18 (35) — Ustalık görselleri 3. geçiş: her beceriye ayrı kimlik (kullanıcı geri bildirimi) · dal `ozellik/ustalik-gorsel`
+- Yeni `SKILL_FX` tablosu (beceriye özel M / G renkleri ve bayraklar). Rün dairesi (ortası yıldızlı) artık yalnız ult becerilerinde (w4, b4); diğerlerinde ve darbelerde kaldırıldı.
+- Yıldırım yalnız: Hamle (w1) Büyük Usta'da İNİŞTE (`boltHit`), Mühür Yemini (w4) başlangıcında gökten düşen yıldırımlar (M: 2 altın, G: 5 kızıl-altın, `_bolts`), Savaş Öfkesi (b4) G'de 4 kızıl yıldırım. Başlangıçtaki genel yıldırım kaldırıldı.
+- Üç Yönlü Kesme (w2): yıldırım yok; keskin katmanlı kesişler (`SkillVis.cut`: açık + doygun + G'de koyu ton, yay boyunca kıvılcım) — Usta sarı, Büyük Usta keskin mavi.
+- Kılıç Çevirme (w3): alev hortumu (`_tornado`: dönen 3 kat alev perdesi + sarmal kor), Usta turuncu alev, Büyük Usta kızıl.
+- Baltacı: b1 alev kuyruğu (`SkillVis.trail`), b3 inişte lav/kor sütunları (`magma`), b1/b3 Usta turuncu, G kızıl; b2 genel altın / mor.
+
 ## 2026-10-18 (34) — Bronz Mühür Sv 60, yüksek seviyede düşük eşya azaltma, tapınak 6./10. kat ödülü · dal `ozellik/efsun-kagidi`
 - `GEAR_SETS.bronzm.lv` 55 → 60.
 - `rollLoot`: 4. zindan ve sonrasında (tapınak = 7) normal/elite eşya şansı çarpanı `[.6,.45,.35,.3]` (4–7. zindan); 6. zindandan itibaren en az Yeşil (normal) / Mavi (elite, patron), set sınıfında Bez ve başlangıç silahı düşmez (40 deneme + `rarityAtLeast`); normal/elite demir cevheri ×0,35, hurda ×0,4. Patron eşya şansı aynı.
