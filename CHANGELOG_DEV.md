@@ -34,6 +34,8 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
   - G1…G5 (mor-beyaz kadim ışık + altın): yerde mühür, ışık sütunu, başta şimşek, darbede iki halka + ağır darbede şimşek ve altın mühür (G3+ ikinci şimşek). Güçlendirme becerileri (w4, b4) etki süresince hafif ışıltı.
 - Kancalar (tek satır `SkillVis.hit`): w1 iniş, w2 her kesiş, w3 her tur, w4 saplama + ışık sütunu, b1 balta değdikçe, b2 her tur, b3 iniş, b4; `single` türü. `useSkill` sonunda `SkillVis.cast`; Baltacı becerilerinde ustalıkta kısa silah izi. `FX.max` 420 → 900.
 - Ortak oyun: diğer oyuncular yalnız klibi görür (efekt eşitlenmez; önceden de böyleydi).
+- Deneme karakteri (`newTestWarrior`, GEÇİCİ): 60 Usta + 6 Büyük Usta Yetenek Parşömeni ile başlar (4 beceri × M1→M10→G1 için yeterli; doğrulama: 4 beceri G1, 14 + 2 parşömen arttı). Kaldırırken bu satır da gider.
+- Test: yeni görsel testi 73/73 (2 sınıf × 8 beceri × N/M1/M10/G1/G5: efekt yoğunluğu kademeyle artar, hasar çarpanı aynı, sayfa hatası yok) + ekran görüntüleri; `node --check`. Gerçek telefon: **denenmedi**.
 
 ## 2026-10-15 (28) — Mühür Yemini düzenlemesi · dal `ozellik/muhur-yemini` (main'e alınmadı); (27) HUD sadeleştirme main'e alındı
 - Animasyon: `skW4` klibi ölçüldü (el yüksekliği): 0–0.3 kılıç kalkar, 0.36–0.96 saplama/diz çökme, 1.02–1.62 eller havaya. Havaya kalkış oynatılmıyor: `SAVASCI_SKILL_T.w4` dur 1.82→0.92, lock 1.24→0.86, ışık sütunu (`rise`) 1.12→0.62 (saplanmış kılıçtan).

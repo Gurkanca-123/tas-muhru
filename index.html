@@ -21216,11 +21216,13 @@ function newTestWarrior() {
   for (const sl of SET_SLOTS) { if (sl === 'weapon') continue; const g = makeGear(sl, 0, 3, 'warrior', 'nihai'); g.plus = 9; P.equip[sl] = g; }
   const w = makeGear('weapon', 0, 3, 'warrior', 'okilic'); w.plus = 9; P.equip.weapon = w;
   addItem(makeStack('hp2', 30)); addItem(makeStack('mp2', 15));
+  // ustalık görsel denemesi: 4 beceri × M1→M10 (başarısızlıklar dahil) ve 4 × G1 için yeterli parşömen
+  addItem(makeStack('usta_parsomen', 60)); addItem(makeStack('busta_parsomen', 6));
   recalc(); P.hp = D.maxHp; P.mp = D.maxMp;
 }
 function testCharButton(parent) { // DENEME-DUGMESI
   if (listChars().length >= MAX_CHARS) return;
-  const b = el('button', 'card px ccard cnew', 'Deneme: Sv 50 Savaşçı<br><span>+9 Nihai Zırh · +9 Obsidyen Keski (geçici)</span>');
+  const b = el('button', 'card px ccard cnew', 'Deneme: Sv 50 Savaşçı<br><span>+9 Nihai Zırh · +9 Obsidyen Keski · 60 Usta + 6 Büyük Usta parşömeni (geçici)</span>');
   b.onclick = () => { SFX.init(); newTestWarrior(); saveGame(); startPlay(); };
   parent.appendChild(b);
 }
