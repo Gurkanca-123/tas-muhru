@@ -28,6 +28,13 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - Test (başsız Chromium + SwiftShader, geçici betik; depoda yok): 24/24 — set parçaları her nadirlikte 4 satır, normal eşya 0/1/2/3, kâğıtla 2→3→4 ve 4'te ret (kâğıt yanmaz), kâğıt yokken ret, silaha `def` yok, giyili eşya, Simyacı efsunu 4 satırı korur, Tüccar listesi + 100.000, tapınak ödül oranları (2000 örnek/kat), Kemik Taht oranları, panel akışı, sayfa hatası yok. `node --check` temiz. `run.mjs` / `qtest*` bu ortamda yok → çalıştırılmadı.
 - Denenmedi: gerçek telefon, kayıt gidiş-dönüşü (applySave bonus dizisinde uzunluk sınırı yok, kod incelemesi), ortak oyun. Denge sayıları (düşüş oranları, 100.000 fiyatı) ilk taslak.
 
+## 2026-10-18 (33) — Beceri ustalığı görsel kademesi (Normal → Usta → Büyük Usta) · dal `ozellik/ustalik-gorsel` (yedek `yedek/ustalik-gorsel-oncesi`)
+- Yeni `SKILL_VIS` (renk tablosu) + `SkillVis` (`of`, `tint`, `aura`, `cast`, `hit`), `Combat`'tan hemen önce. Yalnız görsel: hasar, zamanlama, hedefleme, kilitler aynı; becerinin kendi efektleri aynen oynar, katman üstüne ekler.
+  - Normal Sv1–5: değişmedi; Sv5'te ayakta ve darbede hafif kıvılcım. · M1…M10 (altın-kor): kılıç izi altına döner ve parlar (`FX.bladeOn` → `pl._sv`), başlangıç halkası + ışık + yükselen zerreler, beceri süresince ayak ve silah ışıltısı (`aura`), darbede halka/patlama/kor; M5+ yerde mühür, M10 ağır darbede çift halka. Yoğunluk kademeyle artar (k 0.3→0.7).
+  - G1…G5 (mor-beyaz kadim ışık + altın): yerde mühür, ışık sütunu, başta şimşek, darbede iki halka + ağır darbede şimşek ve altın mühür (G3+ ikinci şimşek). Güçlendirme becerileri (w4, b4) etki süresince hafif ışıltı.
+- Kancalar (tek satır `SkillVis.hit`): w1 iniş, w2 her kesiş, w3 her tur, w4 saplama + ışık sütunu, b1 balta değdikçe, b2 her tur, b3 iniş, b4; `single` türü. `useSkill` sonunda `SkillVis.cast`; Baltacı becerilerinde ustalıkta kısa silah izi. `FX.max` 420 → 900.
+- Ortak oyun: diğer oyuncular yalnız klibi görür (efekt eşitlenmez; önceden de böyleydi).
+
 ## 2026-10-15 (28) — Mühür Yemini düzenlemesi · dal `ozellik/muhur-yemini` (main'e alınmadı); (27) HUD sadeleştirme main'e alındı
 - Animasyon: `skW4` klibi ölçüldü (el yüksekliği): 0–0.3 kılıç kalkar, 0.36–0.96 saplama/diz çökme, 1.02–1.62 eller havaya. Havaya kalkış oynatılmıyor: `SAVASCI_SKILL_T.w4` dur 1.82→0.92, lock 1.24→0.86, ışık sütunu (`rise`) 1.12→0.62 (saplanmış kılıçtan).
 - Değerler: saldırı +%30→+%20, savunma +%20→+%15, yeni `aspdPct` +%20 (otomatik/temel saldırı hızı; seviye çarpanına girmez; `recalc` → `D.aspd`), bekleme 30→31 sn.

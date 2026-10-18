@@ -16048,7 +16048,7 @@ function dungeonWallDeco(L, th, themeKey, faces) {
 
 // ---------- Efektler: parçacık, halka, hasar sayısı ----------
 const FX = {
-  max: 420, n: 0, mesh: null, px: null, life: null,
+  max: 900, n: 0, mesh: null, // beceri ustalığı ışıltısı için 420 → 900 px: null, life: null,
   list: [], // geçici meshler {mesh, t, dur, fn}
   dmgPool: [], dmgActive: [],
   init() {
@@ -16370,6 +16370,7 @@ const FX = {
     if (!B.mesh.parent) W3.scene.add(B.mesh);
     if (B.pl !== pl) B.s.length = 0;
     B.pl = pl; B.left = Math.max(B.left, dur); B.col.setHex(color || 0xeaf4ff); B.pow = power || 1;
+    if (pl._sv && G.time < pl._sv.until) { B.col.lerp((this._svc || (this._svc = new THREE.Color())).setHex(pl._sv.col), pl._sv.mix); B.pow *= pl._sv.pow; } // beceri ustalığı rengi (SkillVis.tint)
   },
   bladeEnds(w) {
     if (!w.userData.bladeAB) {
@@ -18491,6 +18492,106 @@ class PlayerEnt {
 }
 
 // ---------- Savaş ----------
+// ---------- Beceri görsel kademesi (normal Sv1…5 → M1…M10 → G1…G5) ----------
+// Yalnız görsel: hasar / zamanlama / hedefleme değişmez. Becerinin kendi efektleri aynen oynar; bu katman kademeye göre üstüne
+// ışık, renk ve parçacık ekler. Normal: becerinin kendi renkleri (Sv5'te hafif kıvılcım) · M (Usta): altın-kor ışıltı, kılıç izi
+// altına döner, M5+ yerde mühür, M10 çift şok halkası · G (Büyük Usta): mor-beyaz kadim ışık + altın, yerde mühür, ışık sütunu,
+// darbede şimşek, kılıçta kalıcı ışıltı. Renkler / yoğunluk yalnız SKILL_VIS tablosundan değişir.
+const SKILL_VIS = {
+  N: { col: 0xffe2a8, col2: 0xfff4d8, deep: 0xffb050 },
+  M: { col: 0xffc24a, col2: 0xfff1c0, deep: 0xff8a20 },
+  G: { col: 0xb98cff, col2: 0xfff0ff, deep: 0x7a48ff, gold: 0xffd870 },
+};
+const SkillVis = {
+  // k: 0…1 görsel yoğunluk (normal 0…0.15, M1…M10 0.3…0.7, G1…G5 0.8…1)
+  of(id) {
+    const lv = (P && P.skills && P.skills[id]) || 0, st = masteryOf(id);
+    if (st > MASTERY.M) { const g = st - MASTERY.M; return Object.assign({ tier: 'G', st, g, k: Math.min(1, 0.8 + 0.05 * (g - 1)) }, SKILL_VIS.G); }
+    if (st > 0) return Object.assign({ tier: 'M', st, g: 0, k: 0.3 + (0.4 * (st - 1)) / 9 }, SKILL_VIS.M);
+    return Object.assign({ tier: 'N', st: 0, g: 0, full: lv >= SKILL_MAX, k: clamp((lv - 1) / 4, 0, 1) * 0.15 }, SKILL_VIS.N);
+  },
+  // kılıç izi rengi / gücü (FX.bladeOn okur); yalnız ustalıkta
+  tint(pl, v, dur) {
+    if (v.tier === 'N') { pl._sv = null; return; }
+    pl._sv = { col: v.tier === 'G' ? v.col2 : v.col, mix: v.tier === 'G' ? 0.8 : 0.45 + 0.4 * v.k, pow: 1 + 1.4 * v.k, until: G.time + dur };
+  },
+  // silah ucu (dünya) — kılıç/balta namlusu boyunca rastgele bir nokta
+  _tip(pl, out, f) {
+    const w = pl.weapon;
+    if (!w || !w.parent || !w.visible) return null;
+    const [a, b] = FX.bladeEnds(w);
+    w.updateMatrixWorld();
+    return out.copy(a).lerp(b, f).applyMatrix4(w.matrixWorld);
+  },
+  // süre boyunca oyuncuyu izleyen ışıltı: ayak çevresinde dönen kıvılcımlar + silah boyunca kor/ışık zerreleri
+  aura(pl, v, dur, rate) {
+    const L = G.level, V = new THREE.Vector3(), g = new THREE.Group();
+    W3.scene.add(g);
+    const per = (rate || 1) * (v.tier === 'G' ? 70 : 26 + 30 * v.k); // saniyedeki zerre
+    let acc = 0;
+    FX.list.push({ mesh: g, t: 0, dur, fn: (o, k) => {
+      if (pl.dead || G.player !== pl || G.level !== L) { o.t = dur; return; }
+      acc += per * Math.max(0, o.t - (o.lt || 0)); o.lt = o.t;
+      const fade = Math.min(1, (1 - k) * 5);
+      while (acc >= 1) {
+        acc -= 1;
+        if (Math.random() > fade) continue;
+        const a = o.t * 5 + Math.random() * TAU, r = rand(0.5, 1.05);
+        if (Math.random() < 0.55) {
+          const c = v.tier === 'G' ? (Math.random() < 0.35 ? v.gold : Math.random() < 0.5 ? v.col : v.col2) : Math.random() < 0.5 ? v.col : v.deep;
+          FX.spawn(pl.x + Math.cos(a) * r, rand(0.05, 0.4), pl.z + Math.sin(a) * r, -Math.sin(a) * 1.2, rand(0.9, 2.2), Math.cos(a) * 1.2, c, rand(0.45, 0.85), rand(0.05, 0.1), 0);
+        } else {
+          const p = this._tip(pl, V, rand(0.25, 1));
+          if (p) FX.spawnW(p.x + rand(-0.06, 0.06), p.y, p.z + rand(-0.06, 0.06), rand(-0.3, 0.3), rand(0.4, 1.2), rand(-0.3, 0.3), Math.random() < 0.5 ? v.col2 : v.col, rand(0.25, 0.45), rand(0.05, 0.09), 0);
+        }
+      }
+    } });
+  },
+  // beceri başlarken (useSkill, efektler kurulduktan sonra)
+  cast(pl, id, sk) {
+    const v = this.of(id), L = G.level;
+    const dur = Math.max(0.8, (SAVASCI_SKILL_T[id] || BALTACI_SKILL_T[id] || {}).dur || 1);
+    this.tint(pl, v, dur + 0.2);
+    if (v.tier === 'N') {
+      if (v.full) for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU; FX.spawn(pl.x + Math.cos(a) * 0.7, 0.1, pl.z + Math.sin(a) * 0.7, 0, rand(1, 1.8), 0, v.col, 0.5, 0.06, 0); }
+      return;
+    }
+    const x = pl.x, z = pl.z;
+    FX.ring(x, z, 1.6 + 0.8 * v.k, v.col, 0.45);
+    FX.flash(v.tier === 'G' ? v.col : v.col2, 1.5 + 2 * v.k, 0.3);
+    for (let i = 0; i < 10 + 22 * v.k; i++) FX.spawn(x + rand(-0.7, 0.7), rand(0, 0.6), z + rand(-0.7, 0.7), rand(-0.3, 0.3), rand(1.6, 3.6), rand(-0.3, 0.3), i % 3 ? v.col : v.col2, rand(0.5, 0.9), rand(0.06, 0.11), 0);
+    if (v.tier === 'G' || v.st >= 5) FX.seal(x, z, 1.3 + 0.9 * v.k, Math.min(1.6, dur), v.col);
+    if (v.tier === 'G') {
+      FX.pillar(x, z, v.col2, 7, 0.55, 1.1 + 0.15 * v.g);
+      FX.ring(x, z, 2.8, v.gold, 0.55, 0.15);
+      later(0.06, () => { if (G.level === L && !pl.dead) FX.bolt(pl.x + rand(-0.4, 0.4), pl.z + rand(-0.4, 0.4), v.col); });
+    }
+    this.aura(pl, v, dur, 1);
+    // güçlendirme becerisi: etkisi sürdükçe hafif ışıltı (kademe ne kadar yüksekse o kadar yoğun)
+    if (sk.type === 'buff' && sk.dur) later(dur, () => { if (G.level === L && !pl.dead && G.player === pl) this.aura(pl, v, sk.dur - dur, 0.35); });
+  },
+  // darbe anı (useSkill içindeki vuruş noktaları): x, z dünya; r etki yarıçapı; heavy son/ağır vuruş
+  hit(id, x, z, r, heavy) {
+    const v = this.of(id);
+    if (v.tier === 'N') { if (v.full) FX.burst(x, 0.6, z, v.col, heavy ? 8 : 4, 4, 0.08, 0.4, 6); return; }
+    const L = G.level, k = v.k, rr = r || 2;
+    FX.ring(x, z, rr * 1.08, v.col, 0.32 + 0.1 * k);
+    FX.burst(x, 0.6, z, v.col, Math.round(6 + 12 * k), 5 + 2 * k, 0.11, 0.45, 6);
+    for (let i = 0; i < 4 + 8 * k; i++) FX.spawn(x + rand(-rr, rr) * 0.5, rand(0.1, 0.5), z + rand(-rr, rr) * 0.5, 0, rand(2, 4.5), 0, i % 2 ? v.col2 : v.deep, rand(0.35, 0.7), rand(0.06, 0.1), 0);
+    if (heavy) { FX.flash(v.tier === 'G' ? v.col2 : v.col, 2 + 3 * k, 0.24); camPunch(0.3 + 0.4 * k); }
+    if (v.tier === 'M' && heavy && v.st >= 10) later(0.08, () => { if (G.level === L) FX.ring(x, z, rr * 1.4, v.col2, 0.35); });
+    if (v.tier === 'G') {
+      FX.ring(x, z, rr * 0.7, v.gold, 0.28, 0.15);
+      later(0.07, () => { if (G.level === L) FX.ring(x, z, rr * 1.45, v.col2, 0.4); });
+      if (heavy) {
+        FX.bolt(x + rand(-0.3, 0.3), z + rand(-0.3, 0.3), v.col);
+        if (v.g >= 3) later(0.09, () => { if (G.level === L) FX.bolt(x + rand(-0.8, 0.8), z + rand(-0.8, 0.8), v.col2); });
+        FX.seal(x, z, rr * 0.75, 0.7, v.gold);
+      }
+    }
+  },
+};
+
 const Combat = {
   // En yakın hedef: duvar arkasındakiler için düz mesafe yerine yol mesafesi (BFS)
   findTarget(range) {
@@ -18811,7 +18912,7 @@ const Combat = {
           later(h * 0.17, () => {
             if (t.dead || pl.dead) return;
             pl.swing = pl.swingDur = 0.2; pl.swingAlt = !pl.swingAlt;
-            this.hitMob(t, sk.mult * pw, { critAdd: sk.critAdd });
+            this.hitMob(t, sk.mult * pw, { critAdd: sk.critAdd }); SkillVis.hit(id, t.x, t.z, 1.2, h === hits - 1);
             FX.slash(t.x, 1.1, t.z, pl.rot + (h % 2 ? 0.8 : -0.8), cls === 'ninja' ? 0xd8a0ff : 0xffe0a0, 1.6);
             SFX.play('swing');
           });
@@ -18827,7 +18928,7 @@ const Combat = {
             pl.spin = 0.4;
             FX.ring(pl.x, pl.z, sk.radius, cls === 'ninja' ? 0xc08aff : 0xffd080, 0.35);
             for (let a = 0; a < 6; a++) FX.slash(pl.x, 1, pl.z, a * 1.05 + h, cls === 'ninja' ? 0xd8b0ff : 0xfff0c0, sk.radius * 0.7);
-            SFX.play('swing');
+            SFX.play('swing'); SkillVis.hit(id, pl.x, pl.z, sk.radius, h === hits - 1);
             for (const m of G.level.mobs) if (!m.dead && dist(pl.x, pl.z, m.x, m.z) <= sk.radius + m.r) this.hitMob(m, sk.mult * pw);
           });
         }
@@ -18912,7 +19013,7 @@ const Combat = {
           pl.leapY = 0;
           FX.quake(ix, iz, sk.radius, 0x8cc8ff);
           FX.ring(ix, iz, sk.radius * 1.15, 0xcfe4ff, 0.3);
-          FX.flash(0xcfe4ff, 4, 0.3);
+          FX.flash(0xcfe4ff, 4, 0.3); SkillVis.hit(id, ix, iz, sk.radius, true);
           SFX.play('boom'); camPunch(1.4); hitStop(0.08);
           for (const m of L.mobs) {
             if (m.dead || dist(ix, iz, m.x, m.z) > sk.radius + m.r) continue;
@@ -18940,7 +19041,7 @@ const Combat = {
           const fx = Math.sin(pl.rot), fz = Math.cos(pl.rot), last = h === T2.hits.length - 1, c = cuts[h % 3];
           FX.cut(pl.x + fx * 0.6, 1.25, pl.z + fz * 0.6, pl.rot, c.roll, c.col, last ? 2.3 : 2.0, c.dir);
           FX.slash(pl.x + fx * 1.1, 0.8, pl.z + fz * 1.1, pl.rot + c.roll * 0.7, c.col, last ? 2.4 : 2.0); // üstten de okunsun: yerde hilal
-          SFX.play('swing'); camPunch(last ? 1.0 : 0.45);
+          SFX.play('swing'); camPunch(last ? 1.0 : 0.45); SkillVis.hit(id, pl.x + fx * 1.4, pl.z + fz * 1.4, last ? 2.2 : 1.6, last);
           if (last) { FX.flash(0xffe2a8, 2.5, 0.22); FX.bladeOn(pl, 0.3, 0xffe2a8, 1.1); }
           let nHit = 0;
           if (last) { FX.burst(pl.x + fx * 1.8, 0.2, pl.z + fz * 1.8, 0xd8c8a0, 16, 4, 0.16, 0.5, 6); FX.ring(pl.x + fx * 1.6, pl.z + fz * 1.6, 1.6, 0xffe2a8, 0.25); }
@@ -18973,7 +19074,7 @@ const Combat = {
           if (pl.dead || G.player !== pl || G.level !== L) return;
           FX.ring(pl.x, pl.z, sk.radius, 0xcfe4ff, 0.3);
           FX.ring(pl.x, pl.z, sk.radius * 0.6, 0xffe2a8, 0.22, 0.9);
-          FX.flash(0xdcecff, 1.6, 0.16);
+          FX.flash(0xdcecff, 1.6, 0.16); SkillVis.hit(id, pl.x, pl.z, sk.radius * 0.9, false);
           SFX.play('swing'); camPunch(0.55);
           if (L.mobs.some((m) => !m.dead && dist(pl.x, pl.z, m.x, m.z) <= sk.radius + m.r)) hitStop(0.03);
           for (const m of L.mobs) {
@@ -19010,7 +19111,7 @@ const Combat = {
         later(T3.jump, () => { if (!pl.dead) FX.burst(pl.x, 0.15, pl.z, 0xcbb89a, 14, 3, 0.18, 0.5, 4); });
         pl.leap = { x0: pl.x, z0: pl.z, x1: pl.x + (dx / d) * stop, z1: pl.z + (dz / d) * stop, t: -T3.jump, dur: T3.land - T3.jump, h: 0.9 + Math.min(1.1, stop * 0.14), done: () => {
           const cx = pl.x + Math.sin(pl.rot) * 0.8, cz = pl.z + Math.cos(pl.rot) * 0.8; // balta önde yere iner
-          FX.quake(cx, cz, sk.radius);
+          FX.quake(cx, cz, sk.radius); SkillVis.hit(id, cx, cz, sk.radius, true);
           SFX.play('boom'); camPunch(2.4);
           for (const m of G.level.mobs) if (!m.dead && dist(cx, cz, m.x, m.z) <= sk.radius + m.r) { this.hitMob(m, sk.mult * pw); if (!m.static) Coop.stun(m, sk.stun); }
         } };
@@ -19042,7 +19143,7 @@ const Combat = {
             buffs.push(b); recalc();
             const fx = Math.sin(pl.rot), fz = Math.cos(pl.rot), sx = pl.x + fx * 0.55, sz = pl.z + fz * 0.55;
             FX.seal(pl.x, pl.z, sk.radius, 1.6, 0xffcf70);
-            FX.flash(0xffcf70, 3.5, 0.4); hitStop(0.06);
+            FX.flash(0xffcf70, 3.5, 0.4); hitStop(0.06); SkillVis.hit(id, sx, sz, sk.radius, true);
             FX.ring(sx, sz, sk.radius * 1.2, 0xffe2a8, 0.35);
             FX.burst(sx, 0.2, sz, 0xd8c8a0, 18, 4, 0.16, 0.6, 6);
             FX.burst(sx, 0.4, sz, 0xffd890, 14, 5, 0.1, 0.45, 8);
@@ -19057,7 +19158,7 @@ const Combat = {
           });
           later(T4.rise, () => {
             if (pl.dead || G.player !== pl || G.level !== L) return;
-            FX.pillar(pl.x, pl.z, 0xffcf70, 6, 0.7, 1.1);
+            FX.pillar(pl.x, pl.z, 0xffcf70, 6, 0.7, 1.1); SkillVis.hit(id, pl.x, pl.z, 2.6, true);
             FX.flash(0xffe8b0, 4, 0.55); FX.bladeOn(pl, 0.35, 0xffd890, 1);
             FX.ring(pl.x, pl.z, 2.6, 0xfff0c0, 0.5);
             for (let k = 0; k < 30; k++) FX.spawn(pl.x + rand(-0.6, 0.6), rand(0.4, 2.8), pl.z + rand(-0.6, 0.6), 0, rand(1.4, 3), 0, k % 2 ? 0xffd890 : 0xfff4d8, rand(0.5, 0.9), rand(0.06, 0.11), 0);
@@ -19073,7 +19174,7 @@ const Combat = {
         FX.pillar(pl.x, pl.z, cls === 'warrior' ? 0xffb050 : cls === 'ninja' ? 0x9a7aff : 0xfff080, 4, 0.7, 1.4);
         if (sk.swordGlow) for (let k = 0; k < 26; k++) FX.spawn(pl.x + rand(-0.6, 0.6), rand(0.2, 2.2), pl.z + rand(-0.6, 0.6), 0, rand(1.2, 2.6), 0, k % 2 ? 0xffd890 : 0xff8a3a, rand(0.5, 0.9), rand(0.06, 0.11), 0);
         FX.ring(pl.x, pl.z, 2.5, 0xfff080, 0.5);
-        SFX.play('buff');
+        SFX.play('buff'); SkillVis.hit(id, pl.x, pl.z, 2.5, true);
         break;
       }
       case 'heal': {
@@ -19085,6 +19186,8 @@ const Combat = {
         break;
       }
     }
+    SkillVis.cast(pl, id, sk); // ustalık kademesine göre ek ışık / renk / parçacık (yalnız görsel)
+    if (!SAVASCI_SKILL_T[id] && SkillVis.of(id).tier !== 'N') FX.bladeOn(pl, 0.9, SkillVis.of(id).col, 1);
   },
   // Fırlatılan balta: oyuncunun baltasının kopyası dönerek ileri gider (yavaşlayarak), sonra hızlanarak oyuncunun
   // eline döner; gidişte ve dönüşte değdiği her düşmana bir kez vurur. Bu sürede eldeki balta gizlidir.
@@ -19138,7 +19241,7 @@ const Combat = {
         set.add(m);
         this.hitMob(m, k < 0.5 ? mult : multBack);
         FX.slash(m.x, 1.1, m.z, ang + (k < 0.5 ? 0.6 : -0.6), 0xffe0a0, 1.5);
-        FX.burst(m.x, 1.1, m.z, 0xffd060, 10, 4, 0.12, 0.35, 6);
+        FX.burst(m.x, 1.1, m.z, 0xffd060, 10, 4, 0.12, 0.35, 6); SkillVis.hit('b1', m.x, m.z, 1.1, false);
         SFX.play('hit');
       }
       if (k >= 1) { // yakalama
@@ -21215,7 +21318,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { WILD_ZONES, buildWild, wildReach, groundY, goWild, goVillage, setLevel, placePlayer, buffs, SKILLS, toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, addBonusLine, useEfsunPaper, EFSUN_MAX, EFSUN_DROP, GEAR_SETS, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { SkillVis, SKILL_VIS, WILD_ZONES, buildWild, wildReach, groundY, goWild, goVillage, setLevel, placePlayer, buffs, SKILLS, toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, addBonusLine, useEfsunPaper, EFSUN_MAX, EFSUN_DROP, GEAR_SETS, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
