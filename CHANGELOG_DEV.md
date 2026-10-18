@@ -14,6 +14,12 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-18 (36) — Ustalık görselleri son ayar + main'e alındı (kullanıcı onayı) · `ozellik/ustalik-gorsel` → `main` (yedek `yedek/ustalik-gorsel-oncesi`)
+- 1–3. becerilerde karakterin altında daire yok: SkillVis'in başlangıç ve darbe halkaları yalnız ultide (w4, b4); rün dairesi zaten yalnız ultide.
+- Hamle (w1) G: kılıcın yere vurduğu noktada TEK, kalın yıldırım (`FX.bolt` yeni isteğe bağlı kalınlık / süre parametreleri; varsayılan davranış aynı).
+- Kılıç Çevirme (w3): alev hortumu daha yoğun (opaklık, yükseklik, kor sayısı, tabanda yayılan kor, bloom) + gövde alev kabuğu ×1.3.
+- Mühür Yemini (w4): yıldırımlar daha güçlü (M 3, G 7 adet; kalın ana yıldırım + dal, ışık sütunu, kıvılcım), Savaş Öfkesi (b4) G 5 adet.
+
 ## 2026-10-18 (35) — Ustalık görselleri 3. geçiş: her beceriye ayrı kimlik (kullanıcı geri bildirimi) · dal `ozellik/ustalik-gorsel`
 - Yeni `SKILL_FX` tablosu (beceriye özel M / G renkleri ve bayraklar). Rün dairesi (ortası yıldızlı) artık yalnız ult becerilerinde (w4, b4); diğerlerinde ve darbelerde kaldırıldı.
 - Yıldırım yalnız: Hamle (w1) Büyük Usta'da İNİŞTE (`boltHit`), Mühür Yemini (w4) başlangıcında gökten düşen yıldırımlar (M: 2 altın, G: 5 kızıl-altın, `_bolts`), Savaş Öfkesi (b4) G'de 4 kızıl yıldırım. Başlangıçtaki genel yıldırım kaldırıldı.

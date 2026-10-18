@@ -16126,20 +16126,20 @@ const FX = {
     this.addG(m);
     this.list.push({ mesh: m, t: 0, dur: dur || 0.6, fn: (o, k) => { m.material.opacity = 0.7 * (1 - k); m.scale.x = m.scale.z = (w || 1) * (1 - k * 0.6); } });
   },
-  bolt(x, z, color) {
+  bolt(x, z, color, w, dur) { // w: kalınlık (varsayılan 0.18), dur: sönme süresi (varsayılan 0.3)
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const m = basicMat(color || 0xfff080, 0.95, true);
     let px = 0, py = 12;
     for (let i = 0; i < 6; i++) {
       const nx = rand(-0.8, 0.8), ny = py - 2;
       const len = Math.hypot(nx - px, 2);
-      const seg = new THREE.Mesh(boxGeo(0.18, 1, 0.18), m);
+      const seg = new THREE.Mesh(boxGeo(w || 0.18, 1, w || 0.18), m);
       seg.position.set((px + nx) / 2, (py + ny) / 2, 0); seg.scale.y = len;
       seg.rotation.z = Math.atan2(-(nx - px), 2) * -1;
       g.add(seg); px = nx; py = ny;
     }
     this.addG(g);
-    this.list.push({ mesh: g, t: 0, dur: 0.3, fn: (o, k) => { m.opacity = 0.95 * (1 - k); } });
+    this.list.push({ mesh: g, t: 0, dur: dur || 0.3, fn: (o, k) => { m.opacity = 0.95 * (1 - k); } });
   },
   // Büyücü "Meteor Taşı": çarpma noktasında turuncu yer uyarısı, gökten çapraz ve
   // hızlanarak inen, alev izi bırakan yanan kaya. Oyun duraklayınca (panel/geçiş) donar
@@ -18565,12 +18565,12 @@ const SKILL_FX = {
   w2: { M: { col: 0xffd23a, light: 0xffee70, deep: 0xffa010, gold: 0xfff4a0, col2: 0xfffbe0, shellA: [1, 0.85, 0.3], shellB: [1, 0.55, 0.1] },
         G: { col: 0x38b4ff, light: 0x8ee4ff, deep: 0x1c5cff, gold: 0xe8f8ff, col2: 0xe8f8ff, shellA: [0.35, 0.75, 1], shellB: [0.85, 0.97, 1] } },
   w3: { tornado: true, M: SV_FIRE_M, G: SV_FIRE_G },
-  w4: { ult: true, castBolts: { M: { n: 2, cols: [0xffd040, 0xfff0a0], span: 0.2 }, G: { n: 5, cols: [0xff3020, 0xffd040], span: 0.32 } },
+  w4: { ult: true, castBolts: { M: { n: 3, cols: [0xffd040, 0xfff0a0], span: 0.24, w: 0.24 }, G: { n: 7, cols: [0xff3020, 0xffd040], span: 0.34, w: 0.34 } },
         G: { col: 0xffb030, light: 0xffe070, deep: 0xff3a14, gold: 0xff3020, col2: 0xfff0c0, shellA: [1, 0.7, 0.2], shellB: [1, 0.2, 0.05] } },
   b1: { M: SV_FIRE_M, G: SV_FIRE_G },
   b2: {},
   b3: { magma: true, M: SV_FIRE_M, G: SV_FIRE_G },
-  b4: { ult: true, castBolts: { G: { n: 4, cols: [0xff2a14, 0xff8a20], span: 0.3 } }, G: SV_FIRE_G },
+  b4: { ult: true, castBolts: { G: { n: 5, cols: [0xff2a14, 0xff8a20], span: 0.3, w: 0.3 } }, G: SV_FIRE_G },
 };
 const SkillVis = {
   // k: 0…1 görsel yoğunluk (M1…M10 0.35…0.7, G1…G5 0.85…1); renkler: genel kademe + beceriye özel (SKILL_FX[id].M / .G)
@@ -18625,16 +18625,20 @@ const SkillVis = {
     } });
   },
   // gökten düşen yıldırımlar (ult başlangıcı): n adet, oyuncunun çevresine sırayla
-  _bolts(pl, n, cols, t0, span) {
+  _bolts(pl, n, cols, t0, span, w) {
+    w = w || 0.26;
     const L = G.level;
     for (let i = 0; i < n; i++) later(t0 + (span * i) / Math.max(1, n - 1), () => {
       if (G.level !== L || pl.dead) return;
       const last = i === n - 1, a = (i / n) * TAU + rand(-0.3, 0.3), r = last ? 0 : rand(1.4, 2.6);
       const x = pl.x + Math.cos(a) * r, z = pl.z + Math.sin(a) * r, c = cols[i % cols.length];
-      FX.bolt(x, z, c); if (last || i % 2) FX.bolt(x + rand(-0.25, 0.25), z + rand(-0.25, 0.25), cols[(i + 1) % cols.length]);
-      FX.ring(x, z, last ? 2.6 : 1.1, c, 0.3);
-      FX.burst(x, 0.3, z, c, last ? 22 : 10, last ? 7 : 5, 0.12, 0.45, 6);
-      FX.flash(c, last ? 6 : 3, 0.22); camPunch(last ? 0.8 : 0.35);
+      FX.bolt(x, z, c, (last ? 1.6 : 1.2) * w, 0.4); // ana yıldırım (kalın)
+      FX.bolt(x + rand(-0.35, 0.35), z + rand(-0.35, 0.35), cols[(i + 1) % cols.length], w * 0.55, 0.3); // dal
+      FX.pillar(x, z, c, last ? 5 : 3.5, 0.3, last ? 0.9 : 0.5);
+      FX.ring(x, z, last ? 2.8 : 1.3, c, 0.32);
+      FX.burst(x, 0.3, z, c, last ? 30 : 16, last ? 9 : 6, 0.13, 0.5, 6);
+      for (let j = 0; j < (last ? 14 : 7); j++) FX.spawn(x + rand(-0.4, 0.4), 0.1, z + rand(-0.4, 0.4), rand(-1, 1), rand(2, 5), rand(-1, 1), j % 2 ? cols[0] : 0xfff4d0, rand(0.3, 0.6), rand(0.07, 0.12), 6);
+      FX.flash(c, last ? 8 : 4, 0.25); camPunch(last ? 1.1 : 0.5);
       Post.boost = Math.max(Post.boost || 0, last ? 1.4 : 0.8);
       SFX.play('zap');
     });
@@ -18668,18 +18672,20 @@ const SkillVis = {
       const fade = Math.min(1, o.t / 0.15, (1 - k) * 4);
       grp.position.set(pl.x, groundY(L, pl.x, pl.z), pl.z);
       layers.forEach((m, i) => {
-        const rr = r * (1.05 - i * 0.22), h = (G2 ? 3.6 : 2.7) - i * 0.4;
+        const rr = r * (1.1 - i * 0.2), h = (G2 ? 4.2 : 3.0) - i * 0.4;
         m.scale.set(rr, h * (0.7 + 0.3 * Math.min(1, o.t / 0.3)), rr);
         m.rotation.y = -o.t * (11 + i * 4);
         m.userData.tex.offset.y = -o.t * (1.6 + i * 0.5);
-        m.material.opacity = fade * (G2 ? 0.55 : 0.38) * (1 - i * 0.18);
+        m.material.opacity = fade * (G2 ? 0.9 : 0.6) * (1 - i * 0.15);
       });
-      acc += (G2 ? 150 : 80) * dt;
+      acc += (G2 ? 280 : 150) * dt;
       while (acc >= 1) {
         acc -= 1;
         const h = rand(0, G2 ? 3.4 : 2.6), a = o.t * 14 + rand(0, TAU), rr = r * (0.35 + 0.22 * h);
-        FX.spawn(pl.x + Math.cos(a) * rr, h, pl.z + Math.sin(a) * rr, -Math.sin(a) * 5, rand(1.5, 3.2), Math.cos(a) * 5, Math.random() < 0.4 ? v.light : Math.random() < 0.5 ? v.col : v.deep, rand(0.25, 0.5), rand(0.07, 0.13), 0);
+        FX.spawn(pl.x + Math.cos(a) * rr, h, pl.z + Math.sin(a) * rr, -Math.sin(a) * 5, rand(1.5, 3.2), Math.cos(a) * 5, Math.random() < 0.4 ? v.light : Math.random() < 0.5 ? v.col : v.deep, rand(0.3, 0.6), rand(0.08, G2 ? 0.18 : 0.14), 0);
       }
+      if (Math.random() < (G2 ? 0.6 : 0.35)) { const a = rand(0, TAU); FX.spawn(pl.x + Math.cos(a) * r * 1.1, 0.1, pl.z + Math.sin(a) * r * 1.1, Math.cos(a) * 2, rand(0.5, 1.5), Math.sin(a) * 2, v.deep, 0.5, 0.16, 0); } // tabanda yayılan kor
+      Post.boost = Math.max(Post.boost || 0, fade * (G2 ? 1.1 : 0.6));
       if (k >= 1) for (const m of layers) m.userData.tex.dispose();
     } });
   },
@@ -18688,7 +18694,7 @@ const SkillVis = {
     const L = G.level, V = new THREE.Vector3(), g = new THREE.Group(), G2 = v.tier === 'G', soft = (rate || 1) < 1;
     W3.scene.add(g);
     const sh = pl.H && pl.H.sAura, U = sh && sh.material.userData.sv;
-    const kMax = soft ? (G2 ? 0.55 : 0.32) : G2 ? 1.25 + 0.08 * v.g : 0.55 + 0.45 * ((v.st - 1) / 9);
+    const kMax = (soft ? (G2 ? 0.55 : 0.32) : G2 ? 1.25 + 0.08 * v.g : 0.55 + 0.45 * ((v.st - 1) / 9)) * (v.fx.tornado && !soft ? 1.3 : 1);
     if (U) { U.uCA.value.set(...v.shellA); U.uCB.value.set(...v.shellB); }
     const per = (soft ? 0.35 : 1) * (G2 ? 110 : 40 + 40 * v.k);
     let acc = 0, flT = 0;
@@ -18730,13 +18736,13 @@ const SkillVis = {
       return;
     }
     const x = pl.x, z = pl.z, G2 = v.tier === 'G';
-    FX.ring(x, z, G2 ? 2.6 : 2, v.col, 0.45);
+    if (fx.ult) FX.ring(x, z, G2 ? 2.6 : 2, v.col, 0.45); // 1–3. becerilerde karakterin altında daire yok
     for (let i = 0; i < (G2 ? 40 : 20 + 14 * v.k); i++) FX.spawn(x + rand(-0.8, 0.8), rand(0, 0.6), z + rand(-0.8, 0.8), rand(-0.4, 0.4), rand(2, G2 ? 5 : 4), rand(-0.4, 0.4), i % 3 ? v.col : v.light, rand(0.5, 1), rand(0.07, 0.13), 0);
     if (fx.ult) { // ult: rün dairesi + ışık sütunu + gökten yıldırımlar
       this._circle(pl, G2 ? 1.9 : 1.4 + 0.25 * v.k, v.col, G2 ? 0.95 : 0.75, G2 ? 1.6 : 1.1, Math.max(dur, 1.4));
       if (G2) { this._circle(pl, 1.25, v.gold, 0.8, -2.4, Math.max(dur, 1.4)); FX.pillar(x, z, v.col, 8, 0.45, 0.8); }
       const B = fx.castBolts && fx.castBolts[v.tier];
-      if (B) this._bolts(pl, B.n, B.cols, 0.02, B.span);
+      if (B) this._bolts(pl, B.n, B.cols, 0.02, B.span, B.w);
     }
     if (fx.tornado) this._tornado(pl, v, (SAVASCI_SKILL_T[id] || {}).dur || 1.1, G2 ? 1.5 : 1.25);
     this.aura(pl, v, dur, 1);
@@ -18770,15 +18776,14 @@ const SkillVis = {
     const v = this.of(id), fx = v.fx;
     if (v.tier === 'N') { if (v.full) FX.burst(x, 0.6, z, 0xeaf4ff, heavy ? 8 : 4, 4, 0.08, 0.4, 6); return; }
     const L = G.level, k = v.k, rr = (r || 2) * (v.tier === 'G' ? 1.25 : 1.1), G2 = v.tier === 'G';
-    FX.ring(x, z, rr, v.col, 0.36);
-    FX.ring(x, z, rr * 0.6, v.light, 0.26, 0.15);
+    if (fx.ult) { FX.ring(x, z, rr, v.col, 0.36); FX.ring(x, z, rr * 0.6, v.light, 0.26, 0.15); }
     FX.burst(x, 0.7, z, v.col, G2 ? 30 : Math.round(14 + 12 * k), G2 ? 8 : 6, 0.13, 0.55, 5);
     for (let i = 0; i < (G2 ? 22 : 8 + 10 * k); i++) FX.spawn(x + rand(-rr, rr) * 0.45, rand(0.1, 0.5), z + rand(-rr, rr) * 0.45, 0, rand(2.5, G2 ? 6.5 : 5), 0, i % 2 ? v.light : G2 ? v.gold : v.deep, rand(0.4, 0.8), rand(0.07, 0.12), 0);
     FX.flash(G2 ? v.light : v.col, heavy ? (G2 ? 7 : 4.5) : G2 ? 3.5 : 2.2, heavy ? 0.32 : 0.2);
     Post.boost = Math.max(Post.boost || 0, heavy ? (G2 ? 1.6 : 0.9) : G2 ? 0.8 : 0.45);
     if (!heavy) return;
     camPunch(G2 ? 0.9 : 0.5);
-    later(0.07, () => { if (G.level === L) FX.ring(x, z, rr * 1.5, G2 ? v.gold : v.light, 0.42); });
+    if (fx.ult) later(0.07, () => { if (G.level === L) FX.ring(x, z, rr * 1.5, G2 ? v.gold : v.light, 0.42); });
     if (fx.magma) { // Yer Sarsan: çevrede fışkıran lav / kor sütunları
       const n = G2 ? 9 : 5;
       for (let i = 0; i < n; i++) later(0.04 * i, () => {
@@ -18789,10 +18794,10 @@ const SkillVis = {
       });
     } else FX.pillar(x, z, v.col, G2 ? 4 : 3, 0.32, rr * 0.28);
     if (fx.boltHit === v.tier || (fx.boltHit === 'G' && G2)) { // Hamle: Büyük Usta'da inişte yıldırım
-      FX.bolt(x + rand(-0.2, 0.2), z + rand(-0.2, 0.2), v.light);
-      later(0.06, () => { if (G.level === L) FX.bolt(x + rand(-0.6, 0.6), z + rand(-0.6, 0.6), v.col); });
-      if (v.g >= 3) later(0.12, () => { if (G.level === L) FX.bolt(x + rand(-0.9, 0.9), z + rand(-0.9, 0.9), v.gold); });
-      FX.flash(v.light, 8, 0.35); camPunch(1.1);
+      FX.bolt(x, z, v.light, 0.34 + 0.03 * v.g, 0.42); // kılıcın yere vurduğu noktaya tek, kalın yıldırım
+      FX.pillar(x, z, v.light, 3.5, 0.3, 0.55);
+      FX.burst(x, 0.3, z, v.light, 26, 8, 0.12, 0.5, 6);
+      FX.flash(v.light, 9, 0.4); camPunch(1.2);
       SFX.play('zap');
     }
   },

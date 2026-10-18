@@ -1,6 +1,6 @@
 # Taş Mührü — proje durumu (kısa teknik hafıza)
 
-Son güncelleme: 2026-10-14 · `main`: görev zinciri + çanta/arayüz yenilemesi + Savaşçı silahlı bekleme/koşu/yürüme animasyonları ve ince kılıçlar (`SWORD_W/SWORD_T`) dahil. köy yeniden tasarımı + küçük köy yapıları + canavar/NPC/köy görsel kalite geçişi (`ozellik/koy-modeller` → main, kullanıcı onayıyla; yedek `yedek/main-koy-kalite-oncesi`). Satır numaraları bu sürüme göredir ve kayar;
+Son güncelleme: 2026-10-18 · `main`: beceri ustalığı görsel kademesi (`SkillVis`, `SKILL_FX`) dahil; görev zinciri + çanta/arayüz yenilemesi + Savaşçı silahlı bekleme/koşu/yürüme animasyonları ve ince kılıçlar (`SWORD_W/SWORD_T`) dahil. köy yeniden tasarımı + küçük köy yapıları + canavar/NPC/köy görsel kalite geçişi (`ozellik/koy-modeller` → main, kullanıcı onayıyla; yedek `yedek/main-koy-kalite-oncesi`). Satır numaraları bu sürüme göredir ve kayar;
 her zaman `grep -n` ile doğrula.
 
 ## Dosyalar
