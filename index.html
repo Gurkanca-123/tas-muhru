@@ -18503,8 +18503,8 @@ class PlayerEnt {
 //   3) Darbe: halka, patlama, kor sütunu; Büyük Usta'da şimşek, yükselen ışık duvarı, altın mühür.
 // Renkler / yoğunluk yalnız SKILL_VIS tablosundan değişir.
 const SKILL_VIS = {
-  M: { col: 0xffc24a, col2: 0xfff1c0, deep: 0xff8a20, gold: 0xffd060, shellA: [1.0, 0.72, 0.25], shellB: [1.0, 0.36, 0.06] },
-  G: { col: 0xb98cff, col2: 0xfff0ff, deep: 0x7a48ff, gold: 0xffd870, shellA: [0.78, 0.6, 1.0], shellB: [1.0, 0.95, 1.0] },
+  M: { col: 0xffc24a, light: 0xffd97a, col2: 0xfff1c0, deep: 0xff8a20, gold: 0xffd060, shellA: [1.0, 0.72, 0.25], shellB: [1.0, 0.36, 0.06] },
+  G: { col: 0xb98cff, light: 0xcfa8ff, col2: 0xfff0ff, deep: 0x7a48ff, gold: 0xffd870, shellA: [0.78, 0.6, 1.0], shellB: [1.0, 0.95, 1.0] },
 };
 const SKILL_VIS_DUST = new Set([0xcbb89a, 0xb0a084, 0xd8c8a0, 0xa89878, 0xd8c09a]); // toz / toprak: hiçbir kademede boyanmaz
 // Becerinin kendi efektleri için gövde kabuğu: alev kabuğuyla aynı skinned geometri, renk ve güç uniform'la (zırh seviyesinden bağımsız)
@@ -18573,7 +18573,7 @@ const SkillVis = {
       let o = cache.get(c);
       if (o == null) {
         const r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255, l = (0.3 * r + 0.55 * g + 0.15 * b) / 255;
-        o = l > 0.88 ? v.col2 : l > 0.7 ? v.col : v.tier === 'G' ? v.gold : v.deep;
+        o = l > 0.88 ? v.light : l > 0.7 ? v.col : v.tier === 'G' ? v.gold : v.deep; // açık tonlar da doygun kalsın (beyaza kaçmasın)
         cache.set(c, o);
       }
       return o;
