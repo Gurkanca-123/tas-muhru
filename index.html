@@ -1045,10 +1045,10 @@ const GEAR_SETS = {
   // Adlı takı setleri (jewel: yüzük + kolye + tılsım; kademe 7 temel değerleri × mul). Rastgele düşmez, yalnız özel kaynaklar:
   // bronzm (Sv 55): Bronz Taş Tapınağı 6. kat patronu (TEMPLE_REWARDS[5].jset) · ulumuhur (Sv 65): tapınak 8-10. kat
   // (TEMPLE_REWARDS[7..9].jset) ve Kara Taş Tapınağı Kabus'ta Kırık Taş Mühür (rollLoot JSET_KABUS).
-  bronzm: { name: 'Bronz Mühür Takı Seti', jewel: true, tier: 7, lv: 55, mat: 'j7', color: '#e0a050', mul: 1.15, crit: 1,
+  bronzm: { name: 'Bronz Mühür Takı Seti', jewel: true, tier: 7, lv: 55, mat: 'j7', color: '#e0a050', mul: 1.15, crit: 1, lines: 4,
     bonus: { 2: { crit: 5, mob: 5 }, 3: { atkPct: 0.12, hpPct: 0.12, fx: 'muhurYanki' } },
     names: { ring: 'Bronz Mühür Yüzüğü', neck: 'Bronz Mühür Kolyesi', charm: 'Bronz Mühür Tılsımı' } },
-  ulumuhur: { name: 'Ulu Mühür Takı Seti', jewel: true, tier: 7, lv: 65, mat: 'j7', color: '#7ad8ff', mul: 1.38, crit: 2,
+  ulumuhur: { name: 'Ulu Mühür Takı Seti', jewel: true, tier: 7, lv: 65, mat: 'j7', color: '#7ad8ff', mul: 1.38, crit: 2, lines: 4,
     bonus: { 2: { crit: 7, mob: 8 }, 3: { atkPct: 0.17, hpPct: 0.17, defPct: 0.06, fx: 'muhurKalkan' } },
     names: { ring: 'Ulu Mühür Yüzüğü', neck: 'Ulu Mühür Kolyesi', charm: 'Ulu Mühür Tılsımı' } },
   tas: { name: 'Taş Balta', tier: 0, lv: 1, mat: 'j1', look: 'baltaci_balta', cls: 'baltaci', names: { weapon: 'Taş Balta' } },
@@ -1145,6 +1145,8 @@ const STACKS = {
   ess_charm: { name: 'Kehribar Damlası', kind: 'ess', icon: 'soul', tint: '#e8b040', sell: 480, desc: '+7 … +9 tılsım geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
   ess_neck: { name: 'Gölge İncisi', kind: 'ess', icon: 'soul', tint: '#7a7aff', sell: 480, desc: '+7 … +9 kolye geliştirmede kullanılır. Bosslardan, Kadim Mühür\'den ve üst zindan elitlerinden düşer. Simyacı da üretir.' },
   bless: { name: 'Kutsama Kağıdı', kind: 'scroll', price: 10000, sell: 300, icon: 'scroll', tint: '#d8a02a', desc: 'Geliştirme başarısız olursa eşya seviyesi düşmez.' },
+  // Efsun Kağıdı: eşyaya yeni bir efsun (bonus) satırı ekler (Simyacı → Efsun). Tüccar 100.000 (çantadan satış %25) · Bronz Taş Tapınağı (TEMPLE_REWARDS[*].efk) ve Kemik Taht (EFSUN_DROP)
+  efsun_kagit: { name: 'Efsun Kağıdı', kind: 'scroll', price: 100000, sell: 25000, icon: 'scroll', tint: '#e070d8', desc: 'Eşyaya yeni bir efsun (bonus) satırı ekler; eski satırlar değişmez. Eşyada en çok 4 satır olur. Simyacı → Efsun sekmesinde kullanılır. Bronz Taş Tapınağı ve Kemik Taht\'ta düşer.' },
   tp: { name: 'Dönüş Parşömeni', kind: 'scroll', price: 30, icon: 'scroll', tint: '#3a8ae0', desc: 'Zindandan anında köye ışınlar.' },
   // Beceri ustalığı parşömenleri: Tüccar'da 100.000 / 150.000 (çantadan satış fiyatın %25'i) + Kara Taş Tapınağı ve Kemik Taht Kabus düşüşü (PARCH_KABUS)
   usta_parsomen: { name: 'Usta Yetenek Parşömeni', kind: 'scroll', price: 100000, sell: 25000, icon: 'scroll', tint: '#4ad0c0', desc: 'Seviye 5\'e (en yüksek normal seviye) ulaşmış bir beceriyi M1 ustalık aşamasına geçirir. Çantada Kullan → beceri seç. Tüccar\'da satılır; Kara Taş Tapınağı ve Kemik Taht\'ın Kabus zorluğunda da düşer.' },
@@ -1161,7 +1163,7 @@ const STACKS = {
   j6: { name: 'Kara Taş Tozu', kind: 'dmat', sell: 60, icon: 'ore', tint: '#6a4a7a', desc: 'Kademe 6 eşya geliştirmede kullanılır. Kara Taş Tapınağı\'nda düşer.' },
 };
 const STACK_MAX = 200;
-const SHOP_LIST = ['hp1', 'hp2', 'hp3', 'mp1', 'mp2', 'mp3', 'tp', 'ore', 'bless', 'usta_parsomen', 'busta_parsomen'];
+const SHOP_LIST = ['hp1', 'hp2', 'hp3', 'mp1', 'mp2', 'mp3', 'tp', 'ore', 'bless', 'efsun_kagit', 'usta_parsomen', 'busta_parsomen'];
 
 // ---------- Taş Mühürler (Bronz Taş Tapınağı 6-10. kat ödülü) ----------
 // Ekipmana takılan, normal geliştirmeden (+0…+9) bağımsız ilerleme katmanı. Her ekipman parçasında 1 yuva (it.seal = mühür
@@ -1273,6 +1275,8 @@ const DROP = {
 // Kabus özel düşüş payları (rollLoot): Kara Taş Tapınağı Kabus Kırık Taş Mühür → Ulu Mühür takısı;
 // Kara Taş Tapınağı + Kemik Taht Kabus → [Usta, Büyük Usta] Yetenek Parşömeni (rütbeye göre)
 const JSET_KABUS = 0.18;
+// Efsun Kağıdı: Kemik Taht (d7) canavar düşüşü (zorluk çarpanı df.drop ile ölçeklenir); tapınakta kat ödülünden (TEMPLE_REWARDS[*].efk) gelir
+const EFSUN_DROP = { normal: 0, elite: 0.008, metin: 0, boss: 0.2 };
 const PARCH_KABUS = { normal: [0.002, 0], elite: [0.012, 0.004], metin: [0.05, 0.02], boss: [0.08, 0.03] };
 const DIFFS = [
   { name: 'Normal', color: '#e8e2d2', hp: 1, atk: 1, def: 1, exp: 1, gold: 1, drop: 1, rar: 0, ess: 1 },
@@ -2388,9 +2392,12 @@ function makeGear(slot, tier, rarity, cls, set) {
   const it = { uid: uid(), type: 'gear', slot, tier, rarity, plus: 0, dur: 100, bonus: [] };
   if (set) it.set = set;
   if (slot === 'weapon') it.cls = cls;
-  it.bonus = rollBonus(slot, tier, RARITY[rarity].lines);
+  it.bonus = rollBonus(slot, tier, baseLines(set, rarity));
   return it;
 }
+// efsun (bonus) satır sayısı: adlı takı setlerinde 4 (GEAR_SETS[*].lines), diğerlerinde nadirliğe göre; Efsun Kağıdı ile en çok EFSUN_MAX
+const EFSUN_MAX = 4;
+const baseLines = (set, rarity) => (set && GEAR_SETS[set] && GEAR_SETS[set].lines) || RARITY[rarity].lines;
 // n farklı bonus satırı (silahta savunma yok); değer kademenin üst sınırının %50-100'ü. Efsun da bunu kullanır.
 function rollBonus(slot, tier, n) {
   const out = [], pool = Object.keys(BONUS_POOL).filter((k) => !(slot === 'weapon' && k === 'def'));
@@ -2401,12 +2408,31 @@ function rollBonus(slot, tier, n) {
   }
   return out;
 }
+// Efsun Kağıdı: eşyaya, üzerinde olmayan türden yeni bir satır ekler (en çok EFSUN_MAX); eklenen satırı döndürür
+function addBonusLine(it) {
+  if (!it || it.type !== 'gear' || it.bonus.length >= EFSUN_MAX) return null;
+  const have = it.bonus.map((b) => b.k), pool = Object.keys(BONUS_POOL).filter((k) => !have.includes(k) && !(it.slot === 'weapon' && k === 'def'));
+  if (!pool.length) return null;
+  const k = pick(pool), mx = BONUS_POOL[k].max(Math.max(1, it.tier)), line = { k, v: Math.max(1, Math.round(mx * rand(0.5, 1))) };
+  it.bonus.push(line);
+  return line;
+}
+// kâğıdı tüketir ve satır ekler (kontrol → 1 kâğıt düş → ekle; senkron). { ok, line } ya da { ok:false, why }
+function useEfsunPaper(it) {
+  if (!it || it.type !== 'gear') return { ok: false, why: 'Eşya seç' };
+  if (it.bonus.length >= EFSUN_MAX) return { ok: false, why: 'Bu eşyada en çok satır var (' + EFSUN_MAX + ')' };
+  if (countStack('efsun_kagit') < 1) return { ok: false, why: 'Efsun Kağıdı yok' };
+  if (!removeStack('efsun_kagit', 1)) return { ok: false, why: 'Efsun Kağıdı yok' };
+  const line = addBonusLine(it);
+  recalc();
+  return line ? { ok: true, line } : { ok: false, why: 'Eklenemedi' };
+}
 function makeStack(id, n) { return { uid: uid(), type: 'stack', id, n: n || 1 }; }
 // eşyanın nadirliğini en az r yap; bonus satırları yeni nadirliğe göre yeniden zarlanır (nadirlik = satır sayısı)
 function rarityAtLeast(it, r) {
   if (!it || it.type !== 'gear' || !r || it.rarity >= r) return it;
   it.rarity = Math.min(r, RARITY.length - 1);
-  it.bonus = rollBonus(it.slot, it.tier, RARITY[it.rarity].lines);
+  it.bonus = rollBonus(it.slot, it.tier, baseLines(it.set, it.rarity));
   return it;
 }
 
@@ -2749,7 +2775,7 @@ function iconSpec(it) {
     const q = sealParse(it.id);
     if (q) return { kind: 'seal', metal: 0x5a5662, gem: parseInt(q.G.tint.slice(1), 16), glow: 0.6 + q.g * 0.25, stat: q.stat, grade: q.g };
     if (s.icon === 'potion') return { kind: 'potion', metal: 0x888888, gem: tint, glow: 0.45, size: 0.8 + (s.lv >= 28 ? 0.35 : s.lv >= 12 ? 0.18 : 0), band: s.lv >= 28 };
-    if (s.icon === 'scroll') { const gold = it.id === 'bless' || it.id === 'busta_parsomen'; return { kind: 'scroll', metal: 0x888888, gem: tint, glow: gold ? 0.9 : 0.35, gold }; }
+    if (s.icon === 'scroll') { const gold = it.id === 'bless' || it.id === 'busta_parsomen' || it.id === 'efsun_kagit'; return { kind: 'scroll', metal: 0x888888, gem: tint, glow: gold ? 0.9 : 0.35, gold }; }
     if (s.icon === 'ore') return { kind: 'ore', metal: 0x888888, gem: tint, tint, rock: it.id === 'j4' ? 0x3a2a24 : it.id === 'j6' ? 0x2a2230 : it.id === 'bronzparca' ? 0x6a5a48 : 0x6a6470 };
     if (s.icon === 'bone') return { kind: 'bone', metal: 0x888888, gem: tint, tint: it.id === 'j7' ? 0xd8f0d8 : tint };
     let h = 0; for (const c of it.id) h = (h * 31 + c.charCodeAt(0)) % 997;
@@ -2846,7 +2872,7 @@ function icon3DPrewarm() {
 function stackIcon(id) { return (STACKS[id] && icon3DRender(iconSpec({ type: 'stack', id }))) || spriteIcon(STACKS[id].icon, STACKS[id].tint); }
 function itemIcon(it) {
   const u3 = icon3DRender(iconSpec(it), it.type === 'gear' && it.rarity > 0 ? RARITY[it.rarity].color : null,
-    it.type === 'gear' ? it.rarity >= 3 || it.tier >= 7 : it.id === 'bless' || it.id === 'busta_parsomen'); // 3B ikon (yedek: 2B)
+    it.type === 'gear' ? it.rarity >= 3 || it.tier >= 7 : it.id === 'bless' || it.id === 'busta_parsomen' || it.id === 'efsun_kagit'); // 3B ikon (yedek: 2B)
   if (u3) return u3;
   if (it.type === 'stack') { const s = STACKS[it.id]; return spriteIcon(s.icon, s.tint); }
   if (it.set && !GEAR_SETS[it.set].jewel) return spriteIcon(it.set + '_' + it.slot); // sete / adlı eşyaya özel ikon (02c)
@@ -17220,6 +17246,7 @@ const TEMPLE_POW = [
 // 6-10. kat (Efsanevi + Taş Mühür): efs: her biri bir Efsanevi set parçası / silah / takı zarı (rollGear efs=1; Zor/Kabus şartı
 // bu kaynakta aranmaz) · minRar: bu katın eşyalarında en düşük nadirlik (0 Beyaz … 3 Mor) · ts: Taş Mühür zarları [kademe, şans]
 // (kademe 1 Kırık, 2 Bronz, 3 Kadim; her başarılı zar rastgele bir mühür türü verir). Kalite kat kat yükselir.
+// efk: Efsun Kağıdı (efsun_kagit) şansı (6-10. kat; tam tur ≈ 0,61 kâğıt).
 const TEMPLE_REWARDS = [
   { gold: 450, exp: 0.005, mats: [['ore', 2, 3, 1]] },
   { gold: 550, exp: 0.006, mats: [['ore', 2, 4, 1], ['soul', 1, 1, 0.3]] },
@@ -17227,15 +17254,15 @@ const TEMPLE_REWARDS = [
   { gold: 850, exp: 0.01, mats: [['ore', 3, 5, 1], ['soul', 1, 2, 0.6], ['j7', 1, 2, 0.6]], gear: { chance: 0.16, rank: 'elite', n: 1 } },
   { gold: 1000, exp: 0.012, mats: [['ore', 4, 5, 1], ['soul', 1, 2, 0.8], ['j7', 1, 3, 0.8]], gear: { chance: 0.2, rank: 'elite', n: 1 } },
   { gold: 1600, exp: 0.02, chest: true, mats: [['soul', 2, 3, 1], ['j7', 2, 3, 1], ['bless', 1, 1, 0.25]], gear: { chance: 1, rank: 'boss', n: 1 }, ess: 0.25, seal: [1, 1, 0.45],
-    efs: [0.28], minRar: 1, ts: [[1, 1], [1, 0.35], [2, 0.12]], jset: ['bronzm', 0.35] },
+    efs: [0.28], minRar: 1, ts: [[1, 1], [1, 0.35], [2, 0.12]], jset: ['bronzm', 0.35], efk: 0.12 },
   { gold: 1900, exp: 0.015, mats: [['soul', 2, 3, 1], ['j7', 2, 4, 1], ['bless', 1, 1, 0.1]], gear: { chance: 0.25, rank: 'elite', n: 1 }, ess: 0.3, seal: [1, 1, 0.1],
-    efs: [0.22], minRar: 1, ts: [[1, 0.7], [2, 0.25]] },
+    efs: [0.22], minRar: 1, ts: [[1, 0.7], [2, 0.25]], efk: 0.05 },
   { gold: 2200, exp: 0.018, mats: [['soul', 2, 4, 1], ['j7', 3, 4, 1], ['bless', 1, 1, 0.15]], gear: { chance: 0.3, rank: 'elite', n: 1 }, ess: 0.35, seal: [1, 1, 0.15],
-    efs: [0.28], minRar: 2, ts: [[1, 0.6], [2, 0.35], [3, 0.03]], jset: ['ulumuhur', 0.1] },
+    efs: [0.28], minRar: 2, ts: [[1, 0.6], [2, 0.35], [3, 0.03]], jset: ['ulumuhur', 0.1], efk: 0.06 },
   { gold: 2500, exp: 0.02, mats: [['soul', 3, 4, 1], ['j7', 3, 5, 1], ['bless', 1, 1, 0.2]], gear: { chance: 0.35, rank: 'elite', n: 1 }, ess: 0.4, seal: [1, 1, 0.2],
-    efs: [0.34], minRar: 2, ts: [[2, 0.5], [1, 0.4], [3, 0.06]], jset: ['ulumuhur', 0.14] },
+    efs: [0.34], minRar: 2, ts: [[2, 0.5], [1, 0.4], [3, 0.06]], jset: ['ulumuhur', 0.14], efk: 0.08 },
   { gold: 5000, exp: 0.04, chest: true, mats: [['soul', 3, 5, 1], ['j7', 4, 6, 1], ['bless', 1, 2, 0.6]], gear: { chance: 1, rank: 'boss', n: 2 }, rare: 0.35, ess: 1, ess2: 0.4, seal: [2, 3, 1],
-    efs: [1, 0.5], minRar: 2, ts: [[2, 1], [2, 0.5], [3, 0.2], [1, 0.5]], jset: ['ulumuhur', 0.35] },
+    efs: [1, 0.5], minRar: 2, ts: [[2, 1], [2, 0.5], [3, 0.2], [1, 0.5]], jset: ['ulumuhur', 0.35], efk: 0.3 },
 ];
 // ilk kez temizlenen kat: bir kerelik ek ödül (ts: bir Taş Mühür, kademesi)
 const TEMPLE_FIRST = (f) => ({ gold: 400 * (f + 1), soul: f >= 5 ? 2 : 1, seal: f === 9 ? 2 : f === 5 ? 1 : 0, ts: f === 9 ? 3 : f === 5 ? 2 : f >= 6 ? 1 : 0 });
@@ -17761,6 +17788,7 @@ const Temple = {
     if (R.ess && Math.random() < R.ess) stack(RAREMAT[pick(SLOTS)], 1);
     if (R.ess2 && Math.random() < R.ess2) stack(RAREMAT[pick(SLOTS)], 1);
     if (R.seal && Math.random() < R.seal[2]) stack('bronzparca', n(R.seal[0], R.seal[1]));
+    if (R.efk && Math.random() < R.efk) stack('efsun_kagit', 1);
     const gname = (it, w) => itemName(it) + (w === 'depo' ? ' (depoya)' : w === 'altın' ? ' (çanta dolu → altın)' : '');
     const G_ = R.gear;
     if (G_ && Math.random() < G_.chance) for (let k = 0; k < (G_.n || 1); k++) { const it = rarityAtLeast(rollGear(6, G_.rank, 7, true), R.minRar); got.push(gname(it, give(it))); }
@@ -18640,6 +18668,7 @@ const Combat = {
     // nadir yuva cevheri: bosslar/Kadim Mühür her zindanda, elitler yalnız 4. zindan ve sonrasında
     if (!(rank === 'elite' && tier < 4) && Math.random() < DROP.essence[rank] * df.ess) st(RAREMAT[pick(SLOTS)], 1);
     if (Math.random() < DROP.bless[rank]) st('bless', 1);
+    if (L.dg.id === 'd7' && !L.dg.temple && Math.random() < Math.min(1, (EFSUN_DROP[rank] || 0) * df.drop)) st('efsun_kagit', 1); // Kemik Taht
     // Kabus özel kaynakları: Kara Taş Tapınağı'nda Kırık Taş Mühür → Ulu Mühür takısı; Kara Taş + Kemik Taht → ustalık parşömenleri
     if ((L.diff | 0) === 2 && !L.dg.temple) {
       if (L.dg.id === 'd6' && m.key === 'minimetin' && Math.random() < JSET_KABUS) spawnDrop(L, m.x, m.z, { item: rarityAtLeast(makeGear(pick(JEWEL_SLOTS), 7, rollRarity(6, 'boss'), P.cls, 'ulumuhur'), 1) });
@@ -20302,11 +20331,12 @@ const UI = {
   },
   // Efsun: bonus satırlı (Yeşil ve üstü) eşyanın satırları baştan zarlanır; eski satırlar gider (doğrudan değişir)
   efsunPanel(b, S) {
-    b.appendChild(el('div', 'muted', 'Eşyanın bonus satırlarını (Maks. Can, Kritik, Canavarlara Karşı Güç…) baştan zarlarım. Satır sayısı nadirliğe bağlıdır, değişmez; eski satırlar gider. Beyaz eşyanın satırı yoktur.'));
+    b.appendChild(el('div', 'muted', 'Eşyanın bonus satırlarını (Maks. Can, Kritik, Canavarlara Karşı Güç…) baştan zarlarım. Satır sayısı değişmez; eski satırlar gider. Efsun Kağıdın varsa eşyaya yeni bir satır da ekleyebilirim (eski satırlar kalır, en çok ' + EFSUN_MAX + ' satır).'));
     const items = [];
-    for (const sl of SLOTS) if (P.equip[sl] && P.equip[sl].bonus.length) items.push({ it: P.equip[sl], eq: sl });
-    P.inv.forEach((it, i) => { if (it && it.type === 'gear' && it.bonus.length) items.push({ it, inv: i }); });
-    if (!items.length) { b.appendChild(el('div', 'muted', 'Efsunlanacak eşya yok (Yeşil, Mavi ya da Mor eşya gerekir).')); this.footHint(S.foot, 'Bonus satırlı bir eşya bul.'); return; }
+    const paper = countStack('efsun_kagit'), ok = (it) => it.bonus.length > 0 || (paper > 0 && it.bonus.length < EFSUN_MAX); // kâğıtla satırı olmayan eşyaya da satır eklenir
+    for (const sl of SLOTS) if (P.equip[sl] && ok(P.equip[sl])) items.push({ it: P.equip[sl], eq: sl });
+    P.inv.forEach((it, i) => { if (it && it.type === 'gear' && ok(it)) items.push({ it, inv: i }); });
+    if (!items.length) { b.appendChild(el('div', 'muted', 'Efsunlanacak eşya yok (Yeşil, Mavi ya da Mor eşya gerekir; Efsun Kağıdı ile her eşyaya satır eklenir).')); this.footHint(S.foot, 'Bonus satırlı bir eşya bul.'); return; }
     const pick = (o) => this.sel && (o.eq ? this.sel.eq === o.eq : this.sel.inv === o.inv);
     if (!this.sel || !items.some(pick)) this.sel = items[0].eq ? { eq: items[0].eq } : { inv: items[0].inv };
     const list = el('div', 'list'); list.style.marginTop = '8px';
@@ -20323,18 +20353,32 @@ const UI = {
     const R = RARITY[it.rarity];
     const lines = it.bonus.map((x) => `<li class="b">+${x.v}${BONUS_POOL[x.k].pct ? '%' : ''} ${BONUS_POOL[x.k].name} <span class="muted">(en çok ${BONUS_POOL[x.k].max(Math.max(1, it.tier))})</span></li>`).join('');
     const res = this.lastRes ? `<div class="up-res ok">${this.lastRes.text}</div>` : '';
-    const F = this.footCard(S.foot, itemIcon(it), `<div class="up-top"><b style="color:${R.color}">${itemName(it)}</b><span class="muted">${R.name} · ${it.bonus.length} satır</span></div><ul class="efs">${lines}</ul>${res}<div class="up-cost"><span class="price">${coinImg()}${fmtFull(c.gold)}</span>${this.matRows(c.mats)}</div>${missing.length ? `<div class="up-hint muted">Nerede bulunur: ${missing.map((k) => STACKS[k].desc).join(' ')}</div>` : ''}`, 'smith');
+    const F = this.footCard(S.foot, itemIcon(it), `<div class="up-top"><b style="color:${R.color}">${itemName(it)}</b><span class="muted">${R.name} · ${it.bonus.length}/${EFSUN_MAX} satır · Efsun Kağıdı: ${paper}</span></div><ul class="efs">${lines}</ul>${res}<div class="up-cost"><span class="price">${coinImg()}${fmtFull(c.gold)}</span>${this.matRows(c.mats)}</div>${missing.length ? `<div class="up-hint muted">Nerede bulunur: ${missing.map((k) => STACKS[k].desc).join(' ')}</div>` : ''}`, 'smith');
     this.addPlusGlow(F.im, it);
-    const can = P.gold >= c.gold && !missing.length;
-    if (!can) F.acts.appendChild(el('span', 'muted', P.gold < c.gold ? 'Altın yetersiz' : STACKS[missing[0]].name + ' yetersiz'));
-    F.acts.appendChild(this.btn('Efsunla', 'gold big', () => this.doEfsun(it), !can));
+    const can = it.bonus.length > 0 && P.gold >= c.gold && !missing.length;
+    if (!can) F.acts.appendChild(el('span', 'muted', !it.bonus.length ? 'Satırı yok: yalnız Efsun Kağıdı ile satır eklenir' : P.gold < c.gold ? 'Altın yetersiz' : STACKS[missing[0]].name + ' yetersiz'));
+    if (it.bonus.length) F.acts.appendChild(this.btn('Efsunla', 'gold big', () => this.doEfsun(it), !can));
+    // Efsun Kağıdı: yeni satır ekle (eski satırlar kalır)
+    if (it.bonus.length >= EFSUN_MAX) F.acts.appendChild(el('span', 'muted', 'Satır sınırı (' + EFSUN_MAX + ') dolu'));
+    else if (!paper) F.acts.appendChild(el('span', 'muted', 'Satır eklemek için Efsun Kağıdı gerekir (Tüccar, Bronz Taş Tapınağı, Kemik Taht)'));
+    else F.acts.appendChild(this.confirmBtn('efk' + it.uid, 'Efsun Kağıdı ile satır ekle', 'Yeni satır ekle · Onayla', 'blue', () => this.doEfsunPaper(it)));
+  },
+  doEfsunPaper(it) {
+    const r = useEfsunPaper(it);
+    if (!r.ok) { toast(r.why); SFX.play('deny'); this.render(); return false; }
+    const bp = BONUS_POOL[r.line.k];
+    SFX.play('success');
+    this.lastRes = { ok: true, text: `Yeni efsun eklendi: +${r.line.v}${bp.pct ? '%' : ''} ${bp.name}` };
+    saveGame();
+    this.render();
+    return true;
   },
   doEfsun(it) {
     const c = efsunCost(it);
     if (P.gold < c.gold || Object.keys(c.mats).some((k) => countStack(k) < c.mats[k])) return false;
     P.gold -= c.gold;
     for (const k in c.mats) removeStack(k, c.mats[k]);
-    it.bonus = rollBonus(it.slot, it.tier, RARITY[it.rarity].lines);
+    it.bonus = rollBonus(it.slot, it.tier, Math.max(1, it.bonus.length)); // satır sayısı korunur (takı setleri 4, Efsun Kağıdı ile eklenenler dahil)
     recalc();
     Daily.progress('efsun');
     Quest.ev('efsun');
@@ -21155,7 +21199,7 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { WILD_ZONES, buildWild, wildReach, groundY, goWild, goVillage, setLevel, placePlayer, buffs, SKILLS, toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
+window.__tm = { WILD_ZONES, buildWild, wildReach, groundY, goWild, goVillage, setLevel, placePlayer, buffs, SKILLS, toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, addBonusLine, useEfsunPaper, EFSUN_MAX, EFSUN_DROP, GEAR_SETS, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad,
   TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
