@@ -14,6 +14,13 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-19 (37) — Büyücü sınıfı (5 gövde, 5 asa, 4 beceri) · dal `ozellik/buyucu` (main'e alınmadı)
+- Kullanıcının iskeletsiz Tripo modelleri Blender'da (bu ortamdaki `bpy`) iskeletlendi: Mixamo adlı 22 kemik, vokselleştirilmiş kopyada ısı ağırlığı → asıl gövdeye aktarım; sağ elin etek/kemer/cebe sızan zayıf (<0.5) kol ağırlıkları kalçaya verildi. 14 klip anahtar pozla: idleA, idleReady, idleLook, walk, run, atkA/B/C, skM1..4, hit, death.
+- Yeni dosyalar: `buyucu_{baslangic,zambak,zumrut,mavi,ametist}.js` (gövdeler, ~3.7–4 MB) ve `buyucu_asalar.js` (5 asa tek betikte). İkisi de yalnız Büyücü oynanınca / görülünce yüklenir (`tmScript`, `tmParseGLB`).
+- `index.html`: `CLASSES.mage` (Zekâ ana stat, uzak dövüş, `hitDelay` 0.3, `projCol`), `SKILLS` m1 Ateş Topu (projectile, klipte bırakma anında), m2 Gök Taşı (meteor), m3 Yıldırım Zinciri (aoe_target `ticks`), m4 Taş Kalkanı (buff); asalar `GEAR_SETS` masa/iasa/zasa/gasa/yasa + `OUTFIT_DATA` (`gripY`, `full` yeni parça alanları, `buildGearSword`); göğüs adları `CLS_GEAR_NAMES` (`itemName`); gövde `MAGE_BODY_OF` (Bez→Beyaz Zambak, Kurt Dişi/Nihai→Zümrüt, Bronz Taş→Gök Taşı, Efsanevi→Ametist); `buildMageModel`, asa tutuşu `mageMounts` (idleReady pozundan hesap); 2B/3B asa ikonları (`IC_BUILD.staff`); temel büyü küresi asanın taşından çıkar (`Proj.playerShot`); ortak oyun / düello: `RemotePlayer` ve `s` olayı Büyücü'yü tanır.
+- Test (Playwright + SwiftShader, `lowpoly`, oyun zamanına göre bekleme): yeni Büyücü, köy (asa sırtta), zindan (asa elde), temel saldırı + 4 beceri hasar veriyor, 5 göğüs → 5 gövde ve adlar, 5 asa + ikonlar, köye dönüş, kayıt, uzak Büyücü oyuncu; Savaşçı / Baltacı açılışı. Sayfa hatası 0. `run.mjs` / `movetest.mjs` bu ortamda yok — çalıştırılmadı.
+- Açık: Beyaz Zambak Cübbesi Bez seti olduğu için Sv 1'den giyilir (kullanıcı Sv 10 düşünmüştü); denge (int 12, beceri çarpanları) oyuncu geri bildirimi ister; Büyücüye özel görev / tanıtım yok.
+
 ## 2026-10-18 (36) — Ustalık görselleri son ayar + main'e alındı (kullanıcı onayı) · `ozellik/ustalik-gorsel` → `main` (yedek `yedek/ustalik-gorsel-oncesi`)
 - 1–3. becerilerde karakterin altında daire yok: SkillVis'in başlangıç ve darbe halkaları yalnız ultide (w4, b4); rün dairesi zaten yalnız ultide.
 - Hamle (w1) G: kılıcın yere vurduğu noktada TEK, kalın yıldırım (`FX.bolt` yeni isteğe bağlı kalınlık / süre parametreleri; varsayılan davranış aynı).
