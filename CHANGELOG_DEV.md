@@ -20,6 +20,12 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - Tapınak 6. kat: 2 eşya, Efsanevi zarı [.5,.25], Mavi+, Kutsama %60 (1–2), Usta parşömeni %25, Efsun Kağıdı %35, Bronz Mühür takı %50. 10. kat: 3 eşya, Efsanevi [1,.7,.4], Kutsama %85 (2–3), Usta %50 (1–2), Büyük Usta %12, Efsun Kağıdı [1, .5], Ulu Mühür takı %50. `R.efk` artık dizi olabilir.
 - Denge sayıları ilk taslak; gerçek cihazda denenmedi.
 
+## 2026-10-18 (34) — Ustalık görselleri 2. geçiş: kademeler belirgin · dal `ozellik/ustalik-gorsel`
+- Kullanıcı: Normal → Usta → Büyük Usta geçişinde fark yeterince görünmüyordu. Blender gerekmedi (efektler gölgelendirici + doku).
+- Renk dili: `SkillVis.pal(id)` → useSkill / throwAxe içindeki tüm efekt renkleri `vc(...)` ile kademeye göre boyanır (Normal özgün çelik-beyaz · Usta altın-kor · Büyük Usta mor-beyaz + altın); toz renkleri `SKILL_VIS_DUST` korunur.
+- Karakter işareti (beceri süresince): gövde alev kabuğu `makeSkillShell` (`H.sAura`, iki gövde kurulumunda; zırh seviyesinden bağımsız), ayakta dönen rün dairesi (`_circle`; G'de çift, ters dönen), silah boyunca zerreler, oyuncu ışığı ve bloom (`Post.boost`, son-işlemde sönümlenir). Darbede büyük halka/patlama/kor sütunu; G'de 2–3 şimşek, ince ışık sütunu, altın mühür.
+- Test: görsel testi 73/73 (efekt yoğunluğu N < M < G her beceride) + N / M5 / G1 karşılaştırma görüntüleri (w1–w4, b2, b3). Gerçek telefon: **denenmedi**.
+
 ## 2026-10-18 (33) — Efsun Kağıdı + takı setlerinde 4 efsun · dal `ozellik/efsun-kagidi` (yerel, commit/push yapılmadı)
 - Takı setleri: `GEAR_SETS.bronzm` / `ulumuhur` → `lines: 4`; `makeGear` ve `rarityAtLeast` satır sayısını `baseLines(set, rarity)` ile alır (adlı takı 4, diğerleri nadirlik 0/1/2/3). Eski kayıttaki takılar değişmez.
 - Efsun Kağıdı (`STACKS.efsun_kagit`, Tüccar 100.000, çantadan satış 25.000): Simyacı → Efsun sekmesinde eşyaya, üzerinde olmayan türden YENİ bir satır ekler (eski satırlar kalır; silaha `def` gelmez; satır değeri `rollBonus` ile aynı aralık). Üst sınır `EFSUN_MAX = 4`. Beyaz eşyaya da (0→1) eklenir. Mantık `addBonusLine` / `useEfsunPaper`; arayüz `UI.efsunPanel` + `doEfsunPaper` (iki dokunuşla onay).
