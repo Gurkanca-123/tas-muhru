@@ -14,6 +14,12 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-18 (34) — Bronz Mühür Sv 60, yüksek seviyede düşük eşya azaltma, tapınak 6./10. kat ödülü · dal `ozellik/efsun-kagidi`
+- `GEAR_SETS.bronzm.lv` 55 → 60.
+- `rollLoot`: 4. zindan ve sonrasında (tapınak = 7) normal/elite eşya şansı çarpanı `[.6,.45,.35,.3]` (4–7. zindan); 6. zindandan itibaren en az Yeşil (normal) / Mavi (elite, patron), set sınıfında Bez ve başlangıç silahı düşmez (40 deneme + `rarityAtLeast`); normal/elite demir cevheri ×0,35, hurda ×0,4. Patron eşya şansı aynı.
+- Tapınak 6. kat: 2 eşya, Efsanevi zarı [.5,.25], Mavi+, Kutsama %60 (1–2), Usta parşömeni %25, Efsun Kağıdı %35, Bronz Mühür takı %50. 10. kat: 3 eşya, Efsanevi [1,.7,.4], Kutsama %85 (2–3), Usta %50 (1–2), Büyük Usta %12, Efsun Kağıdı [1, .5], Ulu Mühür takı %50. `R.efk` artık dizi olabilir.
+- Denge sayıları ilk taslak; gerçek cihazda denenmedi.
+
 ## 2026-10-18 (33) — Efsun Kağıdı + takı setlerinde 4 efsun · dal `ozellik/efsun-kagidi` (yerel, commit/push yapılmadı)
 - Takı setleri: `GEAR_SETS.bronzm` / `ulumuhur` → `lines: 4`; `makeGear` ve `rarityAtLeast` satır sayısını `baseLines(set, rarity)` ile alır (adlı takı 4, diğerleri nadirlik 0/1/2/3). Eski kayıttaki takılar değişmez.
 - Efsun Kağıdı (`STACKS.efsun_kagit`, Tüccar 100.000, çantadan satış 25.000): Simyacı → Efsun sekmesinde eşyaya, üzerinde olmayan türden YENİ bir satır ekler (eski satırlar kalır; silaha `def` gelmez; satır değeri `rollBonus` ile aynı aralık). Üst sınır `EFSUN_MAX = 4`. Beyaz eşyaya da (0→1) eklenir. Mantık `addBonusLine` / `useEfsunPaper`; arayüz `UI.efsunPanel` + `doEfsunPaper` (iki dokunuşla onay).

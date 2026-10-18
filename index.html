@@ -1043,9 +1043,9 @@ const GEAR_SETS = {
     bonus: { 2: { hpPct: 0.1 }, 3: { defPct: 0.18 }, 4: { atkPct: 0.16, mob: 12, fx: 'efsaneOfke' } },
     names: { head: 'Efsanevi Miğfer', chest: 'Efsanevi Zırh', feet: 'Efsanevi Çizme', shield: 'Efsanevi Kalkan' } },
   // Adlı takı setleri (jewel: yüzük + kolye + tılsım; kademe 7 temel değerleri × mul). Rastgele düşmez, yalnız özel kaynaklar:
-  // bronzm (Sv 55): Bronz Taş Tapınağı 6. kat patronu (TEMPLE_REWARDS[5].jset) · ulumuhur (Sv 65): tapınak 8-10. kat
+  // bronzm (Sv 60): Bronz Taş Tapınağı 6. kat patronu (TEMPLE_REWARDS[5].jset) · ulumuhur (Sv 65): tapınak 8-10. kat
   // (TEMPLE_REWARDS[7..9].jset) ve Kara Taş Tapınağı Kabus'ta Kırık Taş Mühür (rollLoot JSET_KABUS).
-  bronzm: { name: 'Bronz Mühür Takı Seti', jewel: true, tier: 7, lv: 55, mat: 'j7', color: '#e0a050', mul: 1.15, crit: 1, lines: 4,
+  bronzm: { name: 'Bronz Mühür Takı Seti', jewel: true, tier: 7, lv: 60, mat: 'j7', color: '#e0a050', mul: 1.15, crit: 1, lines: 4,
     bonus: { 2: { crit: 5, mob: 5 }, 3: { atkPct: 0.12, hpPct: 0.12, fx: 'muhurYanki' } },
     names: { ring: 'Bronz Mühür Yüzüğü', neck: 'Bronz Mühür Kolyesi', charm: 'Bronz Mühür Tılsımı' } },
   ulumuhur: { name: 'Ulu Mühür Takı Seti', jewel: true, tier: 7, lv: 65, mat: 'j7', color: '#7ad8ff', mul: 1.38, crit: 2, lines: 4,
@@ -17253,16 +17253,16 @@ const TEMPLE_REWARDS = [
   { gold: 750, exp: 0.008, mats: [['ore', 3, 4, 1], ['soul', 1, 1, 0.5], ['j7', 1, 2, 0.5]], gear: { chance: 0.12, rank: 'elite', n: 1 } },
   { gold: 850, exp: 0.01, mats: [['ore', 3, 5, 1], ['soul', 1, 2, 0.6], ['j7', 1, 2, 0.6]], gear: { chance: 0.16, rank: 'elite', n: 1 } },
   { gold: 1000, exp: 0.012, mats: [['ore', 4, 5, 1], ['soul', 1, 2, 0.8], ['j7', 1, 3, 0.8]], gear: { chance: 0.2, rank: 'elite', n: 1 } },
-  { gold: 1600, exp: 0.02, chest: true, mats: [['soul', 2, 3, 1], ['j7', 2, 3, 1], ['bless', 1, 1, 0.25]], gear: { chance: 1, rank: 'boss', n: 1 }, ess: 0.25, seal: [1, 1, 0.45],
-    efs: [0.28], minRar: 1, ts: [[1, 1], [1, 0.35], [2, 0.12]], jset: ['bronzm', 0.35], efk: 0.12 },
+  { gold: 1600, exp: 0.02, chest: true, mats: [['soul', 2, 3, 1], ['j7', 2, 3, 1], ['bless', 1, 2, 0.6], ['usta_parsomen', 1, 1, 0.25]], gear: { chance: 1, rank: 'boss', n: 2 }, ess: 0.4, seal: [1, 2, 0.6],
+    efs: [0.5, 0.25], minRar: 2, ts: [[1, 1], [1, 0.35], [2, 0.12]], jset: ['bronzm', 0.5], efk: 0.35 },
   { gold: 1900, exp: 0.015, mats: [['soul', 2, 3, 1], ['j7', 2, 4, 1], ['bless', 1, 1, 0.1]], gear: { chance: 0.25, rank: 'elite', n: 1 }, ess: 0.3, seal: [1, 1, 0.1],
     efs: [0.22], minRar: 1, ts: [[1, 0.7], [2, 0.25]], efk: 0.05 },
   { gold: 2200, exp: 0.018, mats: [['soul', 2, 4, 1], ['j7', 3, 4, 1], ['bless', 1, 1, 0.15]], gear: { chance: 0.3, rank: 'elite', n: 1 }, ess: 0.35, seal: [1, 1, 0.15],
     efs: [0.28], minRar: 2, ts: [[1, 0.6], [2, 0.35], [3, 0.03]], jset: ['ulumuhur', 0.1], efk: 0.06 },
   { gold: 2500, exp: 0.02, mats: [['soul', 3, 4, 1], ['j7', 3, 5, 1], ['bless', 1, 1, 0.2]], gear: { chance: 0.35, rank: 'elite', n: 1 }, ess: 0.4, seal: [1, 1, 0.2],
     efs: [0.34], minRar: 2, ts: [[2, 0.5], [1, 0.4], [3, 0.06]], jset: ['ulumuhur', 0.14], efk: 0.08 },
-  { gold: 5000, exp: 0.04, chest: true, mats: [['soul', 3, 5, 1], ['j7', 4, 6, 1], ['bless', 1, 2, 0.6]], gear: { chance: 1, rank: 'boss', n: 2 }, rare: 0.35, ess: 1, ess2: 0.4, seal: [2, 3, 1],
-    efs: [1, 0.5], minRar: 2, ts: [[2, 1], [2, 0.5], [3, 0.2], [1, 0.5]], jset: ['ulumuhur', 0.35], efk: 0.3 },
+  { gold: 5000, exp: 0.04, chest: true, mats: [['soul', 3, 5, 1], ['j7', 4, 6, 1], ['bless', 2, 3, 0.85], ['usta_parsomen', 1, 2, 0.5], ['busta_parsomen', 1, 1, 0.12]], gear: { chance: 1, rank: 'boss', n: 3 }, rare: 0.6, ess: 1, ess2: 0.7, seal: [2, 4, 1],
+    efs: [1, 0.7, 0.4], minRar: 2, ts: [[2, 1], [2, 0.5], [3, 0.2], [1, 0.5]], jset: ['ulumuhur', 0.5], efk: [1, 0.5] },
 ];
 // ilk kez temizlenen kat: bir kerelik ek ödül (ts: bir Taş Mühür, kademesi)
 const TEMPLE_FIRST = (f) => ({ gold: 400 * (f + 1), soul: f >= 5 ? 2 : 1, seal: f === 9 ? 2 : f === 5 ? 1 : 0, ts: f === 9 ? 3 : f === 5 ? 2 : f >= 6 ? 1 : 0 });
@@ -17788,7 +17788,7 @@ const Temple = {
     if (R.ess && Math.random() < R.ess) stack(RAREMAT[pick(SLOTS)], 1);
     if (R.ess2 && Math.random() < R.ess2) stack(RAREMAT[pick(SLOTS)], 1);
     if (R.seal && Math.random() < R.seal[2]) stack('bronzparca', n(R.seal[0], R.seal[1]));
-    if (R.efk && Math.random() < R.efk) stack('efsun_kagit', 1);
+    for (const p of Array.isArray(R.efk) ? R.efk : R.efk ? [R.efk] : []) if (Math.random() < p) stack('efsun_kagit', 1);
     const gname = (it, w) => itemName(it) + (w === 'depo' ? ' (depoya)' : w === 'altın' ? ' (çanta dolu → altın)' : '');
     const G_ = R.gear;
     if (G_ && Math.random() < G_.chance) for (let k = 0; k < (G_.n || 1); k++) { const it = rarityAtLeast(rollGear(6, G_.rank, 7, true), R.minRar); got.push(gname(it, give(it))); }
@@ -17796,7 +17796,7 @@ const Temple = {
     // 6-10. kat: Efsanevi set parçası / silah / takı (efs zarları) ve Taş Mühür zarları (ts)
     for (const p of R.efs || []) if (Math.random() < p) { const it = rarityAtLeast(rollGear(6, G_ ? G_.rank : 'elite', 7, true, 1), R.minRar); got.push('Efsanevi: ' + gname(it, give(it))); }
     for (const [gr, p] of R.ts || []) if (Math.random() < p) stack(sealId(pick(SEAL_KEYS), gr), 1);
-    // adlı takı seti parçası (6. kat: Bronz Mühür Sv 55 · 8-10. kat: Ulu Mühür Sv 65)
+    // adlı takı seti parçası (6. kat: Bronz Mühür Sv 60 · 8-10. kat: Ulu Mühür Sv 65)
     if (R.jset && Math.random() < R.jset[1]) { const it = rarityAtLeast(makeGear(pick(JEWEL_SLOTS), 7, rollRarity(6, 'boss'), P.cls, R.jset[0]), R.minRar); got.push('Takı seti: ' + gname(it, give(it))); }
     // ilk kez temizlenen kat: bir kerelik başarı ödülü
     const bit = 1 << f;
@@ -18645,8 +18645,24 @@ const Combat = {
       spawnDrop(L, m.x, m.z, { gold: g });
     }
     const df = DIFFS[L.diff | 0]; // Zor/Kabus: daha sık eşya/cevher/ruh taşı/öz
-    if (Math.random() < Math.min(1, DROP.equip[rank] * df.drop)) {
-      for (let k = 0; k < DROP.equipCount[rank]; k++) spawnDrop(L, m.x, m.z, { item: rollGear(tier, rank, dTier, endgame) });
+    // yüksek seviye zindanlar (4. zindan ve sonrası, tapınak 7): düşük eşya yağmuru azaltılır — normal/elite eşya şansı düşer,
+    // 6. zindandan itibaren en az Yeşil (normal) / Mavi (elite, patron) ve set sınıfında Bez / başlangıç silahı düşmez; demir cevheri ve hurda seyrekleşir
+    const hiD = L.dg.temple ? 7 : L.dIdx | 0;
+    const hiEq = rank === 'boss' ? 1 : [1, 1, 1, 1, 0.6, 0.45, 0.35, 0.3][Math.min(7, hiD)];
+    const hiMat = rank === 'boss' ? 1 : hiD >= 5 ? 0.35 : 1;
+    const minR = hiD >= 5 ? (rank === 'normal' ? 1 : 2) : 0;
+    const hiGear = () => {
+      let it = null;
+      for (let a = 0; a < 40; a++) {
+        it = rollGear(tier, rank, dTier, endgame);
+        if (!minR) return it;
+        const base = it.set && (it.set === 'bez' || (it.slot === 'weapon' && it.set === (CLASSES[P.cls].weapons || {}).base));
+        if (it.rarity >= minR && !base) return it;
+      }
+      return rarityAtLeast(it, minR);
+    };
+    if (Math.random() < Math.min(1, DROP.equip[rank] * df.drop * hiEq)) {
+      for (let k = 0; k < DROP.equipCount[rank]; k++) spawnDrop(L, m.x, m.z, { item: hiGear() });
     }
     // Kemik Kral: 2 ek "önemli" düşüş — set sınıfında son oyun seti / Kurt Dişi / Bronz Taş Balta şansı yüksek
     if (m.t.enrage) for (let k = 0; k < 2; k++) {
@@ -18663,7 +18679,7 @@ const Combat = {
       spawnDrop(L, m.x, m.z, { item: it || rollGear(tier, 'boss', dTier, true) });
     }
     const st = (id, c) => { const it = makeStack(id, c); spawnDrop(L, m.x, m.z, { item: it, n: c }); };
-    if (Math.random() < DROP.ore[rank] * df.drop) st('ore', n(DROP.oreN[rank]));
+    if (Math.random() < DROP.ore[rank] * df.drop * hiMat) st('ore', n(DROP.oreN[rank]));
     if (Math.random() < DROP.soul[rank] * df.drop) st('soul', n(DROP.soulN[rank]));
     // nadir yuva cevheri: bosslar/Kadim Mühür her zindanda, elitler yalnız 4. zindan ve sonrasında
     if (!(rank === 'elite' && tier < 4) && Math.random() < DROP.essence[rank] * df.ess) st(RAREMAT[pick(SLOTS)], 1);
@@ -18678,7 +18694,7 @@ const Combat = {
         if (Math.random() < P1[1]) st('busta_parsomen', 1);
       }
     }
-    if (!m.static && Math.random() < DROP.junk) st(L.dg.junk, rank === 'normal' ? 1 : randi(2, 4));
+    if (!m.static && Math.random() < DROP.junk * (hiD >= 5 ? 0.4 : 1)) st(L.dg.junk, rank === 'normal' ? 1 : randi(2, 4));
     if (Math.random() < DROP.potion) st(P.lv >= 28 ? 'hp3' : P.lv >= 12 ? 'hp2' : 'hp1', randi(1, 2));
   },
   damagePlayer(raw, src, o) {
