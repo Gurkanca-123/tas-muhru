@@ -14607,12 +14607,12 @@ const WILD_ZONES = [
     // Seyir Taşı'nın yanında ışınlanma taşı: Ağ Kuyusu Kapısı'na (Sv 7+)
     tp: { x: 237, z: 69, to: 'w2k', req: 7, label: 'Işınlanma Taşı · Ağ Kuyusu', arrive: [240, 76] },
   },
-  // Ağ Kuyusu (2. zindanın açık dünya karşılığı): ışınlanma taşı → dağ eteğindeki Rün Kapısı → yıkık cüce kenti.
+  // Ağ Kuyusu (2. zindanın açık dünya karşılığı): ışınlanma taşı → dağ eteğindeki Mühür Kapısı → yıkık cüce kenti.
   // link: bu bölgeye bir önceki bölgenin Mühürlü Geçidi'nden değil, ışınlanma taşından gelinir (geçit mühürlü kalır).
   {
-    id: 'w2k', name: 'Ağ Kuyusu Kapısı', sub: 'Demirdağ eteği · Rün Kapısı', build: 'gate', link: 'tp', theme: 'mtn', lv: [7, 12], seed: 4127, size: 140,
+    id: 'w2k', name: 'Ağ Kuyusu Kapısı', sub: 'Demirdağ eteği · Mühür Kapısı', build: 'gate', link: 'tp', theme: 'mtn', lv: [7, 12], seed: 4127, size: 140,
     dId: 'd2', dIdx: 1, mobs: ['spider', 'venomspider'], junk: 'j2', mobLv: [7, 8],
-    start: [70, 117], camps: [[44, 106, 7, 2], [100, 76, 8, 3]],
+    start: [70, 117], camps: [[44, 106, 7, 3], [28, 98, 7, 3], [52, 94, 7, 3], [66, 102, 7, 3], [62, 84, 8, 3], [50, 82, 8, 3], [94, 74, 8, 4], [106, 78, 8, 3], [76, 72, 8, 3], [44, 76, 8, 3], [26, 90, 7, 2]],
   },
   {
     id: 'w2', name: 'Ağ Kuyusu', sub: 'Yıkık cüce kenti · Kraliçe Karadul kuyunun dibinde', build: 'deep', link: 'gate', theme: 'deep', lv: [7, 12], seed: 9907, size: 220,
@@ -15562,10 +15562,10 @@ function buildWild(zi) {
     const okAt = (x, z, r) => { for (let a = 0; a < 6; a++) { const xx = x + Math.cos(a) * r, zz = z + Math.sin(a) * r; const i = Math.floor(xx / T), j = Math.floor(zz / T); if (i < 0 || j < 0 || i >= W || j >= H || !L.grid[j * W + i]) return false; } return canStand(L, x, z, 0.6); };
     const camps = [];
     const [lv0, lv1] = Z.mobLv || [1, 6];
-    for (let z = 20; z < S - 20; z += 9) for (let x = 20; x < S - 20; x += 9) {
+    for (let z = 20; z < S - 20; z += 8) for (let x = 20; x < S - 20; x += 8) {
       const px = x + (rv() - 0.5) * 6, pz = z + (rv() - 0.5) * 6, d = pathDist(px, pz);
-      if (d < 7 || d > 24 || Math.hypot(px - L.spawn.x, pz - L.spawn.z) < 34 || fieldAt(px, pz) || !okAt(px, pz, 2.4)) continue;
-      if (poi.some((p) => Math.hypot(px - p.x, pz - p.z) < (p.boss ? 26 : 14)) || camps.some((c) => Math.hypot(c.x - px, c.z - pz) < 22)) continue;
+      if (d < 6 || d > 28 || Math.hypot(px - L.spawn.x, pz - L.spawn.z) < 34 || fieldAt(px, pz) || !okAt(px, pz, 2.4)) continue;
+      if (poi.some((p) => Math.hypot(px - p.x, pz - p.z) < (p.boss ? 26 : 14)) || camps.some((c) => Math.hypot(c.x - px, c.z - pz) < 15)) continue;
       const k = Math.floor(pz / T) * W + Math.floor(px / T); if (dist0[k] < 0) continue;
       camps.push({ x: px, z: pz, k: dist0[k] / dmax });
     }
@@ -15575,7 +15575,7 @@ function buildWild(zi) {
     camps.forEach((c, ci) => {
       const lv = Math.round(lv0 + (lv1 - lv0) * clamp(c.k * 1.08, 0, 1));
       const batty = forestAt(c.x, c.z) > 0.55 || waterDist(c.x, c.z) < 10 || (ci % 3 === 2);
-      const n = 2 + (rv() < 0.5 ? 1 : 0) + (lv >= 4 ? 1 : 0);
+      const n = 3 + (rv() < 0.5 ? 1 : 0) + (lv >= 3 ? 1 : 0);
       for (let m = 0; m < n; m++) { const [x, z] = campPos(c, 3); addSpawn(batty && m % 2 === 0 ? 'bat' : 'wolf', clamp(lv + Math.round(rv() * 2 - 1), lv0, lv1), x, z); }
       if (!batty) for (let m = 0; m < 5; m++) add2bone(c.x + (rv() - 0.5) * 3, c.z + (rv() - 0.5) * 3);
       c.lv = lv;
@@ -15615,9 +15615,9 @@ function wildReach(L) {
   return { poi: L.poi.filter((p) => !p.deco).map((p) => ({ name: p.name, ok: at(p.x, p.z) })), spawns: L.spawns.filter((s) => !at(s.x, s.z)).length };
 }
 
-// ---------- AÇIK DÜNYA: AĞ KUYUSU (ışınlanma taşı, Rün Kapısı, yıkık cüce kenti) ----------
+// ---------- AÇIK DÜNYA: AĞ KUYUSU (ışınlanma taşı, Mühür Kapısı, yıkık cüce kenti) ----------
 // Fener Ovası'ndaki Seyir Taşı'nın yanındaki ışınlanma taşı → 'gate' bölgesi (Demirdağ eteği: dağın önündeki rünlü kapı)
-// → Rün Kapısı → 'deep' bölgesi (kapının ardındaki yeraltı kenti: kral salonu, sütunlu salon, yıkık mahalle, demir ocakları,
+// → Mühür Kapısı → 'deep' bölgesi (kapının ardındaki yeraltı kenti: kral salonu, sütunlu salon, yıkık mahalle, demir ocakları,
 // uçurum köprüsü, kral mezarı ve Kraliçe Karadul'un kuyusu). İkisi de WILD_ZONES kaydıdır: savaş, kamp, patron, harita aynen çalışır.
 // Ortak motor deepTerrain: oyulmuş şekillerin işaretli mesafe alanından yükseklik haritası (zemin + kaya duvarları + çukurlar),
 // ızgara ve 40 birimlik karelere bölünmüş zemin ağı. Büyük yapılar köşe renkli biriktiricilere (DeepAcc) pişirilir:
@@ -15869,6 +15869,7 @@ function buildTeleStone(L, x, z, y, color) {
   });
   return g;
 }
+const SEAL_COLS = [0xff5a4a, 0x4a9aff, 0x5ae06a, 0xffd04a, 0xb86aff]; // Taş Mühür türleri: saldırı, savunma, can, kritik, beceri
 // --- ortak yapı kiti (cüce taş işçiliği): heykel, kapı çerçevesi, ağ, ışık huzmesi, zincir, mangal ---
 function deepKit(L) {
   const stoneM = wildMat({ vc: true, map: grainTex(), cloud: true, nocl: true, fade: true, deep: true }); // kamera–oyuncu arasında saydamlaşır
@@ -15936,41 +15937,126 @@ function deepKit(L) {
   }
   // Rünlü kapı çerçevesi: kemer, paye, kapı kanatları + ışıyan (ince) çizgiler, yıldız, iki mühür ağacı, rün kemeri.
   // Çerçeve +z'ye bakar. glow: ışıyan çizgiler için ayrı biriktirici (kapı yaklaşınca parlar). Rün düzlemleri glyphs listesine eklenir.
-  function doorFrame(F, base, glowA, glyphs, o) {
-    o = o || {};
-    const ao = aoH(base, base + 34, 0.2), st = o.col || 0x585a66, cS = C(st, 0.03), cD = C(0x262932, 0.02), cL = C(st, 0.04).multiplyScalar(1.12);
-    const gl = glowC(0xbfeeff, 1.15), A = glowA;
-    pc(F, G.box, 0, 5.0, 0.18, 8.8, 10, 0.3, 0, 0, 0, cD, ao); // kanatlar
-    pc(F, G.disc, 0, 10, 0.15, 4.4, 4.4, 0.3, 0, 0, 0, cD, ao); // kemer içi (yarım disk)
-    pc(F, G.box, 0, 5, 0.36, 0.06, 10, 0.06, 0, 0, 0, C(0x101216), null); // kanat aralığı
+  // Mühür Kapısı: dağa gömülü dev taş mühür. İki yarım diske bölünür; oyuncu yaklaşınca yarılar ağır ağır yanlara kayar,
+  // ardındaki dönen ışık geçidi açılır. Lentodaki beş taş mühür oyundaki Taş Mühür türlerinin renklerindedir
+  // (saldırı kırmızı, savunma mavi, can yeşil, kritik altın, beceri mor); yaklaştıkça sırayla uyanırlar.
+  // o: {x, y, z, ry, sc, nx, nz, openR, pl: () => oyuncu, relief}  (nx,nz: kapının açılma merkezi)
+  function sealDoor(o) {
+    const sc = o.sc || 1, F = frame(o.x, o.y, o.z, o.ry || 0, sc), ao = aoH(o.y, o.y + 30 * sc, 0.74), glyphs = [];
+    const SA = DeepAcc(), glowM = new THREE.MeshBasicMaterial({ vertexColors: true, color: 0x777777 });
+    L.disposables.push(glowM);
+    const cS = C(0x6c6874, 0.03), cL = C(0x88848f, 0.04), cD = C(0x3a3842, 0.02), cK = C(0x22202a, 0.02), cB = C(0xb08040, 0.05), cBd = C(0x7c5a2c, 0.04);
+    const gl = glowC(0xbfeeff, 1.15), R = 5.5, CY = 5.95, W2 = Math.PI / 2;
+    const slab = (r, th, sd) => new THREE.CylinderGeometry(1, 1, 1, th, 1, false, sd > 0 ? 0 : Math.PI, Math.PI).rotateX(W2);
+    // ---- sabit çerçeve (köşe renkli, gölgeli) ----
+    pc(F, G.box, 0, 6.0, 0.0, 11.6, 12.0, 0.28, 0, 0, 0, cK, ao); // daire çevresindeki arka panel
+    for (const rz of [0, Math.PI]) { pc(F, G.archT, 0, CY, 0.16, 5.78, 5.78, 4, 0, 0, rz, gl, null, SA); pc(F, G.archT, 0, CY, 0.16, 5.98, 5.98, 3, 0, 0, rz, gl, null, SA); }
+    pc(F, G.box, 0, 12.9, 1.0, 25.6, 1.8, 2.2, 0, 0, 0, cS, ao); // lento
+    pc(F, G.box, 0, 11.95, 1.05, 25.9, 0.3, 2.3, 0, 0, 0, cL, ao);
+    for (const [y, w] of [[14.2, 21], [15.0, 15.5], [15.8, 10]]) pc(F, G.box, 0, y, 0.95, w, 0.8, 1.8, 0, 0, 0, cS, ao); // basamaklı taç
+    for (let k = -9; k <= 9; k++) pc(F, G.box, k * 1.05, 14.2, 1.86, 0.5, 0.36, 0.12, 0, 0, 0, k % 2 ? cL : cBd, ao); // kıvrım kuşağı
+    pc(F, G.cone4, 0, 16.9, 1.0, 1.5, 1.2, 1.5, 0, Math.PI / 4, 0, cB, ao);
+    pc(F, G.box, 0, 12.9, 2.1, 17, 0.1, 0.1, 0, 0, 0, cBd, ao); // soket rayı
+    for (let i = 0; i < 5; i++) { const x = (i - 2) * 4; // beş mühür taşı yuvası
+      pc(F, G.cyl16, x, 12.9, 2.14, 1.05, 0.16, 1.05, W2, 0, 0, cB, ao); pc(F, G.cyl16, x, 12.9, 2.24, 0.8, 0.14, 0.8, W2, 0, 0, cK, ao);
+      pc(F, G.ring, x, 12.9, 2.3, 0.88, 0.88, 0.6, 0, 0, 0, glowC(SEAL_COLS[i], 0.8), null, SA);
+      pc(F, G.box, x, 12.9, 1.0, 2.6, 0.3, 2.4, 0, 0, 0, cL, ao); }
     for (const sd of [-1, 1]) {
-      pc(F, G.box, sd * 5.25, 5.0, 0.45, 1.5, 10, 1.2, 0, 0, 0, cS, ao); // paye
-      pc(F, G.box, sd * 5.25, 0.4, 0.5, 2.1, 0.8, 1.5, 0, 0, 0, cL, ao);
-      pc(F, G.box, sd * 5.25, 10.1, 0.5, 2.2, 0.6, 1.5, 0, 0, 0, cL, ao);
-      for (let k = 0; k < 4; k++) pc(F, G.box, sd * 5.25, 2.2 + k * 2.1, 1.06, 0.9, 0.1, 0.06, 0, 0, 0, cL, ao); // paye bantları
+      const cx = sd * 7.4, wx = sd * 10.9;
+      pc(F, G.box, cx, 0.45, 1.0, 4.4, 0.9, 2.9, 0, 0, 0, cL, ao); // kule gövdesi: kaide, gövde, başlık
+      pc(F, G.box, cx, 6.4, 1.0, 3.2, 11.0, 2.2, 0, 0, 0, cS, ao);
+      pc(F, G.box, cx, 11.75, 1.0, 3.8, 0.5, 2.6, 0, 0, 0, cL, ao);
+      for (const dx of [-1.0, 1.0]) pc(F, G.box, cx + dx, 6.4, 2.12, 0.09, 9.6, 0.06, 0, 0, 0, cK, ao);
+      for (const yb of [4.6, 8.4]) { pc(F, G.box, cx, yb, 1.0, 3.5, 0.3, 2.5, 0, 0, 0, cB, ao);
+        for (const xs of [-1.4, 1.4]) pc(F, G.sph, cx + xs, yb, 2.27, 0.14, 0.14, 0.07, 0, 0, 0, cBd, ao); }
+      [2.6, 6.5, 10.2].forEach((yb, k) => { // mühür damgaları
+        pc(F, G.cyl16, cx, yb, 2.14, 0.95, 0.1, 0.95, W2, 0, 0, cB, ao); pc(F, G.cyl16, cx, yb, 2.22, 0.74, 0.1, 0.74, W2, 0, 0, cK, ao);
+        pc(F, G.ring, cx, yb, 2.28, 0.82, 0.82, 0.5, 0, 0, 0, gl, null, SA);
+        glyphs.push({ F, x: cx, y: yb, z: 2.3, s: 0.95, i: k * 2 + (sd > 0 ? 1 : 0) }); });
+      pc(F, G.box, wx, 6.0, 0.9, 3.8, 12.0, 2.0, 0, 0, 0, cS, ao); // yan duvar
+      pc(F, G.box, wx, 0.35, 0.9, 4.4, 0.7, 2.5, 0, 0, 0, cL, ao);
+      pc(F, G.box, wx, 6.2, 1.93, 0.34, 5.2, 0.1, 0, 0, 0, cK, ao); pc(F, G.box, wx, 6.2, 1.99, 0.07, 4.6, 0.04, 0, 0, 0, gl, null, SA);
+      for (const yb of [3.0, 9.6]) pc(F, G.box, wx, yb, 1.96, 2.2, 0.22, 0.1, 0, 0, 0, cB, ao);
+      pc(F, G.cone4, sd * 11.8, 15.9, 1.0, 1.25, 4.2, 1.25, 0, Math.PI / 4, 0, cL, ao); // dikili taş sivri uçlar
+      pc(F, G.box, sd * 11.8, 14.05, 1.0, 1.8, 0.5, 1.8, 0, 0, 0, cBd, ao);
     }
-    pc(F, G.arch, 0, 10, 0.45, 5.25, 5.25, 7, 0, 0, 0, cS, ao); // kemer
-    pc(F, G.box, 0, 15.45, 0.6, 1.5, 1.9, 1.4, 0, 0, 0, cL, ao); // kilit taşı
-    // ışıyan çizgiler
-    pc(F, G.archT, 0, 10, 0.36, 4.55, 4.55, 4, 0, 0, 0, gl, null, A);
-    pc(F, G.archT, 0, 10, 0.36, 3.85, 3.85, 3, 0, 0, 0, gl, null, A);
-    for (const sd of [-1, 1]) for (const xx of [4.55, 3.85]) pc(F, G.box, sd * xx, 5.0, 0.36, 0.055, 10, 0.03, 0, 0, 0, gl, null, A);
-    for (let k = 0; k < 4; k++) pc(F, G.box, 0, 11.6, 0.37, 0.05, 1.5, 0.03, 0, 0, (k / 4) * Math.PI, gl, null, A); // yıldız
-    pc(F, G.ring, 0, 11.6, 0.37, 0.5, 0.5, 0.4, 0, 0, 0, gl, null, A);
-    for (let k = 0; k < 7; k++) { const a = Math.PI * (0.18 + (k / 6) * 0.64); pc(F, G.sph, Math.cos(a) * 1.3, 11.6 + Math.sin(a) * 1.3 + 0.45, 0.38, 0.09, 0.09, 0.04, 0, 0, 0, gl, null, A); } // taç
-    for (const sd of [-1, 1]) { // mühür ağaçları
-      const tx = sd * 2.25;
-      pc(F, G.box, tx, 4.6, 0.36, 0.05, 7.6, 0.03, 0, 0, 0, gl, null, A);
-      for (let k = 0; k < 4; k++) { const yy = 3.2 + k * 1.35, ln = 1.2 - k * 0.15; for (const s2 of [-1, 1]) pc(F, G.box, tx + s2 * ln * 0.36, yy + ln * 0.32, 0.36, 0.045, ln, 0.03, 0, 0, s2 * 0.85, gl, null, A); }
-      pc(F, G.ring, tx, 8.75, 0.37, 0.3, 0.3, 0.4, 0, 0, 0, gl, null, A);
-      pc(F, G.box, tx, 0.75, 0.36, 1.1, 0.05, 0.03, 0, 0, 0, gl, null, A); // kök çizgisi
+    for (let i = 0; i < 5; i++) { const x = (i - 2) * 4; // sahanlıkta beş mühür kakması
+      pc(F, G.box, x, 0.05, 3.4, 2.0, 0.1, 2.0, 0, 0, 0, cBd, null); pc(F, G.box, x, 0.1, 3.4, 1.5, 0.06, 1.5, 0, 0, 0, glowC(SEAL_COLS[i], 0.9), null, SA); }
+    if (o.relief) { // dağ yüzüne oyulmuş dev mühür kabartması
+      pc(F, G.cyl16, 0, 23.6, 0.25, 6.6, 0.2, 6.6, W2, 0, 0, cL, ao); pc(F, G.cyl16, 0, 23.6, 0.35, 5.7, 0.2, 5.7, W2, 0, 0, cD, ao);
+      for (const r of [5.9, 4.4, 2.8]) pc(F, G.ring, 0, 23.6, 0.5, r, r, 1.2, 0, 0, 0, r === 4.4 ? gl : glowC(0xb08040, 0.7), null, SA);
+      for (let k = 0; k < 12; k++) { const a = (k / 12) * TAU; pc(F, G.box, Math.cos(a) * 5.15, 23.6 + Math.sin(a) * 5.15, 0.5, 0.5, 1.3, 0.2, 0, 0, a - W2, k % 2 ? cB : cL, ao); }
+      for (let k = 0; k < 5; k++) { const a = W2 + (k / 5) * TAU; pc(F, G.ico, Math.cos(a) * 3.6, 23.6 + Math.sin(a) * 3.6, 0.7, 0.42, 0.55, 0.3, 0, 0, a, glowC(SEAL_COLS[k], 1.0), null, SA); }
+      pc(F, G.cyl16, 0, 23.6, 0.55, 1.5, 0.2, 1.5, W2, 0, 0, cB, ao); pc(F, G.ring, 0, 23.6, 0.7, 1.1, 1.1, 0.8, 0, 0, 0, gl, null, SA);
     }
-    // rün imleri: kemer boyunca + payelerde
-    if (glyphs) {
-      for (let k = 0; k < 13; k++) { const a = Math.PI * (0.06 + (k / 12) * 0.88); glyphs.push({ F, x: Math.cos(a) * 6.45, y: 10 + Math.sin(a) * 6.45, z: 1.18, s: 0.66, i: k }); }
-      for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) glyphs.push({ F, x: sd * 5.25, y: 3.0 + k * 2.4, z: 1.12, s: 0.5, i: 3 + k * 2 + (sd > 0 ? 1 : 0) });
-      for (let k = 0; k < 9; k++) glyphs.push({ F, x: -2.4 + k * 0.6, y: 16.9, z: 0.72, s: 0.42, i: k + 4 });
+    deepFlush(L, SA, glowM, false);
+    const gm = placeGlyphs(glyphs, 0xbfeeff);
+    // ---- hareketli parçalar ----
+    const ag = pivot(L.group, o.x, o.y, o.z); ag.rotation.y = o.ry || 0; ag.scale.setScalar(sc); ag.userData.dyn = true;
+    const _m = new THREE.Matrix4(), _q2 = new THREE.Quaternion(), _e2 = new THREE.Euler(), _v2 = new THREE.Vector3(), _s2 = new THREE.Vector3();
+    const put = (A, geo, x, y, z, sx, sy, sz, rz, col) => { _q2.setFromEuler(_e2.set(0, 0, rz || 0)); _m.compose(_v2.set(x, y, z), _q2, _s2.set(sx, sy, sz)); deepBake(A, geo, _m, col, null); };
+    const tor = new THREE.TorusGeometry(1, 0.045, 6, 40, Math.PI), RUNE_PLANE = new THREE.PlaneGeometry(1, 1), halves = [];
+    const gSlab = [slab(R, 40, 1), slab(R, 40, -1)], gMed = [slab(1, 4, 1), slab(1, 4, -1)];
+    L.disposables.push(tor, RUNE_PLANE, ...gSlab, ...gMed);
+    for (const sd of [1, -1]) {
+      const A = Acc(), Ag = Acc(), hg = pivot(ag, 0, CY, 0.55), idx = sd > 0 ? 0 : 1, mir = (a) => (sd > 0 ? a : Math.PI - a), rzT = sd > 0 ? -W2 : W2;
+      put(A, gSlab[idx], 0, 0, 0, R, R, 0.5, 0, C(0x5e5a66, 0.03));
+      put(A, tor, 0, 0, 0.25, 5.3, 5.3, 5.3, rzT, cB); put(A, tor, 0, 0, 0.27, 3.45, 3.45, 3.45, rzT, cBd); put(A, tor, 0, 0, 0.25, 1.85, 1.85, 1.85, rzT, cB);
+      for (const [r, th] of [[4.55, 6], [2.55, 5]]) put(Ag, G.archT, 0, 0, 0.27, r, r, th, rzT, gl);
+      for (let k = 0; k < 11; k++) { const a = mir((-80 + k * 16) * Math.PI / 180), r = 4.95; put(A, G.box, Math.cos(a) * r, Math.sin(a) * r, 0.3, 0.9, 0.8, 0.22, a - W2, k % 2 ? cB : cL); }
+      for (let k = 0; k < 5; k++) { const a = mir((-72 + k * 36) * Math.PI / 180); put(Ag, G.box, Math.cos(a) * 1.6, Math.sin(a) * 1.6, 0.27, 0.06, 1.3, 0.04, a - W2, gl); }
+      put(A, gMed[idx], 0, 0, 0.3, 1.5, 1.5, 0.3, 0, cB); put(A, gMed[idx], 0, 0, 0.36, 1.1, 1.1, 0.3, 0, cK); put(Ag, gMed[idx], 0, 0, 0.5, 0.62, 0.62, 0.1, 0, gl);
+      put(Ag, G.box, sd * 0.03, 0, 0.27, 0.05, 10.8, 0.04, 0, gl);
+      for (let k = 0; k < 6; k++) { const a = mir((-55 + k * 22) * Math.PI / 180); // dış halkadaki rün imleri
+        const m = new THREE.Mesh(RUNE_PLANE, gm[(k * 2 + (sd > 0 ? 0 : 1)) % 10]); m.position.set(Math.cos(a) * 3.98, Math.sin(a) * 3.98, 0.31); m.rotation.z = a - W2; m.scale.set(0.95, 0.95, 1); m.renderOrder = 3; hg.add(m); }
+      const gS = accGeo(A), gG = accGeo(Ag);
+      if (gS) { const me = new THREE.Mesh(gS, stoneM); me.castShadow = true; me.receiveShadow = true; hg.add(me); L.disposables.push(gS); }
+      if (gG) { const me = new THREE.Mesh(gG, glowM); hg.add(me); L.disposables.push(gG); }
+      halves.push(hg);
     }
+    const pm = new THREE.ShaderMaterial({
+      uniforms: { t: { value: 0 }, k: { value: 0 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `uniform float t; uniform float k; varying vec2 vUv;
+void main(){ vec2 p = vUv * 2.0 - 1.0; float r = length(p); float a = atan(p.y, p.x);
+  float s1 = sin(a * 4.0 + r * 10.0 - t * 1.7) * 0.5 + 0.5, s2 = sin(a * 7.0 - r * 16.0 + t * 1.2) * 0.5 + 0.5;
+  float g = pow(1.0 - r, 1.6) * (0.45 + 0.55 * mix(s1, s2, 0.45)) + 0.18 * (1.0 - r);
+  float ring = smoothstep(0.86, 0.96, r) * (1.0 - smoothstep(0.96, 1.0, r));
+  vec3 c = mix(vec3(0.03, 0.10, 0.26), vec3(0.62, 0.92, 1.0), clamp(g, 0.0, 1.0)) + vec3(0.4, 0.7, 1.0) * ring * 0.6;
+  gl_FragColor = vec4(c * (0.25 + k), 1.0); }`,
+    });
+    const pg = new THREE.CircleGeometry(R - 0.1, 48), pmesh = new THREE.Mesh(pg, pm); pmesh.position.set(0, CY, 0.17); ag.add(pmesh);
+    L.disposables.push(pm, pg);
+    // lentodaki beş mühür taşı + taç taşı
+    const oct = new THREE.OctahedronGeometry(0.62, 0); L.disposables.push(oct);
+    ag.updateMatrixWorld(true);
+    const gems = [];
+    const addGem = (lx, ly, lz, hex, sx) => {
+      const mt = new THREE.MeshBasicMaterial({ color: hex }), me = new THREE.Mesh(oct, mt); me.position.set(lx, ly, lz); me.scale.set(sx, sx * 1.55, sx); ag.add(me);
+      const hl = addGlowSprite(L, 0, 0, 0, hex, 3.4 * sx); ag.localToWorld(hl.position.set(lx, ly, lz + 0.3)); hl.material = hl.material.clone(); hl.material.opacity = 0; L.disposables.push(mt, hl.material);
+      gems.push({ me, mt, hl, c: new THREE.Color(hex) });
+    };
+    for (let i = 0; i < 5; i++) addGem((i - 2) * 4, 12.9, 2.6, SEAL_COLS[i], 1);
+    addGem(0, 18.0, 1.0, 0xdff4ff, 1.45);
+    const wp = (lx, ly, lz) => ag.localToWorld(new THREE.Vector3(lx, ly, lz));
+    const nrm = [Math.sin(o.ry || 0), Math.cos(o.ry || 0)];
+    let openK = 0;
+    L.anims.push((t, dt) => {
+      const pl = o.pl && o.pl(), d = pl ? Math.hypot(pl.x - o.nx, pl.z - o.nz) : 99, want = d < (o.openR || 15) ? 1 : 0;
+      openK = lerp(openK, want, Math.min(1, dt * (want ? 0.8 : 0.5)));
+      if (want && openK > 0.985) openK = 1; else if (!want && openK < 0.015) openK = 0;
+      const e = openK * openK * (3 - 2 * openK);
+      halves[0].position.x = 5.9 * e; halves[1].position.x = -5.9 * e;
+      pm.uniforms.t.value = t; pm.uniforms.k.value = e;
+      const pulse = 0.88 + 0.12 * Math.sin(t * 2.3);
+      glowM.color.setScalar(0.22 + e * 0.95 * pulse);
+      for (const m of gm) m.opacity = 0.28 + e * 0.6 * pulse;
+      gems.forEach((g, i) => { const lit = (i === 5 ? clamp(e * 1.4, 0, 1) : clamp(openK * 6 - i * 0.9, 0, 1)), v = 0.42 + 0.14 * Math.sin(t * 1.8 + i) + lit * 1.15;
+        g.mt.color.copy(g.c).multiplyScalar(v); g.me.rotation.y = t * (0.5 + i * 0.07); g.hl.material.opacity = (0.04 + lit * 0.3) * pulse; });
+      if (openK > 0.03 && openK < 0.97 && Math.random() < dt * 16) { const sd = Math.random() < 0.5 ? 1 : -1, p0 = wp(sd * (R * 0.9 + 5.9 * e * 0.5), rand(0.4, 9), 1.4); FX.spawnW(p0.x, p0.y, p0.z, rand(-0.3, 0.3), rand(0.2, 0.8), rand(-0.2, 0.2), 0x9a96a0, 1.4, 0.12, 0); }
+      if (e > 0.85 && Math.random() < dt * 8) { const a = Math.random() * TAU, rr = Math.random() * 4.6, p0 = wp(Math.cos(a) * rr, CY + Math.sin(a) * rr, 0.6); FX.spawnW(p0.x, p0.y, p0.z, nrm[0] * 0.9, rand(-0.1, 0.3), nrm[1] * 0.9, 0xbfeeff, 1.6, 0.08, 0); }
+    });
+    return { get k() { return openK; }, gm, glowM };
   }
   // rün düzlemleri (kapı): tek ortak malzeme renkleri, ayrı dokular (10 im)
   function placeGlyphs(list, color) {
@@ -16038,11 +16124,11 @@ function deepKit(L) {
     deepFlush(L, GA, dkitGlowMat(), false);
     for (const k in G) G[k].dispose();
   }
-  return { CA, GA, G, frame, C, pc, aoH, glowC, statue, doorFrame, placeGlyphs, web, shaft, chain, brazier, flush, stoneM };
+  return { CA, GA, G, frame, C, pc, aoH, glowC, statue, sealDoor, placeGlyphs, web, shaft, chain, brazier, flush, stoneM };
 }
 
 // ===== Bölge 1: Ağ Kuyusu Kapısı (Demirdağ eteği) =====
-// Işınlanma taşından yokuş bir patika, dağın dibinde taş meydan ve basamaklar; sarp kaya yüzüne oyulmuş Rün Kapısı.
+// Işınlanma taşından yokuş bir patika, dağın dibinde taş meydan ve basamaklar; sarp kaya yüzüne oyulmuş Mühür Kapısı.
 // Batıda kara bir gölet, doğuda yıkık gözcü kulesi; çevrede çam ve kuru ağaçlar, tepelerde kar.
 function buildAgGate(Z) {
   const R0 = Math.random; Math.random = mulberry32(Z.seed >>> 0);
@@ -16143,41 +16229,20 @@ function buildAgGateInner(Z) {
   addLabel(L, 'Işınlanma Taşı', 'Fener Ovası\'na dön', tpx, tph + 5.2, tpz, '#bff4ff');
   L.interact.push({ kind: 'wtp', zone: wildIdxOf('w1'), from: 'tp', x: tpx, z: tpz, r: 3.6, label: 'Işınlanma Taşı · Fener Ovası', active: true });
 
-  // --- dağ yüzü, Rün Kapısı, nöbetçi heykeller, basamaklar ---
+  // --- dağ yüzü, Mühür Kapısı, nöbetçi heykeller, basamaklar ---
   const gyL = gy(GX, 41.2), F = kit.frame(GX, gyL, GZ + 0.6, 0);
   const cF = kit.C(0x7c7e8c, 0.03), aoF = kit.aoH(gyL, gyL + 40, 0.8); // açık hava: cephe yukarıda kararmaz
   kit.pc(F, kit.G.box, 0, 13, -2.2, 34, 30, 4.6, 0, 0, 0, cF, aoF); // oyulmuş cephe
-  for (const sd of [-1, 1]) {
-    kit.pc(F, kit.G.box, sd * 11.2, 11, -0.1, 2.4, 22, 1.4, 0, 0, 0, kit.C(0x5a5c68, 0.03), aoF); // kabartma sütun
-    kit.pc(F, kit.G.box, sd * 11.2, 22.4, 0.1, 3.4, 1.0, 1.8, 0, 0, 0, kit.C(0x666874, 0.03), aoF);
-    kit.pc(F, kit.G.box, sd * 11.2, 0.6, 0.1, 3.4, 1.2, 1.8, 0, 0, 0, kit.C(0x666874, 0.03), aoF);
-    kit.pc(F, kit.G.box, sd * 8.6, 23.6, 0.05, 9.4, 0.8, 1.0, 0, 0, sd * -0.32, kit.C(0x5e606c, 0.03), aoF); // alınlık
-  }
-  kit.pc(F, kit.G.box, 0, 17.6, 0.05, 22, 0.9, 0.7, 0, 0, 0, kit.C(0x62646e, 0.03), aoF); // kuşak
-  for (let k = 0; k < 17; k++) kit.pc(F, kit.G.box, -9.6 + k * 1.2, 17.6, 0.42, 0.46, 0.46, 0.2, 0, 0, Math.PI / 4, kit.C(0x707280, 0.03), aoF);
-  const RA = DeepAcc(), glyphs = [];
-  kit.doorFrame(F, gyL, RA, glyphs, {});
-  const runeM = new THREE.MeshBasicMaterial({ vertexColors: true, color: 0x777777 });
-  L.disposables.push(runeM);
-  deepFlush(L, RA, runeM, false);
-  const gm = kit.placeGlyphs(glyphs, 0xbfeeff);
+  const door = kit.sealDoor({ x: GX, y: gyL, z: GZ + 0.6, ry: 0, sc: 1, nx: GX, nz: GZ + 5, openR: 15, relief: true, pl: () => G.player }); // Mühür Kapısı
+  for (const sd of [-1, 1]) blockDisc(GX + sd * 7.4, GZ + 1.7, 2.3); // kule ayakları yürünmez
   for (let k = 0; k < 4; k++) { const top = -0.2 - k * 0.4; kit.pc(F, kit.G.box, 0, (top - 1.9) / 2, 4.4 + (k + 0.5) * 1.15, 12.4 + k * 0.8, top + 1.9, 1.16, 0, 0, 0, kit.C(0x6e6c72, 0.04), null); } // basamaklar
-  for (const sd of [-1, 1]) kit.statue(GX + sd * 13.4, gyL - 0.3, GZ + 2.6, 0, 1.12, { eyes: 0x8ae8ff });
+  for (const sd of [-1, 1]) kit.statue(GX + sd * 15.2, gyL - 0.3, GZ + 3.6, 0, 1.12, { eyes: 0x8ae8ff });
   for (const sd of [-1, 1]) { const bx = GX + sd * 8.4, bz = GZ + 7.4; kit.brazier(bx, gy(bx, bz), bz, 0xff9a48, true); blockDisc(bx, bz, 0.9); } // basamak başında mangallar: gölgedeki cepheye sıcak ışık
-  const gateLight = addLightSpot(L, GX, gyL + 5, GZ + 5, 0x8ae0ff, 0.6, 16, { flicker: false, pri: 1.4 });
+  const gateLight = addLightSpot(L, GX, gyL + 5.5, GZ + 5, 0x8ae0ff, 0.6, 18, { flicker: false, pri: 1.4 });
   const gHalo = addGlowSprite(L, GX, gyL + 9, GZ + 1.4, 0x8ae0ff, 10); gHalo.material = gHalo.material.clone(); gHalo.material.opacity = 0.0; L.disposables.push(gHalo.material);
-  let glowK = 0.3;
-  L.anims.push((t, dt) => { // kapıya yaklaştıkça rünler uyanır
-    const pl = G.player; const d = pl ? Math.hypot(pl.x - GX, pl.z - (GZ + 4)) : 99;
-    glowK = lerp(glowK, d < 18 ? 1 : 0.28, Math.min(1, dt * 1.5));
-    const k = glowK * (0.88 + 0.12 * Math.sin(t * 2.3));
-    runeM.color.setScalar(0.25 + k * 1.1);
-    for (const m of gm) m.opacity = 0.25 + k * 0.75;
-    gateLight.intensity = 0.3 + k * 1.1; gHalo.material.opacity = k * 0.22;
-    if (glowK > 0.6 && Math.random() < dt * 5) FX.spawnW(GX + rand(-4.5, 4.5), gyL + rand(0.5, 14), GZ + 1.6, 0, rand(0.2, 0.6), rand(0.1, 0.3), 0xbfeeff, 1.6, 0.07, 0);
-  });
-  addLabel(L, 'Rün Kapısı', 'Ağ Kuyusu · Sv 7+', GX, gyL + 18.8, GZ + 1.2, '#bfeeff');
-  L.interact.push({ kind: 'wtp', zone: wildIdxOf('w2'), from: 'door', req: 7, x: GX, z: GZ + 3.6, r: 4.4, label: 'Rün Kapısı · Ağ Kuyusu\'na gir', active: true });
+  L.anims.push(() => { const k = door.k; gateLight.intensity = 0.3 + k * 1.5; gHalo.material.opacity = k * 0.2; }); // kapı açıldıkça çevreyi aydınlatır
+  addLabel(L, 'Mühür Kapısı', 'Ağ Kuyusu · Sv 7+', GX, gyL + 19.6, GZ + 2.2, '#bfeeff');
+  L.interact.push({ kind: 'wtp', zone: wildIdxOf('w2'), from: 'door', req: 7, x: GX, z: GZ + 3.6, r: 4.4, label: 'Mühür Kapısı · Ağ Kuyusu\'na gir', active: true });
 
   // yol taşları (bazısı devrik, bazısında soluk rün)
   for (let k = 6, sd = 1; k < pathPts.length - 8; k += 12, sd = -sd) {
@@ -16204,16 +16269,16 @@ function buildAgGateInner(Z) {
   wildSky(L, S, Math.random, { top: 0x23224a, sunC: [1.0, 0.6, 0.4], puffs: 9, puffC: 0xc8a8c0, puffOp: 0.6, mt: 0x3c3c54, sn: 0xd2d6e6, mtn: 26, mtR: 170 });
 
   // harita + ilgi noktaları + kamplar
-  L.poi = [{ x: tpx, z: tpz, name: 'Işınlanma Taşı', gate: 'back' }, { x: GX, z: GZ + 2, name: 'Rün Kapısı', gate: 'next' }, { x: lake.x, z: lake.z, name: 'Kara Gölet', deco: 1 }, { x: 101, z: 74, name: 'Yıkık Gözcü Kulesi', deco: 1 }];
+  L.poi = [{ x: tpx, z: tpz, name: 'Işınlanma Taşı', gate: 'back' }, { x: GX, z: GZ + 2, name: 'Mühür Kapısı', gate: 'next' }, { x: lake.x, z: lake.z, name: 'Kara Gölet', deco: 1 }, { x: 101, z: 74, name: 'Yıkık Gözcü Kulesi', deco: 1 }];
   deepMap(L, (x, z, k) => (L.grid[k] ? (pathD(x, z) < 2.6 ? 0xa08a68 : z < 49 && Math.abs(x - GX) < 14 ? 0x8a8890 : 0x6a7048) : lakeD(x, z) < 0 ? 0x24384e : sdf(x, z) < 2 ? 0x4a4a42 : 0x2a2a30));
   L.spawn = { x: Z.start[0], z: Z.start[1] }; L.spawnGate = L.spawn;
   L.arrive = { tp: { x: tpx, z: tpz - 5.5 }, door: { x: GX, z: GZ + 9 } };
-  L.camFocus = [{ x: GX, z: GZ + 2, r: 34, shift: 0.38, pull: 0.6, lift: 4.5, tilt: 0.26 }]; // kapıya yaklaşınca dağ yüzü ve Rün Kapısı kadraja girer
+  L.camFocus = [{ x: GX, z: GZ + 2, r: 34, shift: 0.38, pull: 0.6, lift: 4.5, tilt: 0.26 }]; // kapıya yaklaşınca dağ yüzü ve Mühür Kapısı kadraja girer
   deepCamps(L, Z, Z.camps || []);
   return deepFinish(L);
 }
 // ===== Bölge 2: Ağ Kuyusu — yıkık cüce kenti (yeraltı) =====
-// Güneyde Rün Kapısı'nın iç yüzü ve kemerli tünel → Kral Salonu (dev cüce heykelleri) → basamaklar → Sütunlu Salon (karanlığa yükselen
+// Güneyde Mühür Kapısı'nın iç yüzü ve kemerli tünel → Kral Salonu (dev cüce heykelleri) → basamaklar → Sütunlu Salon (karanlığa yükselen
 // sütunlar) · batıda Yıkık Mahalle (taş evler, kayaya oyulmuş seki evleri) · doğuda Demir Ocakları (sönmüş ocaklar, lav oluğu, raylar)
 // · kuzeyde uçurum ve tek kemerli köprü → kuzey kıyısı → Kral Mezarı (batı) ve Ağ Kuyusu (Kraliçe Karadul).
 // Zemin -2 (Kral Salonu ve tünel 0); tavan 40 birimde (yalnız 3. şahıs kamerasında görünür), aradaki her şey karanlığa gömülür.
@@ -16377,14 +16442,11 @@ function buildAgDeepInner(Z) {
     for (let k = 0; k < 3; k++) pc(F, KG.box, 3.6 + k * 0.9, -0.55 - k * 0.55, 0.9, 0.9, 0.4, 2.0, 0, 0, 0, cL, ao); // inen basamaklar
   };
 
-  // --- Rün Kapısı (iç yüz) + kemerli tünel ---
+  // --- Mühür Kapısı (iç yüz) + kemerli tünel ---
   { // kamera güneyden baktığı için iç kapı alçak tutulur (oyuncu kuzeye yürürken kadrajı kapatmasın)
-    const F = frame(110, 0, 218.4, Math.PI, 0.62), RA = kit.GA, gl = [];
+    const F = frame(110, 0, 218.4, Math.PI, 0.62);
     pc(F, KG.box, 0, 7.4, -1.6, 16, 14.8, 2.4, 0, 0, 0, C(0x3e4048, 0.03), aoH(0, 14, 0.25));
-    for (const sd of [-1, 1]) pc(F, KG.box, sd * 7.6, 6.5, -0.4, 2.6, 13, 2.6, 0, 0, 0, C(0x4a4c56, 0.03), aoH(0, 14, 0.25));
-    kit.doorFrame(F, 0, RA, gl, {});
-    const gm = kit.placeGlyphs(gl, 0xbfeeff);
-    L.anims.push((t) => { for (const m of gm) m.opacity = 0.55 + 0.25 * Math.sin(t * 1.6); });
+    kit.sealDoor({ x: 110, y: 0, z: 218.4, ry: Math.PI, sc: 0.62, nx: 110, nz: 212, openR: 14, pl: () => G.player }); // dışarı açılan Mühür Kapısı (iç yüz)
     addLightSpot(L, 110, 4, 213, 0x8ae0ff, 0.9, 14, { flicker: false, pri: 1.3 });
     glowDecal(L.group, 110, 0.04, 214.5, 5, 0x8ae0ff, 0.14).userData.dyn = true; }
   for (const z of [190, 197, 204, 211]) { const F = frame(110, 0, z, 0), ao = aoH(0, 26, 0.1), cS = C(0x5a5652, 0.04); // tünel duvar payeleri (kemer yok: kuşbakışı kadrajı kapatır)
@@ -16598,7 +16660,7 @@ function buildAgDeepInner(Z) {
     ce.userData.dyn = true; ce.userData.noCast = true; L.group.add(ce); L.disposables.push(cg, cm); }
 
   // --- harita, ilgi noktaları, kamplar, patron ---
-  L.poi = [{ x: 110, z: 213, name: 'Rün Kapısı', gate: 'back' }, { x: 110, z: 178, name: 'Kral Salonu', deco: 1 }, { x: 110, z: 124, name: 'Sütunlu Salon', deco: 1 },
+  L.poi = [{ x: 110, z: 213, name: 'Mühür Kapısı', gate: 'back' }, { x: 110, z: 178, name: 'Kral Salonu', deco: 1 }, { x: 110, z: 124, name: 'Sütunlu Salon', deco: 1 },
     { x: 33, z: 124, name: 'Yıkık Mahalle', deco: 1 }, { x: 192, z: 128, name: 'Demir Ocakları', deco: 1 }, { x: 110, z: 77, name: 'Uçurum Köprüsü', deco: 1 },
     { x: 26, z: 26, name: 'Kral Mezarı', deco: 1 }, { x: WX, z: 46, name: 'Ağ Kuyusu', boss: 1 }];
   deepMap(L, (x, z, k) => {
@@ -16610,13 +16672,16 @@ function buildAgDeepInner(Z) {
   });
   L.spawn = { x: Z.start[0], z: Z.start[1] }; L.spawnGate = L.spawn;
   L.arrive = { door: { x: 110, z: 206 } };
-  L.interact.push({ kind: 'wtp', zone: wildIdxOf('w2k'), from: 'door', x: 110, z: 212.5, r: 4.2, label: 'Rün Kapısı · dışarı çık', active: true });
-  addLabel(L, 'Rün Kapısı', 'Demirdağ eteğine çık', 110, 10.5, 217, '#bfeeff');
+  L.interact.push({ kind: 'wtp', zone: wildIdxOf('w2k'), from: 'door', x: 110, z: 212.5, r: 4.2, label: 'Mühür Kapısı · dışarı çık', active: true });
+  addLabel(L, 'Mühür Kapısı', 'Demirdağ eteğine çık', 110, 10.5, 217, '#bfeeff');
   const addSpawn = deepCamps(L, Z, [
     [110, 172, 7, 2], [86, 122, 8, 3], [134, 108, 8, 3], [134, 138, 9, 3], [74, 96, 9, 2], [150, 96, 9, 2],
     [33, 154, 8, 3], [33, 92, 9, 3], [36, 108, 10, 2], [22, 74, 10, 3], [30, 128, 11, 1, 'e'],
     [178, 108, 10, 3], [194, 128, 11, 3], [178, 152, 11, 3], [196, 152, 12, 1, 'e'],
     [62, 56, 11, 3], [160, 56, 12, 3], [24, 52, 11, 2], [26, 33, 12, 1, 'e'], [92, 24, 12, 2], [128, 24, 12, 2],
+    [110, 150, 8, 3], [108, 180, 7, 3], [124, 190, 7, 3], [56, 130, 9, 3], [164, 128, 9, 3], [30, 78, 9, 3],
+    [200, 100, 11, 2], [18, 104, 10, 3], [48, 168, 8, 3], [86, 52, 12, 3], [110, 100, 9, 4], [110, 78, 11, 3], [110, 62, 12, 3],
+    [198, 114, 11, 3], [196, 138, 11, 3], [190, 158, 11, 3], [168, 54, 12, 1, 'e'],
   ]);
   L.bossSpawn = addSpawn(Z.boss, Z.bossLv || 14, WX, 46, { boss: true, respawnTime: 300 });
   return deepFinish(L);
@@ -21050,9 +21115,9 @@ const UI = {
     else if (it.kind === 'exit') goVillage(true);
     else if (it.kind === 'wild') goWild(it.zone | 0);
     else if (it.kind === 'wback') goVillage('gate');
-    else if (it.kind === 'wtp') { // ışınlanma taşı / Rün Kapısı: başka bölgenin varış noktasına
+    else if (it.kind === 'wtp') { // ışınlanma taşı / Mühür Kapısı: başka bölgenin varış noktasına
       if (!it.active || it.zone < 0) { toast('Bu geçit şimdilik kapalı'); SFX.play('deny'); return; }
-      if (it.req && P.lv < it.req) { toast('Rünler tepki vermiyor: Sv ' + it.req + ' gerekli'); SFX.play('deny'); return; }
+      if (it.req && P.lv < it.req) { toast('Mühür tepki vermiyor: Sv ' + it.req + ' gerekli'); SFX.play('deny'); return; }
       goWild(it.zone, it.from);
     }
     else if (it.kind === 'wnext') {
@@ -22538,7 +22603,7 @@ function updateCamera(dt) {
   // zoom hedefe yumuşak geçer: yön/ayar değişince kamera zıplamaz
   G.camZ = G.camZ ? lerp(G.camZ, zt, Math.min(1, dt * 5)) : zt;
   const z = G.camZ;
-  // kamera odağı (L.camFocus): büyük bir yapıya (ör. Rün Kapısı) yaklaşınca kadraj ona kayar, kamera geri çekilip yukarı bakar
+  // kamera odağı (L.camFocus): büyük bir yapıya (ör. Mühür Kapısı) yaklaşınca kadraj ona kayar, kamera geri çekilip yukarı bakar
   let cfw = 0, cfo = null;
   if (G.level.camFocus) for (const f of G.level.camFocus) { const w = sstep(f.r, f.r * 0.35, Math.hypot(pl.x - f.x, pl.z - f.z)); if (w > cfw) { cfw = w; cfo = f; } }
   if (cfo) G.camF = cfo;
