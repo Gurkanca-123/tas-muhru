@@ -14,6 +14,9 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-19 (40) — Büyücü main'e alındı (kullanıcı onayı) · `ozellik/buyucu` → `main` (yedek `yedek/buyucu-oncesi`)
+- Kullanıcı telefonda test etti; saldırı ve beceri animasyonları sonradan değişebilir (karar verilmedi).
+
 ## 2026-10-19 (39) — Büyücü: daha uzun gövde, ince asalar · dal `ozellik/buyucu`
 - Geri bildirim: asa beden oranına göre kalın; karakter biraz daha uzun olmalı. `MAGE_SCALE` 2.12 → 2.3 (boy ~2.25), asalar `thin: 0.62` (genişlik/kalınlık; uzunluk aynı).
 - Diğer zırhlarda eski yürüyüş görünmesi: depodaki 5 gövde dosyasında da yeni walk/run/…Ready klipleri doğrulandı; neden test bağlantısının (raw.githack) önbelleği. Bundan sonra test bağlantısı işleme (commit) sabitli verilir (rawcdn.githack.com/…/<sha>/index.html).

@@ -1,6 +1,6 @@
 # Taş Mührü — proje durumu (kısa teknik hafıza)
 
-Son güncelleme: 2026-10-18 · `main`: beceri ustalığı görsel kademesi (`SkillVis`, `SKILL_FX`) dahil; görev zinciri + çanta/arayüz yenilemesi + Savaşçı silahlı bekleme/koşu/yürüme animasyonları ve ince kılıçlar (`SWORD_W/SWORD_T`) dahil. köy yeniden tasarımı + küçük köy yapıları + canavar/NPC/köy görsel kalite geçişi (`ozellik/koy-modeller` → main, kullanıcı onayıyla; yedek `yedek/main-koy-kalite-oncesi`). Satır numaraları bu sürüme göredir ve kayar;
+Son güncelleme: 2026-10-19 · `main`: Büyücü sınıfı (5 gövde, 5 asa, 4 beceri; saldırı/beceri animasyonları sonra değişebilir) dahil; beceri ustalığı görsel kademesi (`SkillVis`, `SKILL_FX`) dahil; görev zinciri + çanta/arayüz yenilemesi + Savaşçı silahlı bekleme/koşu/yürüme animasyonları ve ince kılıçlar (`SWORD_W/SWORD_T`) dahil. köy yeniden tasarımı + küçük köy yapıları + canavar/NPC/köy görsel kalite geçişi (`ozellik/koy-modeller` → main, kullanıcı onayıyla; yedek `yedek/main-koy-kalite-oncesi`). Satır numaraları bu sürüme göredir ve kayar;
 her zaman `grep -n` ile doğrula.
 
 ## Dosyalar
@@ -36,7 +36,7 @@ her zaman `grep -n` ile doğrula.
 | 16959 | ana döngü: `goVillage` (~16996), `goDungeon` (~17010), `update` (~17034), `frame`; 17375 `window.__tm` test kancası |
 
 ## Sistemler
-- **Büyücü (`mage`, dal `ozellik/buyucu`):** GLB gövde `buyucu_<ad>.js` (`MAGE_FILES`, `mageLoad`, `mageModelKey`, `buildMageModel`; boş → baslangic, Bez → zambak, Kurt/Nihai → zumrut, Bronz Taş → mavi, Efsanevi → ametist), asalar tek betik `buyucu_asalar.js` (`mageStaffLoad` → `GEAR_GLTF['buyucu/asa_<ad>.glb']`, `OUTFIT_DATA` `buyucu_<ad>_asa`, `gripY:0, full:true`). Asa tutuşu `mageMounts` (idleReady ilk karesinden). Beceriler m1–m4, zamanlamalar `MAGE_SKILL_T`; göğüs adları `CLS_GEAR_NAMES.mage`. Gövdeler 1 birim, `MAGE_SCALE` 2.12; klipler: idleA, idleReady, idleLook, walk, run (Savaşçı hareket yakalamasından aktarım), walkReady/runReady (aynısı + sağ kol asayı tutar; zindan/açık dünya), atkA/B/C, skM1–4, hit, death (hit/death kodda kullanılmıyor). Asa kavrama yüksekliği `OUTFIT_DATA` `gripAt`.
+- **Büyücü (`mage`; `ozellik/buyucu` → main 2026-10-19, kullanıcı onayıyla; yedek `yedek/buyucu-oncesi`):** GLB gövde `buyucu_<ad>.js` (`MAGE_FILES`, `mageLoad`, `mageModelKey`, `buildMageModel`; boş → baslangic, Bez → zambak, Kurt/Nihai → zumrut, Bronz Taş → mavi, Efsanevi → ametist), asalar tek betik `buyucu_asalar.js` (`mageStaffLoad` → `GEAR_GLTF['buyucu/asa_<ad>.glb']`, `OUTFIT_DATA` `buyucu_<ad>_asa`, `gripY:0, full:true`). Asa tutuşu `mageMounts` (idleReady ilk karesinden). Beceriler m1–m4, zamanlamalar `MAGE_SKILL_T`; göğüs adları `CLS_GEAR_NAMES.mage`. Gövdeler 1 birim, `MAGE_SCALE` 2.12; klipler: idleA, idleReady, idleLook, walk, run (Savaşçı hareket yakalamasından aktarım), walkReady/runReady (aynısı + sağ kol asayı tutar; zindan/açık dünya), atkA/B/C, skM1–4, hit, death (hit/death kodda kullanılmıyor). Asa kavrama yüksekliği `OUTFIT_DATA` `gripAt`.
 - **Karakter:** sınıflar `baltaci` (Baltacı) ve `warrior` (Savaşçı); ikisi de GLB gövde + AnimationMixer, zırh setine göre gövde
   değişir. Yetenek animasyonu kilidi `SKILL_LOCK` / `SAVASCI_SKILL_T`. Statlar `recalc()` → `D`.
   Savaşçı silahlı klipleri (`idleReady`, `walkReady`, `runReady`) GLB'de değil, yükleme anında `svBuildClips` (buildSavasciModel'in üstü) ile üretilir:
