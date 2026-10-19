@@ -14,6 +14,14 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-19 (38) — Büyücü düzeltmeleri (kullanıcı telefon testi) · dal `ozellik/buyucu`
+- Geri bildirim: yürüme/koşu paytak (bacaklar açık), saldırı ve beceriler ağır, asa tutuşu estetik değil.
+- walk / run: elle anahtar poz yerine Savaşçı GLB'sinin hareket yakalama walk/run klipleri dünya uzayı dönüş farkıyla Büyücü iskeletine aktarıldı (kalça yüksekliği oranı 0.98). Yeni walkReady / runReady: aynı klip + sağ omuz/kol/el asayı tutan sabit poz (hafif salınım); `clips.walkCombat/runCombat`, yer hızları walk 0.63 · run 2.46 (× ölçek).
+- idleReady yeniden: dik duruş, bacaklar açık değil; sağ el asayı bel hizasında vücuda yakın kavrar. Asa kavrama noktası ortanın üstüne alındı (`gripAt`, uç yere yakın), asa ekseni hafif ileri ve dışa eğik (`mageMounts`).
+- Hız: temel saldırı klibi ×1.7 (`atkDur` 0.5, `hitDelay` 0.22, `atkCd` 0.8); beceri klipleri ×1.35–1.5 (`MAGE_SKILL_T` süreleri ve kilitleri kısaldı; m2 `fall` 0.53, m3 `ticks` 0.34/0.56/0.78).
+- Gövde dosyaları yeniden üretildi (`buyucu_*.js`, yeni `?v=`).
+- Test (Playwright + SwiftShader): yeni Büyücü, köy/zindan, temel saldırı + 4 beceri hasar, 5 gövde, 5 asa, kayıt, Savaşçı/Baltacı açılışı; sayfa hatası 0. Blender ve oyun içi görüntülerle yürüme/koşu ve asa tutuşu kontrol edildi.
+
 ## 2026-10-19 (37) — Büyücü sınıfı (5 gövde, 5 asa, 4 beceri) · dal `ozellik/buyucu` (main'e alınmadı)
 - Kullanıcının iskeletsiz Tripo modelleri Blender'da (bu ortamdaki `bpy`) iskeletlendi: Mixamo adlı 22 kemik, vokselleştirilmiş kopyada ısı ağırlığı → asıl gövdeye aktarım; sağ elin etek/kemer/cebe sızan zayıf (<0.5) kol ağırlıkları kalçaya verildi. 14 klip anahtar pozla: idleA, idleReady, idleLook, walk, run, atkA/B/C, skM1..4, hit, death.
 - Yeni dosyalar: `buyucu_{baslangic,zambak,zumrut,mavi,ametist}.js` (gövdeler, ~3.7–4 MB) ve `buyucu_asalar.js` (5 asa tek betikte). İkisi de yalnız Büyücü oynanınca / görülünce yüklenir (`tmScript`, `tmParseGLB`).
