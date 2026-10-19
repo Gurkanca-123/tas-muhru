@@ -14,6 +14,14 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-19 (41) — Büyücü deneyi: Mühür Taşları + asa vuruşu + Sv 55 deneme karakteri · dal `ozellik/buyucu-test` (main'e alınmadı)
+- `Stones` nesnesi (Combat'tan önce): her büyü (güçlendirme hariç) çevrede dönen 1 taş ekler (en çok 3, 14 sn yeni taş gelmezse dağılır). Taş darbeyi emer (en çok maks. canın %25'i; zehir hasarı taş harcamaz). 3 taşla yapılan sonraki hasar büyüsü ×1.5 ve taşları harcar. Durum yalnız çalışma anında (`pl.stoneN/stoneT`), kayıt alanı eklenmedi. Dönen taşlar `L.group`'ta ayrı grup (model yenilense de kalır).
+- `CLASSES.mage.melee = 2.8`: hedef bu mesafeden yakınsa `basicAttack` asa vuruşu yapar (çarpan 1.15, 1.15, 3. vuruş 1.5 + 2.2 yarıçapta %60 sıçrama); uzaktaysa eski mermi. Klipler aynı (atkA/B/C), yeni animasyon yok.
+- Kancalar: `useSkill` (emp + kazanım), `damagePlayer` (emme), `PlayerEnt.update` (`Stones.update`), `basicAttack`. İşaret: `MUHUR-TASI`. Geri alma: `Stones` bloğu + bu işaretli satırlar + `melee`.
+- Geçici «Deneme: Sv 55 Büyücü» (`newTestMage`, `testMageButton`, `DENEME-DUGMESI`): Efsanevi set +9 + Yıldırım Taşı Asası +9 giyili; çantada Bez/Kurt Dişi/Nihai/Bronz Taş zırh setleri (4'er) + 4 asa (+9), iksirler; beceriler Sv 5. `__tm.newTestMage`, `__tm.Stones` eklendi.
+- Test (Playwright, depoda değil; düşük grafik, oyun zamanına bağlı bekleme): 21/21 geçti — deneme karakteri, taş kazanımı/buff/1.5× büyü, emme (%25 sınırı, zehir), yakın kombo 1.15/1.15/1.5 ve uzak mermi, süre/ölüm temizliği, Savaşçı/Baltacı etkilenmedi, sayfa hatası 0. Görsel: oyun içi görüntüyle taşlar ve emme doğrulandı. Denenmedi: gerçek telefon, ortak oyun (taşlar yalnız yerelde görünür), ultra grafik/bloom ile görünüm.
+- Açık: asa vuruşu mevcut büyü klipleriyle oynar (görsel uyumsuzluk olabilir); denge değerleri (EMP 1.5, SOAK %25, LIFE 14 sn, melee çarpanları) ilk taslak.
+
 ## 2026-10-19 (40) — Büyücü main'e alındı (kullanıcı onayı) · `ozellik/buyucu` → `main` (yedek `yedek/buyucu-oncesi`)
 - Kullanıcı telefonda test etti; saldırı ve beceri animasyonları sonradan değişebilir (karar verilmedi).
 

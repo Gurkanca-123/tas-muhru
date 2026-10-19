@@ -830,9 +830,10 @@ const CLASSES = {
   // Uzak dövüş: temel saldırı asanın ucundan büyü küresi (hitDelay: klipteki atış anı). Saldırı gücü Zekâ'dan (main: 'int').
   mage: {
     name: 'Büyücü', main: 'int', weapon: 'Asa', icon: 'staff',
-    desc: 'Taş asayla uzaktan büyü yapar. Ateş topu, gök taşı ve yıldırımla düşmanı yaklaşmadan eritir.',
+    desc: 'Taş asayla uzaktan büyü yapar. Ateş topu, gök taşı ve yıldırımla düşmanı yaklaşmadan eritir. Yakına gelene asayla vurur; her büyü çevresinde bir Mühür Taşı döndürür.',
     base: { vit: 7, str: 3, int: 12, dex: 4 }, rec: { int: 2, vit: 1 },
     atkRange: 7.5, atkCd: 0.8, hitDelay: 0.22, ranged: true, projCol: 0x7ad8ff,
+    melee: 2.8, // MUHUR-TASI: bu mesafeden yakındaki düşmana asayla vurur (3'lü kombo)
     skills: ['m1', 'm2', 'm3', 'm4'],
     starterSet: true, starterChest: false, // Başlangıç kıyafetiyle başlar; ilk göğüs Beyaz Zambak Cübbesi (Bez Zırh seti)
     armorSets: true,
@@ -18443,6 +18444,7 @@ class PlayerEnt {
     if (this.potT > 0) this.potT -= dt;
     if (this.skillLock > 0) this.skillLock -= dt;
     if (this.skillBuf) { this.skillBufT -= dt; if (this.skillBufT <= 0) this.skillBuf = null; else if (!(this.skillLock > 0) && !this.dead) { const q = this.skillBuf; this.skillBuf = null; Combat.useSkill(q); } }
+    if (P.cls === 'mage') Stones.update(this, dt); // MUHUR-TASI
     if (this.dead) { this.leap = null; this.leapY = 0; this.skillLock = 0; this.skillBuf = null; this.animate(dt); return; }
     if (!this.leap && !this.dash && this.leapY) this.leapY = 0; // atılma dışarıdan kesildiyse havada kalmasın
     // durum etkileri
@@ -19030,6 +19032,61 @@ const SkillVis = {
   },
 };
 
+// ===== MÜHÜR TAŞLARI (DENEME · Büyücü) =====
+// Her büyü (güçlendirme hariç) oyuncunun çevresine dönen bir taş ekler (en çok 3). Bir taş bir darbeyi emer (en çok maks. canın %25'i).
+// 3 taşla yapılan bir sonraki hasar büyüsü %50 güçlü çıkar ve taşları harcar. 14 sn yeni taş gelmezse taşlar dağılır.
+// Kayıt dışı: yalnız çalışma anı durumu (pl.stoneN / pl.stoneT). Geri almak = bu blok + "MUHUR-TASI" işaretli satırlar.
+const Stones = {
+  MAX: 3, LIFE: 14, EMP: 1.5, SOAK: 0.25,
+  full(pl) { return (pl.stoneN | 0) >= this.MAX; },
+  gain(pl) {
+    pl.stoneN = Math.min(this.MAX, (pl.stoneN | 0) + 1); pl.stoneT = this.LIFE;
+    FX.ring(pl.x, pl.z, 1.2, 0x7ad8ff, 0.35, 0.15);
+    if (this.full(pl)) { FX.burst(pl.x, 1.2, pl.z, 0xbff0ff, 14, 3.5); FX.num(pl.x, 2.9, pl.z, 'MÜHÜR DOLU', 'exp'); SFX.play('buff'); }
+  },
+  spend(pl) {
+    pl.stoneN = 0; pl.stoneT = 0;
+    FX.ring(pl.x, pl.z, 3.2, 0xbff0ff, 0.5, 0.2); FX.burst(pl.x, 1.2, pl.z, 0xbff0ff, 26, 6); FX.flash(0x7ad8ff, 2, 0.25); camPunch(0.5);
+  },
+  absorb(pl, dmg) { // darbenin bir kısmını (en çok maks. canın %25'i) bir taş emer; kalanı döner
+    const soak = Math.min(dmg, Math.max(1, Math.round(D.maxHp * this.SOAK)));
+    pl.stoneN = Math.max(0, (pl.stoneN | 0) - 1);
+    FX.ring(pl.x, pl.z, 1.8, 0x7ad8ff, 0.4, 0.2); FX.burst(pl.x, 1.2, pl.z, 0xbff0ff, 10, 4);
+    FX.num(pl.x, 2.6, pl.z, soak < dmg ? 'KISMEN EMİLDİ' : 'EMİLDİ', 'exp'); SFX.play('buff');
+    return dmg - soak;
+  },
+  mk() {
+    if (!this.geo) {
+      this.geo = new THREE.OctahedronGeometry(0.19, 0);
+      this.mat = new THREE.MeshBasicMaterial({ color: 0x5cc8ff });
+      this.hal = new THREE.MeshBasicMaterial({ color: 0x1f7cff, transparent: true, opacity: 0.45, depthWrite: false }); // normal karışım: açık zeminde de seçilir
+    }
+    const m = new THREE.Mesh(this.geo, this.mat), h = new THREE.Mesh(this.geo, this.hal);
+    h.scale.setScalar(1.9); m.add(h); m.castShadow = false;
+    return m;
+  },
+  update(pl, dt) { // PlayerEnt.update her karede çağırır
+    if (pl.dead) pl.stoneN = 0;
+    if ((pl.stoneN | 0) > 0) { pl.stoneT -= dt; if (pl.stoneT <= 0) pl.stoneN = 0; }
+    const want = pl.stoneN | 0, L = G.level;
+    let g = pl._stoneG;
+    if (!want && !g) return;
+    if (!g || g.parent !== L.group) { // yeni seviye: taşları yeni sahneye kur
+      if (!want) { pl._stoneG = null; return; }
+      g = pl._stoneG = new THREE.Group(); g.userData.m = [];
+      L.group.add(g);
+    }
+    const ms = g.userData.m;
+    while (ms.length < want) { const m = this.mk(); ms.push(m); g.add(m); }
+    while (ms.length > want) g.remove(ms.pop());
+    const t = pl.anim, y = groundY(L, pl.x, pl.z) + 1.15, blink = pl.stoneT > 3 || Math.sin(t * 24) > 0;
+    for (let i = 0; i < ms.length; i++) {
+      const a = t * 2.4 + i * (Math.PI * 2 / this.MAX);
+      ms[i].position.set(pl.x + Math.cos(a) * 1.05, y + Math.sin(t * 3 + i * 2) * 0.12, pl.z + Math.sin(a) * 1.05);
+      ms[i].rotation.set(t * 2 + i, t * 3, 0); ms[i].visible = blink;
+    }
+  },
+};
 const Combat = {
   // En yakın hedef: duvar arkasındakiler için düz mesafe yerine yol mesafesi (BFS)
   findTarget(range) {
@@ -19255,6 +19312,10 @@ const Combat = {
         FX.ring(pl.x, pl.z, 2.4, 0x7ad8ff, 0.7, 0.2); FX.burst(pl.x, 1, pl.z, 0x7ad8ff, 24, 5); banner('Mühür Kalkanı', '5 sn hasar azalır, can doldu', 1.8);
       }
     }
+    if (P.cls === 'mage' && (pl.stoneN | 0) > 0 && !o.poisonTick) { // MUHUR-TASI: taş darbeyi emer
+      dmg = Stones.absorb(pl, dmg);
+      if (dmg <= 0) { pl.combatT = 0; if (src && !src.dead && src.state === 'idle') src.aggro(true); return; }
+    }
     P.hp -= dmg;
     pl.combatT = 0;
     if (!o.poisonTick) { pl.flash(); SFX.play('hurt'); }
@@ -19289,7 +19350,19 @@ const Combat = {
     if (P.cls === 'warrior') FX.bladeOn(pl, 0.5, buffs.some((b) => SKILLS[b.id] && SKILLS[b.id].swordGlow) ? 0xffd890 : 0xdfeaff, 0.55);
     SFX.play(c.ranged ? 'magic' : 'swing');
     const echo = !!SETFX.on.muhurYanki && (SETFX.yankiN = (SETFX.yankiN | 0) + 1) % 5 === 0; // Mühür Yankısı: her 5. vuruş
-    if (c.ranged) {
+    if (c.ranged && c.melee && dist(pl.x, pl.z, t.x, t.z) <= c.melee + t.r) { // MUHUR-TASI: yakındaki düşmana asa vuruşu (3'lü kombo, son vuruş taş patlaması)
+      const fin = (pl.swingN | 0) % 3 === 2;
+      later(c.hitDelay || 0.12, () => {
+        if (t.dead || pl.dead || dist(pl.x, pl.z, t.x, t.z) > c.melee + t.r + 0.8) return;
+        this.hitMob(t, fin ? 1.5 : 1.15, { echo });
+        FX.slash(pl.x, 1.2, pl.z, pl.rot, fin ? 0xbff0ff : 0x9fe8ff, fin ? 2.4 : 1.8);
+        FX.burst(t.x, 1, t.z, 0x7ad8ff, fin ? 16 : 6, 4);
+        if (fin) {
+          FX.ring(t.x, t.z, 2.2, 0x7ad8ff, 0.4, 0.2); camPunch(0.4);
+          for (const o of G.level.mobs) if (o !== t && !o.dead && dist(o.x, o.z, t.x, t.z) <= 2.2 + o.r) this.hitMob(o, 0.6);
+        }
+      });
+    } else if (c.ranged) {
       const shoot = () => { if (t.dead || pl.dead) return; Proj.playerShot(pl, t, c.projCol || 0x7af0e0, (m) => this.hitMob(m, 1, { echo }), 18, 0.18); };
       if (c.hitDelay) later(c.hitDelay, shoot); else shoot(); // büyü klibindeki atış anı
     } else {
@@ -19320,7 +19393,8 @@ const Combat = {
     if (G.level.type === 'village' && sk.type !== 'buff' && sk.type !== 'heal' && Duel.phase !== 'fight') { toast('Köyde saldırı yeteneği kullanılamaz'); return; }
     if ((pl.cds[id] || 0) > 0) return;
     if (P.mp < sk.mp) { toast('Mana yetersiz'); SFX.play('deny'); return; }
-    const pw = skillPowerOf(id) * (1 + (D.skillPct || 0)); // seviye + ustalık çarpanı · Taş Mühür: beceri hasarı bonusu
+    const emp = P.cls === 'mage' && sk.type !== 'buff' && Stones.full(pl); // MUHUR-TASI: 3 taşla sonraki hasar büyüsü güçlü
+    const pw = skillPowerOf(id) * (1 + (D.skillPct || 0)) * (emp ? Stones.EMP : 1); // seviye + ustalık çarpanı · Taş Mühür: beceri hasarı bonusu
     const needsTarget = ['single', 'dash', 'projectile', 'axe_throw', 'leap'].includes(sk.type);
     let t = pl.target && !pl.target.dead ? pl.target : null;
     if (needsTarget || sk.type === 'aoe_target') {
@@ -19338,6 +19412,7 @@ const Combat = {
       pl.face(Math.atan2(t.x - pl.x, t.z - pl.z), 1, 1);
     }
     P.mp -= sk.mp;
+    if (P.cls === 'mage') { if (emp) Stones.spend(pl); else Stones.gain(pl); } // MUHUR-TASI
     Quest.ev('skilluse', { id });
     pl.cds[id] = sk.cd;
     pl.skillCast = id; // yalnız animasyon: modelin yetenek klibi varsa oynar
@@ -21655,6 +21730,7 @@ function showCharSelect() {
     nw.onclick = () => { SFX.play('click'); showClassSelect(); };
     box.appendChild(nw);
     testCharButton(box); // DENEME-DUGMESI
+    testMageButton(box); // DENEME-DUGMESI
   }
 }
 // ===== GEÇİCİ DENEME KARAKTERİ (kaldırılacak: bu blok + "DENEME-DUGMESI" çağrıları) =====
@@ -21675,6 +21751,26 @@ function testCharButton(parent) { // DENEME-DUGMESI
   if (listChars().length >= MAX_CHARS) return;
   const b = el('button', 'card px ccard cnew', 'Deneme: Sv 50 Savaşçı<br><span>+9 Nihai Zırh · +9 Obsidyen Keski · 60 Usta + 6 Büyük Usta parşömeni (geçici)</span>');
   b.onclick = () => { SFX.init(); newTestWarrior(); saveGame(); startPlay(); };
+  parent.appendChild(b);
+}
+function newTestMage() {
+  newCharacter('mage', 'Deneme Sv55');
+  P.lv = 55; P.exp = 0; P.pts = 0; P.gold = 500000;
+  P.stats.int += 108; P.stats.vit += 54; // 54 seviye × 3 puan: Zekâ 2 : Can 1 (sınıf önerisi)
+  for (const id of CLASSES.mage.skills) P.skills[id] = SKILL_MAX;
+  // giyili: Efsanevi Zırh Seti +9 + Yıldırım Taşı Asası +9
+  for (const sl of SET_SLOTS) { const g = makeGear(sl, 0, 3, 'mage', 'efsane'); g.plus = 9; P.equip[sl] = g; }
+  const w = makeGear('weapon', 0, 3, 'mage', 'yasa'); w.plus = 9; P.equip.weapon = w;
+  // çanta: Bez · Kurt Dişi · Nihai · Bronz Taş zırh setleri (4'er parça) + Mavi Taş · Işık Taşı · Zümrüt · Gök Taşı asaları
+  for (const set of ['bez', 'kurt', 'nihai', 'bronzz']) for (const sl of SET_SLOTS) { const g = makeGear(sl, 0, 3, 'mage', set); g.plus = 9; addItem(g); }
+  for (const set of ['masa', 'iasa', 'zasa', 'gasa']) { const g = makeGear('weapon', 0, 3, 'mage', set); g.plus = 9; addItem(g); }
+  addItem(makeStack('hp2', 30)); addItem(makeStack('mp2', 15));
+  recalc(); P.hp = D.maxHp; P.mp = D.maxMp;
+}
+function testMageButton(parent) { // DENEME-DUGMESI
+  if (listChars().length >= MAX_CHARS) return;
+  const b = el('button', 'card px ccard cnew', 'Deneme: Sv 55 Büyücü<br><span>Efsanevi set +9 · Yıldırım Taşı Asası +9 · çantada 4 zırh seti + 4 asa (geçici)</span>');
+  b.onclick = () => { SFX.init(); newTestMage(); saveGame(); startPlay(); };
   parent.appendChild(b);
 }
 // ===== /GEÇİCİ DENEME KARAKTERİ =====
@@ -21771,8 +21867,8 @@ function boot(data) {
     requestAnimationFrame(frame);
   } catch (e) { showError(e); }
 }
-window.__tm = { SkillVis, SKILL_VIS, WILD_ZONES, buildWild, wildReach, groundY, goWild, goVillage, setLevel, placePlayer, buffs, SKILLS, toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, addBonusLine, useEfsunPaper, EFSUN_MAX, EFSUN_DROP, GEAR_SETS, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad, MAGE_BODIES, MAGE_LOAD, mageModelKey, mageBodyKey, mageLoad, mageStaffLoad, get MAGE_STAFF_ST() { return MAGE_STAFF_ST; }, MAGE_SKILL_T, buildMageModel, CLS_GEAR_NAMES,
-  TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, W3, armorLevel, gildLevel };
+window.__tm = { Stones, SkillVis, SKILL_VIS, WILD_ZONES, buildWild, wildReach, groundY, goWild, goVillage, setLevel, placePlayer, buffs, SKILLS, toast, SETFX, SET_FX, recalc, D, Combat, rollBonus, Post, applyGfx, buildMobModel, buildNPC, MOB_TPL, makeGear, makeStack, itemIcon, itemName, STACKS, GEAR_SETS, gearStats, sellPrice, setInfoOf, ICON3D, Quest, QUESTS, NPC_ROLE, MASTERY_RATE, MASTERY_STEP, masteryBonus, skillPowerOf, masteryNext, skillPower, UPG, expNeed, expNeed0, MASTERY, MASTERY_SCROLLS, masteryOf, masteryLabel, masteryCheck, useMasteryScroll, skillLvText, SKILL_MAX, SKILLS, CLASSES, countStack, addStack, removeStack, validItem, Temple, TempleAssets, TEMPLE_FLOORS, TEMPLE_REWARDS, templeWalk, moveEntity, buildGearSword, weaponLookPart, Net, Duel, Coop, Daily, DIFFS, diffUnlocked, activeSets, setInfoOf, listChars, efsunCost, rollBonus, SLOTS, SET_SLOTS, STACKS, RAREMAT, buildBoneKing, animateBoneKing, MOBS, BONEKING, G, get P() { return P; }, saveGame, Cloud, Equipment, OUTFITS, GEAR_GLTF, Input, applySave, BALTACI_BODIES, GILD_T, gildLevel, get BALTACI_GLTF() { return BALTACI_GLTF; }, baltaciBodyKey, BALTACI_SKILL_T, itemName, itemReq, rollGear, migrateSets, GEAR_SETS, canEquip, upgradeCost, dismantle, dismantleYield, expNeed, skillIcon, spriteIcon, uiIcon, itemIcon, goDungeon, goVillage, UI, Combat, addExp, addItem, makeGear, makeStack, countStack, removeStack, addBonusLine, useEfsunPaper, EFSUN_MAX, EFSUN_DROP, GEAR_SETS, recalc, telegraph, buildDungeon, disposeLevel, setLevel, spawnMob, W3, update, FX, Proj, canStand, walkable, losClear, CLASSES, SKILLS, DUNGEONS, TIER_REQ, get D() { return D; }, SAVASCI_BODIES, SAVASCI_LOAD, savasciBodyKey, savasciModelKey, SAVASCI_SKILL_T, MAX_LV, newCharacter, startPlay, equipFromInv, buffs, RemotePlayer, savasciLoad, MAGE_BODIES, MAGE_LOAD, mageModelKey, mageBodyKey, mageLoad, mageStaffLoad, get MAGE_STAFF_ST() { return MAGE_STAFF_ST; }, MAGE_SKILL_T, buildMageModel, CLS_GEAR_NAMES,
+  TEMPLE_POW, TEMPLE_FIRST, templeFloorLv, EXP_PLAN, EXP_KILL_CAP, expKills, mobBase, RANK, SEAL_STATS, SEAL_GRADES, sealId, sealParse, sealBonusOf, socketSeal, unsocketSeal, mergeSeal, rarityAtLeast, validItem, gearStats, itemDetailHTML, newTestWarrior, newTestMage, W3, armorLevel, gildLevel };
 try {
   const hot = window.claude && window.claude.hot;
   if (hot && hot.ready) hot.ready(boot); else boot(hot && hot.data ? hot.data : {});
