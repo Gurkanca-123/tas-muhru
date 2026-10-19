@@ -14,6 +14,11 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-19 (39) — Büyücü: daha uzun gövde, ince asalar · dal `ozellik/buyucu`
+- Geri bildirim: asa beden oranına göre kalın; karakter biraz daha uzun olmalı. `MAGE_SCALE` 2.12 → 2.3 (boy ~2.25), asalar `thin: 0.62` (genişlik/kalınlık; uzunluk aynı).
+- Diğer zırhlarda eski yürüyüş görünmesi: depodaki 5 gövde dosyasında da yeni walk/run/…Ready klipleri doğrulandı; neden test bağlantısının (raw.githack) önbelleği. Bundan sonra test bağlantısı işleme (commit) sabitli verilir (rawcdn.githack.com/…/<sha>/index.html).
+- Test: genel Büyücü testi (saldırı, beceriler, zırh/gövde, asalar, kayıt) geçti, sayfa hatası 0; oyun içi görüntülerle boy ve asa kontrol edildi.
+
 ## 2026-10-19 (38) — Büyücü düzeltmeleri (kullanıcı telefon testi) · dal `ozellik/buyucu`
 - Geri bildirim: yürüme/koşu paytak (bacaklar açık), saldırı ve beceriler ağır, asa tutuşu estetik değil.
 - walk / run: elle anahtar poz yerine Savaşçı GLB'sinin hareket yakalama walk/run klipleri dünya uzayı dönüş farkıyla Büyücü iskeletine aktarıldı (kalça yüksekliği oranı 0.98). Yeni walkReady / runReady: aynı klip + sağ omuz/kol/el asayı tutan sabit poz (hafif salınım); `clips.walkCombat/runCombat`, yer hızları walk 0.63 · run 2.46 (× ölçek).
