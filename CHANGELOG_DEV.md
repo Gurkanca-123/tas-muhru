@@ -16,6 +16,13 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-20 (41) — Büyücü: asa elde tutulmuyordu · dal `duzeltme/buyucu-asa-tutus`
+- Sorun: gövdelerin elinde parmak kemiği yok, el açık; asa bağlantısı bilek yakınına sabit (`[0, 0.03, 0]`) ve avuç aşağı bakıyordu → asa elin dışında duruyordu.
+- `mageHandFrame` (yeni): el köşelerinden (boneInverse ile el kemiği uzayı) parmak ekseni, avuç yönü (bağlama -y, görselle doğrulandı) ve avuç ortası tutuş noktası (`MAGE_GRIP`).
+- `mageMounts`: el bağlantısı tutuş noktasına; bilek düzeltmesi `wrist` (parmaklar asaya dik, avuç asaya; iki yandan en az bükeni, en çok 2.4 rad). `buildMageModel` → `H.wristFix`; `animateGltf` mixer'dan sonra uygular (yalnız asa eldeyken; RemotePlayer da aynı yoldan).
+- Test: 5 gövdede idleReady/runReady/walkReady/idleA/atkA yakın çekim; Fener Ovası canlı döngü (Sv 55, Efsanevi zırh + Yıldırım asası ve başlangıç) eski/yeni karşılaştırma; sayfa hatası 0; `node --check` geçti. Telefonda denenmedi.
+- Kalan: el açık modelli (yumruk yok); asa elin dönüşünü izlediği için bazı kliplerde (ör. idleA, beceri) eğik durabilir — önceden de böyleydi.
+
 ## 2026-10-19 (40) — Büyücü main'e alındı (kullanıcı onayı) · `ozellik/buyucu` → `main` (yedek `yedek/buyucu-oncesi`)
 - Kullanıcı telefonda test etti; saldırı ve beceri animasyonları sonradan değişebilir (karar verilmedi).
 
@@ -378,3 +385,4 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
   - Base64 / üçüncü taraf bölgeleri atlanır.
 - Testler: kod değişmediği için oyun testi çalıştırılmadı. Bölüm haritası ve semboller `grep` ile kaynaktan doğrulandı.
 - Açık: tapınak dengesi, tapınak ortak oyununun cihaz testi.
+

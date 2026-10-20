@@ -11210,9 +11210,42 @@ const MAGE_SKILL_T = {
 const MAGE_BACK = { p: [0, 0.057, -0.1], q: [0.037, 0, 0, 0.9993] }; // sırt bağlantısı (Spine2; Savaşçı ile aynı çerçeve)
 // Asa tutuşu: zindan bekleme pozunda (idleReady ilk karesi) asa dik ve hafif ileri eğik, kavrama noktası avuç ortasında.
 // Gövde başına bir kez hesaplanır (kemik pozu geri yüklenir); asa diğer kliplerde eli izler.
+// Asa tutuşu: gövdelerin elinde parmak kemiği yok, el açık modellenmiş ve bekleme klibinde avuç aşağı bakıyor; asa bileğin dışında
+// kalıyordu. Çözüm (oyuncu el kemiği yerel çerçevesinde, animasyondan bağımsız):
+//  1) bilek döndürülür (animasyondan SONRA uygulanır: H.wristFix) → parmaklar asaya dik, avuç yana (asaya) bakar; bilek en az bükülecek yan seçilir;
+//  2) asa ekseni avucun ortasından (parmak köklerine yakın), avuç yüzeyine dayalı geçer.
+// El köşeleri bağlama uzayından el kemiği uzayına boneInverse ile alınır. Avuç yönü: bağlama duruşunda avuç -y (parmak uçlarının kıvrımıyla doğrulandı).
+const MAGE_GRIP = { t: 0.46, r: 0.0105, maxRoll: 2.4 }; // t: bilekten parmak ucuna oran · r: asa yarıçapı (el yerel birimi) · en çok bilek dönüşü (rad)
+function mageHandFrame(scene, hand) {
+  const V = [], v = new THREE.Vector3(), nL = new THREE.Vector3();
+  let got = false;
+  scene.traverse((sm) => {
+    if (!sm.isSkinnedMesh) return;
+    const bi = sm.skeleton.bones.indexOf(hand); if (bi < 0) return;
+    const M = sm.skeleton.boneInverses[bi].clone().multiply(sm.bindMatrix);
+    const g = sm.geometry, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      let w = 0;
+      if (si.getX(i) === bi) w += sw.getX(i); if (si.getY(i) === bi) w += sw.getY(i);
+      if (si.getZ(i) === bi) w += sw.getZ(i); if (si.getW(i) === bi) w += sw.getW(i);
+      if (w >= 0.6) V.push(v.fromBufferAttribute(pos, i).applyMatrix4(M).clone());
+    }
+    if (!got) { nL.set(0, -1, 0).transformDirection(M); got = true; }
+  });
+  if (V.length < 30 || !got) return null;
+  const f = new THREE.Vector3(); for (const q of V) f.add(q); f.normalize(); // bilek → parmaklar
+  nL.addScaledVector(f, -nL.dot(f)).normalize(); // avuç yönü (parmak eksenine dik)
+  const ts = V.map((q) => q.dot(f)).sort((x, y) => x - y), tMax = ts[Math.floor(ts.length * 0.97)];
+  const t0 = tMax * (MAGE_GRIP.t - 0.08), t1 = tMax * (MAGE_GRIP.t + 0.08);
+  const S = V.filter((q) => { const t = q.dot(f); return t >= t0 && t <= t1; });
+  if (S.length < 8) return null;
+  const c = new THREE.Vector3(); for (const q of S) c.add(q); c.multiplyScalar(1 / S.length);
+  const hs = S.map((q) => q.clone().sub(c).dot(nL)).sort((x, y) => x - y), h = hs[Math.floor(hs.length * 0.9)];
+  return { f, n: nL, grip: c.addScaledVector(nL, h + MAGE_GRIP.r) }; // grip: avuç yüzeyine dayalı asa ekseni noktası
+}
 function mageMounts(gl) {
   if (gl.mgMount) return gl.mgMount;
-  const res = { hand: null, back: MAGE_BACK }, scene = gl.scene, hand = scene.getObjectByName('mixamorigRightHand');
+  const res = { hand: null, back: MAGE_BACK, wrist: null }, scene = gl.scene, hand = scene.getObjectByName('mixamorigRightHand');
   const clip = gl.animations.find((c) => c.name === 'idleReady');
   if (hand && clip) {
     const keep = []; scene.traverse((o) => { if (o.isBone) keep.push([o, o.position.clone(), o.quaternion.clone()]); });
@@ -11223,7 +11256,27 @@ function mageMounts(gl) {
     const up = new THREE.Vector3(-0.06, 1, 0.1).normalize(), X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3().crossVectors(up, X).normalize();
     X.crossVectors(Y, up); // dik taban (asa ekseni hafif dışa eğik)
     const qw = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, up)); // silahın +z ekseni → yukarı
-    res.hand = { p: [0, 0.03, 0], q: hq.invert().multiply(qw).toArray() };
+    const fr = mageHandFrame(scene, hand);
+    if (fr) {
+      // el, parmaklar asaya dik (yatay) ve avuç yana bakacak (asa avuçtan geçecek) şekilde döndürülür; iki yandan bileği en az
+      // bükeni seçilir (çoğu gövdede avuç gövdeye döner). qc: el yerel çerçevesinde düzeltme ([f, n, f×n] → istenen, el uzayında)
+      const hi = hq.clone().invert(), fW = fr.f.clone().applyQuaternion(hq);
+      fW.addScaledVector(up, -fW.dot(up)).normalize(); // parmak yönü: asaya dik düzleme izdüşüm
+      const fD = fW.clone().applyQuaternion(hi);
+      const L = new THREE.Matrix4().makeBasis(fr.f, fr.n, new THREE.Vector3().crossVectors(fr.f, fr.n)).transpose();
+      let qc = null, best = Infinity;
+      for (const sg of [1, -1]) {
+        const nD = new THREE.Vector3().crossVectors(up, fW).multiplyScalar(sg).applyQuaternion(hi);
+        const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(fD, nD, new THREE.Vector3().crossVectors(fD, nD)).multiply(L));
+        const ang = 2 * Math.acos(Math.min(1, Math.abs(q.w)));
+        if (ang < best) { best = ang; qc = q; }
+      }
+      if (best > MAGE_GRIP.maxRoll) qc.identity(); // aşırı bükülme: dokunma
+      res.wrist = qc.toArray();
+      hq.multiply(qc);
+    }
+    const qh = hq.invert().multiply(qw);
+    res.hand = { p: fr ? fr.grip.toArray() : [0, 0.03, 0], q: qh.toArray() };
     mx.stopAllAction(); mx.uncacheRoot(scene);
     for (const [o, p, q] of keep) { o.position.copy(p); o.quaternion.copy(q); }
     scene.updateMatrixWorld(true);
@@ -11266,6 +11319,7 @@ function buildMageModel(key) {
   return {
     root, body, torso: ghost(), head: ghost(), legL: ghost(), legR: ghost(), armL: ghost(), armR: ghost(),
     hand: mount('mixamorigRightHand', mt.hand), handL: ghost(), back: mount('mixamorigSpine2', mt.back), chest: ghost(), height: 2.25,
+    wristFix: mt.wrist ? { bone: scene.getObjectByName('mixamorigRightHand'), q: new THREE.Quaternion().fromArray(mt.wrist) } : null, // asa elde: avuç asaya döner
     gltf: true, mixer, actions, curAnim: null, skel: scene, gearSlots: true, gearMeshes: [],
     bodyKey: key, costume: true, gild, shell, sAura, cls: 'mage',
     // üç büyü klibi sırayla (sağ el, sol el, iki el); atkDur: klip ~0.87 sn ×1.7 hızlı, atış anı ~0.23 sn (CLASSES.mage.hitDelay)
@@ -19769,6 +19823,10 @@ class PlayerEnt {
     // Kılıç Çevirme vb.: kök etrafında tam tur (prosedürel modellerdeki gibi)
     if (this.spin > 0) { this.spin -= dt; if (!H.skillClip) H.root.rotation.y = this.rot + (1 - this.spin / 0.4) * TAU; } // klip kendisi dönüyorsa kök dönmez
     H.mixer.update(dt);
+    if (H.wristFix && this.weapon && this.weapon.parent === H.hand) { // büyücü: asayı avuçta tut (mageMounts); klip eli yazmadıysa tekrar uygulama
+      const wf = H.wristFix, bq = wf.bone.quaternion;
+      if (!wf.last || !wf.last.equals(bq)) { bq.multiply(wf.q); (wf.last || (wf.last = new THREE.Quaternion())).copy(bq); }
+    }
     const ring = G.targetRing;
     if (ring) {
       const tg = this.target;
