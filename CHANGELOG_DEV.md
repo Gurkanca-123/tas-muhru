@@ -14,6 +14,20 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-20 (42) — Büyücü: asayla dövüşen yeni saldırı ve beceri animasyonları + yeni beceri seti · dal `ozellik/buyucu-test`
+- Kullanıcı geri bildirimi: eski saldırılar «elle vuruş» gibi. Klipler kullanıcının Blender'ında (MCP) iki el asayı IK ile kavrayacak şekilde yazıldı,
+  pişirilip `MAGE_STAFF_ANIM` olarak gömüldü (~140 KB; beş gövde iskeleti özdeş). `mageStaffClips(gl)` yüklemede atkA/B/C, skM1–4'ü değiştirir, idleGuard/atkShot ekler
+  (asa tutuşu önce özgün idleReady'den hesaplanır). Kapatma: `MAGE_STAFF_READY = false`. Kaynak/araç: `tools/mage_staff_anim/` (README).
+- Temel saldırı: yakında atkA çapraz → atkB ters çapraz → atkC tepeden yere vuruş (taş dalgası `FX.quake`, asa ucu önde), asa izi `FX.bladeOn`; uzakta atkShot
+  (asayı mızrak gibi iter, uçtaki taş dolar, mermi uçtan çıkar). Temas anları klipten (`MAGE_ATK_T`); saldırı aralığı kısalırsa klip ve temas birlikte hızlanır.
+  `animateGltf`: `C.attackFar` + `this.atkFar` seçimi, `C.atkNative` hız; diğer sınıflarda davranış aynı.
+- Beceriler (id'ler ve açılış seviyeleri aynı): m1 Asa Fırlatma (`staff_throw`; `throwAxe` artık `opt` alır: zamanlama, renk, yatay dönüş — Baltacı varsayılanı değişmedi),
+  m2 Yer Vuruşu (`staff_slam`, çevre hasarı + sersemletme), m3 Işık Adımı (`blink`, hedefin dibine anlık geçiş + yatay savuruş + itme),
+  m4 Mühür Kalkanı (`sealPlant` dalı Büyücüye açıldı, mavi renkler). Yeni ikonlar: staffthrow, staffslam, blink, sealshield (SMOOTH + piksel yedek).
+- Test: Büyücü betiği 28/28 (21 eski + klip yükleme/seçim, 4 beceri); bir koşuda rastgele zindan düzeninde (duvar görüş engeli) T2/T9 kaldı, tekrarında geçti.
+  Baltacı b1 (2 vuruş) ve Savaşçı w4 (güçlendirme) duman testi geçti, sayfa hatası yok. `run.mjs`/`movetest.mjs` bu ortamda yok → çalıştırılmadı.
+- Açık: ortak oyunda uzak saldırı klibi (atkShot) karşı tarafta yakın kombo olarak görünür (atkFar eşitlenmiyor); denge değerleri ilk taslak.
+
 ## 2026-10-19 (41) — Büyücü deneyi: Mühür Taşları + asa vuruşu + Sv 55 deneme karakteri · dal `ozellik/buyucu-test` (main'e alınmadı)
 - `Stones` nesnesi (Combat'tan önce): her büyü (güçlendirme hariç) çevrede dönen 1 taş ekler (en çok 3, 14 sn yeni taş gelmezse dağılır). Taş darbeyi emer (en çok maks. canın %25'i; zehir hasarı taş harcamaz). 3 taşla yapılan sonraki hasar büyüsü ×1.5 ve taşları harcar. Durum yalnız çalışma anında (`pl.stoneN/stoneT`), kayıt alanı eklenmedi. Dönen taşlar `L.group`'ta ayrı grup (model yenilense de kalır).
 - `CLASSES.mage.melee = 2.8`: hedef bu mesafeden yakınsa `basicAttack` asa vuruşu yapar (çarpan 1.15, 1.15, 3. vuruş 1.5 + 2.2 yarıçapta %60 sıçrama); uzaktaysa eski mermi. Klipler aynı (atkA/B/C), yeni animasyon yok.
