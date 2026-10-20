@@ -16,6 +16,12 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-20 (42) — Büyücü: başlangıç gövdesine parmak kemikleri, el asayı yumruk yapıp tutuyor · dal `duzeltme/buyucu-asa-tutus` (commit/push yok)
+- `buyucu_baslangic.js` yeniden üretildi (`?v=1eb56d6c49`): Meshy ile riglenen başlangıç gövdesinden sağ+sol el 15'er parmak kemiği (`mixamorigRightHand{Thumb|Index|Middle|Ring|Pinky}{1-3}`) ve parmak bölgesi ağırlıkları (2086 köşe, en çok 4 etki) eski gövdeye aşılandı; eski iskelet/animasyon/doku aynen duruyor (köşe sırası ve UV birebir, fark < 0,0001).
+- `index.html`: `mageHandFrame` el+parmak ağırlıklarını sayar, parmak kemikleri varsa avuç yönünü onlardan bulur (eski «bağlama −y» varsayımı bu gövdede avuç yönünü ~55° yanlış veriyordu); `mageFistData`/`MAGE_FIST` + `H.fist`: asa sağ eldeyken parmaklar avuca doğru kıvrılır (kemik yönü × avuç yönü ekseni), sırtta/elde değilken açılır (`animateGltf`). Bilek düzeltmesi (`wristFix`) olduğu gibi duruyor; parmaksız 4 gövde eski yolla çalışır (`fist: null`).
+- Test (yerel, başsız Chromium): yumruk yakın çekim idleReady/runReady/atkA'da asa yumruğun içinden geçiyor; elde↔sırtta geçişte `fist.k` 0↔1; zambak/ametist gövdeleri hatasız yükleniyor. Denenmedi: gerçek telefon, diğer 4 gövde (parmaksız), tam regresyon betikleri (bu ortamda yok).
+- Sıradaki: kullanıcı zambak/zümrüt/mavi/ametist gövdelerini Meshy'de riglenmiş gönderecek → aynı aşılama (`graft.py`, bu oturumun geçici dizininde) → `MAGE_FILES` sürüm eki.
+
 ## 2026-10-20 (41) — Büyücü: asa elde tutulmuyordu · dal `duzeltme/buyucu-asa-tutus`
 - Sorun: gövdelerin elinde parmak kemiği yok, el açık; asa bağlantısı bilek yakınına sabit (`[0, 0.03, 0]`) ve avuç aşağı bakıyordu → asa elin dışında duruyordu.
 - `mageHandFrame` (yeni): el köşelerinden (boneInverse ile el kemiği uzayı) parmak ekseni, avuç yönü (bağlama -y, görselle doğrulandı) ve avuç ortası tutuş noktası (`MAGE_GRIP`).

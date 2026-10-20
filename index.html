@@ -8872,7 +8872,7 @@ function savasciModelKey(want) {
 // atkA / atkB / atkC (sağ el, sol el, iki el büyü) · skM1..skM4 (yetenekler) · hit · death. Model 1 birim boyunda, yüz +z.
 // Gövde, göğüs eşyasının setine göre: boş → baslangic, Bez → zambak (Beyaz Zambak Cübbesi), Kurt Dişi / Nihai → zumrut,
 // Bronz Taş → mavi (Gök Taşı Zırhı), Efsanevi → ametist (Ametist Mühür Zırhı). İhtiyaç anında yüklenir (buyucu_<ad>.js).
-const MAGE_FILES = { baslangic: 'buyucu_baslangic.js?v=c4026fefdd', zambak: 'buyucu_zambak.js?v=c703592eb9', zumrut: 'buyucu_zumrut.js?v=ce7f4da3c0', mavi: 'buyucu_mavi.js?v=bab8536e86', ametist: 'buyucu_ametist.js?v=5c70978696' };
+const MAGE_FILES = { baslangic: 'buyucu_baslangic.js?v=1eb56d6c49', zambak: 'buyucu_zambak.js?v=c703592eb9', zumrut: 'buyucu_zumrut.js?v=ce7f4da3c0', mavi: 'buyucu_mavi.js?v=bab8536e86', ametist: 'buyucu_ametist.js?v=5c70978696' };
 const MAGE_ORDER = ['baslangic', 'zambak', 'zumrut', 'mavi', 'ametist'];
 const MAGE_BODY_OF = { bez: 'zambak', kurt: 'zumrut', nihai: 'zumrut', bronzz: 'mavi', efsane: 'ametist' };
 const MAGE_BODIES = {}, MAGE_LOAD = {};
@@ -11224,16 +11224,28 @@ function mageHandFrame(scene, hand) {
     const bi = sm.skeleton.bones.indexOf(hand); if (bi < 0) return;
     const M = sm.skeleton.boneInverses[bi].clone().multiply(sm.bindMatrix);
     const g = sm.geometry, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, pos = g.attributes.position;
+    const inH = new Set(); hand.traverse((o) => { const k = sm.skeleton.bones.indexOf(o); if (k >= 0) inH.add(k); }); // el + (varsa) parmak kemikleri
     for (let i = 0; i < pos.count; i++) {
       let w = 0;
-      if (si.getX(i) === bi) w += sw.getX(i); if (si.getY(i) === bi) w += sw.getY(i);
-      if (si.getZ(i) === bi) w += sw.getZ(i); if (si.getW(i) === bi) w += sw.getW(i);
+      if (inH.has(si.getX(i))) w += sw.getX(i); if (inH.has(si.getY(i))) w += sw.getY(i);
+      if (inH.has(si.getZ(i))) w += sw.getZ(i); if (inH.has(si.getW(i))) w += sw.getW(i);
       if (w >= 0.6) V.push(v.fromBufferAttribute(pos, i).applyMatrix4(M).clone());
     }
     if (!got) { nL.set(0, -1, 0).transformDirection(M); got = true; }
   });
   if (V.length < 30 || !got) return null;
   const f = new THREE.Vector3(); for (const q of V) f.add(q); f.normalize(); // bilek → parmaklar
+  { // parmak kemikleri varsa avuç yönü onlardan: eklem hattı (işaret→serçe) ⟂ parmak ekseni; avuç = parmakların kıvrıldığı yan
+    const fb = (k) => scene.getObjectByName('mixamorigRightHand' + k), K = ['Index', 'Middle', 'Ring', 'Pinky'];
+    if (K.every((k) => fb(k + '1') && fb(k + '3'))) {
+      const lp = (o) => hand.worldToLocal(o.getWorldPosition(new THREE.Vector3()));
+      const t = lp(fb('Index1')).sub(lp(fb('Pinky1'))); t.addScaledVector(f, -t.dot(f)).normalize();
+      const n0 = new THREE.Vector3().crossVectors(f, t), cv = new THREE.Vector3();
+      for (const k of K) cv.add(lp(fb(k + '3')).sub(lp(fb(k + '1'))));
+      const d = cv.dot(n0);
+      if (Math.abs(d) > 0.1 * cv.length()) nL.copy(n0).multiplyScalar(Math.sign(d));
+    }
+  }
   nL.addScaledVector(f, -nL.dot(f)).normalize(); // avuç yönü (parmak eksenine dik)
   const ts = V.map((q) => q.dot(f)).sort((x, y) => x - y), tMax = ts[Math.floor(ts.length * 0.97)];
   const t0 = tMax * (MAGE_GRIP.t - 0.08), t1 = tMax * (MAGE_GRIP.t + 0.08);
@@ -11243,9 +11255,29 @@ function mageHandFrame(scene, hand) {
   const hs = S.map((q) => q.clone().sub(c).dot(nL)).sort((x, y) => x - y), h = hs[Math.floor(hs.length * 0.9)];
   return { f, n: nL, grip: c.addScaledVector(nL, h + MAGE_GRIP.r) }; // grip: avuç yüzeyine dayalı asa ekseni noktası
 }
+// Yumruk: sağ el parmak kemikleri varsa (mixamorigRightHand{Thumb|Index|Middle|Ring|Pinky}{1..3}) her kemik, avuç yönüne doğru
+// kendi ekseni (kemik yönü × avuç yönü) etrafında kıvrılır. Eksenler bağlama duruşunda el uzayında hesaplanır → kemik yerel eksenine çevrilir.
+const MAGE_FIST = { // [kök, orta, uç] eklem açıları (rad)
+  Index: [1.15, 1.45, 1.0], Middle: [1.2, 1.5, 1.0], Ring: [1.25, 1.5, 1.0], Pinky: [1.3, 1.5, 0.95], Thumb: [0.35, 0.6, 0.6],
+};
+function mageFistData(scene, hand, fr) {
+  const out = [], Y = new THREE.Vector3(0, 1, 0);
+  for (const f of Object.keys(MAGE_FIST)) {
+    let Q = new THREE.Quaternion();
+    for (let j = 1; j <= 3; j++) {
+      const b = scene.getObjectByName('mixamorigRightHand' + f + j); if (!b) return null;
+      Q = Q.clone().multiply(b.quaternion);
+      const d = Y.clone().applyQuaternion(Q), a = new THREE.Vector3().crossVectors(d, fr.n);
+      if (a.lengthSq() < 1e-6) continue;
+      a.normalize().applyQuaternion(Q.clone().invert());
+      out.push({ name: b.name, axis: a.toArray(), ang: MAGE_FIST[f][j - 1] });
+    }
+  }
+  return out.length ? out : null;
+}
 function mageMounts(gl) {
   if (gl.mgMount) return gl.mgMount;
-  const res = { hand: null, back: MAGE_BACK, wrist: null }, scene = gl.scene, hand = scene.getObjectByName('mixamorigRightHand');
+  const res = { hand: null, back: MAGE_BACK, wrist: null, fist: null }, scene = gl.scene, hand = scene.getObjectByName('mixamorigRightHand');
   const clip = gl.animations.find((c) => c.name === 'idleReady');
   if (hand && clip) {
     const keep = []; scene.traverse((o) => { if (o.isBone) keep.push([o, o.position.clone(), o.quaternion.clone()]); });
@@ -11273,6 +11305,7 @@ function mageMounts(gl) {
       }
       if (best > MAGE_GRIP.maxRoll) qc.identity(); // aşırı bükülme: dokunma
       res.wrist = qc.toArray();
+      res.fist = mageFistData(scene, hand, fr);
       hq.multiply(qc);
     }
     const qh = hq.invert().multiply(qw);
@@ -11319,6 +11352,7 @@ function buildMageModel(key) {
   return {
     root, body, torso: ghost(), head: ghost(), legL: ghost(), legR: ghost(), armL: ghost(), armR: ghost(),
     hand: mount('mixamorigRightHand', mt.hand), handL: ghost(), back: mount('mixamorigSpine2', mt.back), chest: ghost(), height: 2.25,
+    fist: mt.fist ? { k: 0, bones: mt.fist.map((d) => { const o = scene.getObjectByName(d.name); return { o, r: o.quaternion.clone(), t: o.quaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3().fromArray(d.axis), d.ang)) }; }) } : null,
     wristFix: mt.wrist ? { bone: scene.getObjectByName('mixamorigRightHand'), q: new THREE.Quaternion().fromArray(mt.wrist) } : null, // asa elde: avuç asaya döner
     gltf: true, mixer, actions, curAnim: null, skel: scene, gearSlots: true, gearMeshes: [],
     bodyKey: key, costume: true, gild, shell, sAura, cls: 'mage',
@@ -19826,6 +19860,10 @@ class PlayerEnt {
     if (H.wristFix && this.weapon && this.weapon.parent === H.hand) { // büyücü: asayı avuçta tut (mageMounts); klip eli yazmadıysa tekrar uygulama
       const wf = H.wristFix, bq = wf.bone.quaternion;
       if (!wf.last || !wf.last.equals(bq)) { bq.multiply(wf.q); (wf.last || (wf.last = new THREE.Quaternion())).copy(bq); }
+    }
+    if (H.fist) { // büyücü: asa elde → sağ el parmakları kapanır (klip parmak kemiklerine dokunmaz)
+      const F = H.fist, tk = this.weapon && this.weapon.parent === H.hand ? 1 : 0;
+      if (F.k !== tk) { F.k += Math.sign(tk - F.k) * Math.min(Math.abs(tk - F.k), dt * 9); for (const b of F.bones) b.o.quaternion.copy(b.r).slerp(b.t, F.k); }
     }
     const ring = G.targetRing;
     if (ring) {
