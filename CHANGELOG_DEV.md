@@ -14,6 +14,17 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-20 (43) — Büyücü: tutuş düzeltmesi, dinamik kombo, yeni beceri seti, uzak saldırı kaldırıldı · dal `ozellik/buyucu-test`
+- Geri bildirim (ekran görüntüsü): sol el asanın başını tutuyordu. Klipler Blender'da yeniden yazıldı: asa elde `MAGE_GRIP_SHIFT` (0.345) yukarı kayar,
+  sağ el sopanın ortasında, sol el onun biraz üstünde; baş boşta. `refreshWeapon` ve `RemotePlayer.mountWeapon` kaydırmayı uygular (yalnız Büyücü GLB'si, elde).
+- Kombo daha dinamik: atkA adım atarak çapraz kesiş, atkB tam tur dönerek yatay savuruş, atkC sıçrayıp tepeden yere vuruş. Vuruş efektleri büyür:
+  1. kıvılcım, 2. elektrik çatlaması, 3. alev patlaması (önde, çevreye %60). Uzaktan temel saldırı kaldırıldı: `ranged: false`, `atkRange` 2.2, atkShot klibi yok.
+- Beceriler: m1 Alev Patlaması (`flame_burst`: çevre hasarı + 3 sn yanma bulutu, `updateClouds` artık `col` alır; 3 taşla alan ×1.35),
+  m2 Gök Taşı (`aoe_target`+`meteor`, iniş 0.75 sn, sersemletme; 3 taşla iki küçük taş), m3 Buz Dalgası (`ice_wave`: önündeki koni, 8 birim, vurur + 1.5 sn
+  dondurur; 3 taşla ×1.6), m4 Mühür Kalkanı (savunma +%30, beceri gücü +%20; `recalc` güçlendirmeden `skillPct` toplar). İkonlar flameburst, icewave.
+  Asa Fırlatma / Yer Vuruşu / Işık Adımı (42) kaldırıldı (`throwAxe`'in `opt` desteği kaldı, Baltacı varsayılanı aynı).
+- Test: Büyücü betiği 29/29 (beceri gücü Sv 5'te ×1.6 ölçekli: 0.32), Baltacı b1 / Savaşçı w4 duman testi geçti, sayfa hatası yok. `run.mjs` bu ortamda yok.
+
 ## 2026-10-20 (42) — Büyücü: asayla dövüşen yeni saldırı ve beceri animasyonları + yeni beceri seti · dal `ozellik/buyucu-test`
 - Kullanıcı geri bildirimi: eski saldırılar «elle vuruş» gibi. Klipler kullanıcının Blender'ında (MCP) iki el asayı IK ile kavrayacak şekilde yazıldı,
   pişirilip `MAGE_STAFF_ANIM` olarak gömüldü (~140 KB; beş gövde iskeleti özdeş). `mageStaffClips(gl)` yüklemede atkA/B/C, skM1–4'ü değiştirir, idleGuard/atkShot ekler

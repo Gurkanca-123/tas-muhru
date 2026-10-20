@@ -8,4 +8,4 @@ Kaynak: kullanıcının bilgisayarında `Belgeler\tas_muhru_anim\buyucu_anim.ble
 - Dışa aktarım: her kare için kemik deformasyonu `pose.matrix · rest⁻¹` → `mage_staff_clips.json`.
 - `python3 build_clips.py` (depo kökünde, json yanında): glTF düğüm dinlenme pozuna göre yerel dönüşler → `mage_staff_anim.json`;
   içerik `index.html`'deki `const MAGE_STAFF_ANIM = …;` satırına yapıştırılır.
-- Klipler: idleGuard, atkA, atkB, atkC, atkShot, skM1–skM4 (24 kare/sn). Temas/olay kareleri: `MAGE_ATK_T`, `MAGE_SKILL_T`.
+- Klipler: idleGuard, atkA, atkB, atkC, skM1–skM4 (24 kare/sn). Metin bloğu `tm_clips.py`: klip poz tabloları (yeniden çalıştırılabilir). Asa kontrolde 0.15 birim yukarı kaydırılmış (oyunda `MAGE_GRIP_SHIFT`). Temas/olay kareleri: `MAGE_ATK_T`, `MAGE_SKILL_T`.
