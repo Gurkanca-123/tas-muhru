@@ -8872,7 +8872,7 @@ function savasciModelKey(want) {
 // atkA / atkB / atkC (sağ el, sol el, iki el büyü) · skM1..skM4 (yetenekler) · hit · death. Model 1 birim boyunda, yüz +z.
 // Gövde, göğüs eşyasının setine göre: boş → baslangic, Bez → zambak (Beyaz Zambak Cübbesi), Kurt Dişi / Nihai → zumrut,
 // Bronz Taş → mavi (Gök Taşı Zırhı), Efsanevi → ametist (Ametist Mühür Zırhı). İhtiyaç anında yüklenir (buyucu_<ad>.js).
-const MAGE_FILES = { baslangic: 'buyucu_baslangic.js?v=1eb56d6c49', zambak: 'buyucu_zambak.js?v=c703592eb9', zumrut: 'buyucu_zumrut.js?v=ce7f4da3c0', mavi: 'buyucu_mavi.js?v=bab8536e86', ametist: 'buyucu_ametist.js?v=5c70978696' };
+const MAGE_FILES = { baslangic: 'buyucu_baslangic.js?v=10f9331a13', zambak: 'buyucu_zambak.js?v=d3bb6ad485', zumrut: 'buyucu_zumrut.js?v=2265887b7a', mavi: 'buyucu_mavi.js?v=53e98809e9', ametist: 'buyucu_ametist.js?v=0750f8f221' };
 const MAGE_ORDER = ['baslangic', 'zambak', 'zumrut', 'mavi', 'ametist'];
 const MAGE_BODY_OF = { bez: 'zambak', kurt: 'zumrut', nihai: 'zumrut', bronzz: 'mavi', efsane: 'ametist' };
 const MAGE_BODIES = {}, MAGE_LOAD = {};
@@ -11237,7 +11237,8 @@ function mageHandFrame(scene, hand) {
   const f = new THREE.Vector3(); for (const q of V) f.add(q); f.normalize(); // bilek → parmaklar
   { // parmak kemikleri varsa avuç yönü onlardan: eklem hattı (işaret→serçe) ⟂ parmak ekseni; avuç = parmakların kıvrıldığı yan
     const fb = (k) => scene.getObjectByName('mixamorigRightHand' + k), K = ['Index', 'Middle', 'Ring', 'Pinky'];
-    if (K.every((k) => fb(k + '1') && fb(k + '3'))) {
+    if (hand.userData && Array.isArray(hand.userData.palm) && hand.userData.palm.length === 3) nL.fromArray(hand.userData.palm); // modelden: el yerel avuç yönü (GLB düğüm extras)
+    else if (K.every((k) => fb(k + '1') && fb(k + '3'))) {
       const lp = (o) => hand.worldToLocal(o.getWorldPosition(new THREE.Vector3()));
       const t = lp(fb('Index1')).sub(lp(fb('Pinky1'))); t.addScaledVector(f, -t.dot(f)).normalize();
       const n0 = new THREE.Vector3().crossVectors(f, t), cv = new THREE.Vector3();
@@ -11261,16 +11262,16 @@ const MAGE_FIST = { // [kök, orta, uç] eklem açıları (rad)
   Index: [1.15, 1.45, 1.0], Middle: [1.2, 1.5, 1.0], Ring: [1.25, 1.5, 1.0], Pinky: [1.3, 1.5, 0.95], Thumb: [0.35, 0.6, 0.6],
 };
 function mageFistData(scene, hand, fr) {
-  const out = [], Y = new THREE.Vector3(0, 1, 0);
+  const out = [], Y = new THREE.Vector3(0, 1, 0), ts = hand.userData && typeof hand.userData.thumb === 'number' ? hand.userData.thumb : 1; // başparmak kıvrımı çarpanı (modelden: komşu köşeleri yırtan modellerde 0)
   for (const f of Object.keys(MAGE_FIST)) {
     let Q = new THREE.Quaternion();
     for (let j = 1; j <= 3; j++) {
-      const b = scene.getObjectByName('mixamorigRightHand' + f + j); if (!b) return null;
+      const b = scene.getObjectByName('mixamorigRightHand' + f + j); if (!b) break; // bazı gövdelerde yalnız başparmak + orta parmak zinciri var
       Q = Q.clone().multiply(b.quaternion);
       const d = Y.clone().applyQuaternion(Q), a = new THREE.Vector3().crossVectors(d, fr.n);
       if (a.lengthSq() < 1e-6) continue;
       a.normalize().applyQuaternion(Q.clone().invert());
-      out.push({ name: b.name, axis: a.toArray(), ang: MAGE_FIST[f][j - 1] });
+      out.push({ name: b.name, axis: a.toArray(), ang: MAGE_FIST[f][j - 1] * (f === 'Thumb' ? ts : 1) });
     }
   }
   return out.length ? out : null;
