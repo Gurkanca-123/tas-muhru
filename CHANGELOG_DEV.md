@@ -14,6 +14,15 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
+## 2026-10-20 (44) — Büyücü: yatay 2. vuruş + Usta / Büyük Usta beceri görünümleri · dal `ozellik/buyucu-test`
+- atkB artık dönmeden soldan sağa yatay savuruş (Blender `tm_clips.py`, yeniden pişirildi).
+- `SKILL_FX` m1–m4 (yalnız görsel): Alev Patlaması Usta kızıl-altın + lav sütunları, Büyük Usta mavi-beyaz ruh alevi + ikinci patlama (`blast2`);
+  Gök Taşı Usta erimiş kaya + lav, Büyük Usta mor kozmik taş + inişte yıldırım (`FX.meteor`/`meteorImpact` artık isteğe bağlı renk eşleyici `vc` alır);
+  Buz Dalgası Usta kristal buz sivrileri (`SkillVis.ice`), Büyük Usta kutup ışığı: büyük sivriler + uçta don halkası; Mühür Kalkanı ult (rün dairesi +
+  gökten yıldırım), Büyük Usta'da dönen rün kubbesi (`SkillVis._dome`). `SkillVis.cast` süreyi `MAGE_SKILL_T`'den de okur.
+- Deneme karakterine 60 Usta + 4 Büyük Usta Yetenek Parşömeni (görünümleri oyun içinden yükselterek denemek için; G1→G5 oyunda henüz yok).
+- Test: görsel kontrol (N / M10 / G5 her beceri, sayfa hatası yok); Büyücü betiği 30/30; Baltacı b1 / Savaşçı w4 duman testi geçti.
+
 ## 2026-10-20 (43) — Büyücü: tutuş düzeltmesi, dinamik kombo, yeni beceri seti, uzak saldırı kaldırıldı · dal `ozellik/buyucu-test`
 - Geri bildirim (ekran görüntüsü): sol el asanın başını tutuyordu. Klipler Blender'da yeniden yazıldı: asa elde `MAGE_GRIP_SHIFT` (0.345) yukarı kayar,
   sağ el sopanın ortasında, sol el onun biraz üstünde; baş boşta. `refreshWeapon` ve `RemotePlayer.mountWeapon` kaydırmayı uygular (yalnız Büyücü GLB'si, elde).
