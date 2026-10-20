@@ -16,7 +16,7 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
-## 2026-10-20 (42) — Büyücü: başlangıç gövdesine parmak kemikleri, el asayı yumruk yapıp tutuyor · dal `duzeltme/buyucu-asa-tutus` (commit/push yok)
+## 2026-10-21 (46) — Büyücü: başlangıç gövdesine parmak kemikleri, el asayı yumruk yapıp tutuyor · dal `duzeltme/buyucu-asa-tutus`
 - `buyucu_baslangic.js` yeniden üretildi (`?v=1eb56d6c49`): Meshy ile riglenen başlangıç gövdesinden sağ+sol el 15'er parmak kemiği (`mixamorigRightHand{Thumb|Index|Middle|Ring|Pinky}{1-3}`) ve parmak bölgesi ağırlıkları (2086 köşe, en çok 4 etki) eski gövdeye aşılandı; eski iskelet/animasyon/doku aynen duruyor (köşe sırası ve UV birebir, fark < 0,0001).
 - `index.html`: `mageHandFrame` el+parmak ağırlıklarını sayar, parmak kemikleri varsa avuç yönünü onlardan bulur (eski «bağlama −y» varsayımı bu gövdede avuç yönünü ~55° yanlış veriyordu); `mageFistData`/`MAGE_FIST` + `H.fist`: asa sağ eldeyken parmaklar avuca doğru kıvrılır (kemik yönü × avuç yönü ekseni), sırtta/elde değilken açılır (`animateGltf`). Bilek düzeltmesi (`wristFix`) olduğu gibi duruyor; parmaksız 4 gövde eski yolla çalışır (`fist: null`).
 - Test (yerel, başsız Chromium): yumruk yakın çekim idleReady/runReady/atkA'da asa yumruğun içinden geçiyor; elde↔sırtta geçişte `fist.k` 0↔1; zambak/ametist gövdeleri hatasız yükleniyor. Denenmedi: gerçek telefon, diğer 4 gövde (parmaksız), tam regresyon betikleri (bu ortamda yok).
@@ -24,7 +24,55 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - Zümrüt/mavi/ametist: kullanıcının Meshy rigleri güvenilmez çıktı (mavi/ametist yalnız başparmak+orta zincir, eldivenli/birleşik parmak; zümrütte ağırlıklar parmak ucuna yığılı). Konuma göre yeniden ağırlıklandırma + avuç ekseni araması denendi: iğne gibi uzamalar gitti ama yumruk asayı sarmıyor (zümrütte el bozuk). Bu üç gövde için parmaklı dosyalar kullanılmıyor, eski parmaksız GLB'ler geri konuldu (`fist: null` → eski bilek düzeltmesi). Başlangıç + zambak yumruklu.
 - Sıradaki: zümrüt/mavi/ametist için beş parmağı ayrı ve düzgün ağırlıklı rig (veya elle ağırlık düzeltmesi) gerekir.
 
-## 2026-10-20 (41) — Büyücü: asa elde tutulmuyordu · dal `duzeltme/buyucu-asa-tutus`
+## 2026-10-20 (45) — Büyücü asa dövüşü main'e alındı (kullanıcı onayı) · `ozellik/buyucu-test` → `main` (yedek `yedek/buyucu-asa-oncesi`)
+- Test: birleşik sürümde Büyücü betiği 30/30, Baltacı b1 / Savaşçı w4 duman testi geçti, sayfa hatası yok; yakın çekim pozlar (bilek düzeltmesi uygulanmış) doğru.
+- Main'deki (41b) avuç tutuşu (`mageHandFrame`, `H.wristFix`) korundu: bağlantı dönüşü bilek düzeltmesini telafi ettiği için asa kliplerdeki yönünü korur;
+  yalnız tutuş noktası avuca kayar. Çakışmalar: `window.__tm` (iki tarafın dışa aktarımları birleşti), CHANGELOG.
+- Deneme karakteri düğmesi (Sv 55 Büyücü, ustalık parşömenleriyle) Savaşçı deneme düğmesi gibi kaldı (`DENEME-DUGMESI`; istenirse kaldırılır).
+
+## 2026-10-20 (44) — Büyücü: yatay 2. vuruş + Usta / Büyük Usta beceri görünümleri · dal `ozellik/buyucu-test`
+- atkB artık dönmeden soldan sağa yatay savuruş (Blender `tm_clips.py`, yeniden pişirildi).
+- `SKILL_FX` m1–m4 (yalnız görsel): Alev Patlaması Usta kızıl-altın + lav sütunları, Büyük Usta mavi-beyaz ruh alevi + ikinci patlama (`blast2`);
+  Gök Taşı Usta erimiş kaya + lav, Büyük Usta mor kozmik taş + inişte yıldırım (`FX.meteor`/`meteorImpact` artık isteğe bağlı renk eşleyici `vc` alır);
+  Buz Dalgası Usta kristal buz sivrileri (`SkillVis.ice`), Büyük Usta kutup ışığı: büyük sivriler + uçta don halkası; Mühür Kalkanı ult (rün dairesi +
+  gökten yıldırım), Büyük Usta'da dönen rün kubbesi (`SkillVis._dome`). `SkillVis.cast` süreyi `MAGE_SKILL_T`'den de okur.
+- Deneme karakterine 60 Usta + 4 Büyük Usta Yetenek Parşömeni (görünümleri oyun içinden yükselterek denemek için; G1→G5 oyunda henüz yok).
+- Test: görsel kontrol (N / M10 / G5 her beceri, sayfa hatası yok); Büyücü betiği 30/30; Baltacı b1 / Savaşçı w4 duman testi geçti.
+
+## 2026-10-20 (43) — Büyücü: tutuş düzeltmesi, dinamik kombo, yeni beceri seti, uzak saldırı kaldırıldı · dal `ozellik/buyucu-test`
+- Geri bildirim (ekran görüntüsü): sol el asanın başını tutuyordu. Klipler Blender'da yeniden yazıldı: asa elde `MAGE_GRIP_SHIFT` (0.345) yukarı kayar,
+  sağ el sopanın ortasında, sol el onun biraz üstünde; baş boşta. `refreshWeapon` ve `RemotePlayer.mountWeapon` kaydırmayı uygular (yalnız Büyücü GLB'si, elde).
+- Kombo daha dinamik: atkA adım atarak çapraz kesiş, atkB tam tur dönerek yatay savuruş, atkC sıçrayıp tepeden yere vuruş. Vuruş efektleri büyür:
+  1. kıvılcım, 2. elektrik çatlaması, 3. alev patlaması (önde, çevreye %60). Uzaktan temel saldırı kaldırıldı: `ranged: false`, `atkRange` 2.2, atkShot klibi yok.
+- Beceriler: m1 Alev Patlaması (`flame_burst`: çevre hasarı + 3 sn yanma bulutu, `updateClouds` artık `col` alır; 3 taşla alan ×1.35),
+  m2 Gök Taşı (`aoe_target`+`meteor`, iniş 0.75 sn, sersemletme; 3 taşla iki küçük taş), m3 Buz Dalgası (`ice_wave`: önündeki koni, 8 birim, vurur + 1.5 sn
+  dondurur; 3 taşla ×1.6), m4 Mühür Kalkanı (savunma +%30, beceri gücü +%20; `recalc` güçlendirmeden `skillPct` toplar). İkonlar flameburst, icewave.
+  Asa Fırlatma / Yer Vuruşu / Işık Adımı (42) kaldırıldı (`throwAxe`'in `opt` desteği kaldı, Baltacı varsayılanı aynı).
+- Test: Büyücü betiği 29/29 (beceri gücü Sv 5'te ×1.6 ölçekli: 0.32), Baltacı b1 / Savaşçı w4 duman testi geçti, sayfa hatası yok. `run.mjs` bu ortamda yok.
+
+## 2026-10-20 (42) — Büyücü: asayla dövüşen yeni saldırı ve beceri animasyonları + yeni beceri seti · dal `ozellik/buyucu-test`
+- Kullanıcı geri bildirimi: eski saldırılar «elle vuruş» gibi. Klipler kullanıcının Blender'ında (MCP) iki el asayı IK ile kavrayacak şekilde yazıldı,
+  pişirilip `MAGE_STAFF_ANIM` olarak gömüldü (~140 KB; beş gövde iskeleti özdeş). `mageStaffClips(gl)` yüklemede atkA/B/C, skM1–4'ü değiştirir, idleGuard/atkShot ekler
+  (asa tutuşu önce özgün idleReady'den hesaplanır). Kapatma: `MAGE_STAFF_READY = false`. Kaynak/araç: `tools/mage_staff_anim/` (README).
+- Temel saldırı: yakında atkA çapraz → atkB ters çapraz → atkC tepeden yere vuruş (taş dalgası `FX.quake`, asa ucu önde), asa izi `FX.bladeOn`; uzakta atkShot
+  (asayı mızrak gibi iter, uçtaki taş dolar, mermi uçtan çıkar). Temas anları klipten (`MAGE_ATK_T`); saldırı aralığı kısalırsa klip ve temas birlikte hızlanır.
+  `animateGltf`: `C.attackFar` + `this.atkFar` seçimi, `C.atkNative` hız; diğer sınıflarda davranış aynı.
+- Beceriler (id'ler ve açılış seviyeleri aynı): m1 Asa Fırlatma (`staff_throw`; `throwAxe` artık `opt` alır: zamanlama, renk, yatay dönüş — Baltacı varsayılanı değişmedi),
+  m2 Yer Vuruşu (`staff_slam`, çevre hasarı + sersemletme), m3 Işık Adımı (`blink`, hedefin dibine anlık geçiş + yatay savuruş + itme),
+  m4 Mühür Kalkanı (`sealPlant` dalı Büyücüye açıldı, mavi renkler). Yeni ikonlar: staffthrow, staffslam, blink, sealshield (SMOOTH + piksel yedek).
+- Test: Büyücü betiği 28/28 (21 eski + klip yükleme/seçim, 4 beceri); bir koşuda rastgele zindan düzeninde (duvar görüş engeli) T2/T9 kaldı, tekrarında geçti.
+  Baltacı b1 (2 vuruş) ve Savaşçı w4 (güçlendirme) duman testi geçti, sayfa hatası yok. `run.mjs`/`movetest.mjs` bu ortamda yok → çalıştırılmadı.
+- Açık: ortak oyunda uzak saldırı klibi (atkShot) karşı tarafta yakın kombo olarak görünür (atkFar eşitlenmiyor); denge değerleri ilk taslak.
+
+## 2026-10-19 (41) — Büyücü deneyi: Mühür Taşları + asa vuruşu + Sv 55 deneme karakteri · dal `ozellik/buyucu-test` (main'e alınmadı)
+- `Stones` nesnesi (Combat'tan önce): her büyü (güçlendirme hariç) çevrede dönen 1 taş ekler (en çok 3, 14 sn yeni taş gelmezse dağılır). Taş darbeyi emer (en çok maks. canın %25'i; zehir hasarı taş harcamaz). 3 taşla yapılan sonraki hasar büyüsü ×1.5 ve taşları harcar. Durum yalnız çalışma anında (`pl.stoneN/stoneT`), kayıt alanı eklenmedi. Dönen taşlar `L.group`'ta ayrı grup (model yenilense de kalır).
+- `CLASSES.mage.melee = 2.8`: hedef bu mesafeden yakınsa `basicAttack` asa vuruşu yapar (çarpan 1.15, 1.15, 3. vuruş 1.5 + 2.2 yarıçapta %60 sıçrama); uzaktaysa eski mermi. Klipler aynı (atkA/B/C), yeni animasyon yok.
+- Kancalar: `useSkill` (emp + kazanım), `damagePlayer` (emme), `PlayerEnt.update` (`Stones.update`), `basicAttack`. İşaret: `MUHUR-TASI`. Geri alma: `Stones` bloğu + bu işaretli satırlar + `melee`.
+- Geçici «Deneme: Sv 55 Büyücü» (`newTestMage`, `testMageButton`, `DENEME-DUGMESI`): Efsanevi set +9 + Yıldırım Taşı Asası +9 giyili; çantada Bez/Kurt Dişi/Nihai/Bronz Taş zırh setleri (4'er) + 4 asa (+9), iksirler; beceriler Sv 5. `__tm.newTestMage`, `__tm.Stones` eklendi.
+- Test (Playwright, depoda değil; düşük grafik, oyun zamanına bağlı bekleme): 21/21 geçti — deneme karakteri, taş kazanımı/buff/1.5× büyü, emme (%25 sınırı, zehir), yakın kombo 1.15/1.15/1.5 ve uzak mermi, süre/ölüm temizliği, Savaşçı/Baltacı etkilenmedi, sayfa hatası 0. Görsel: oyun içi görüntüyle taşlar ve emme doğrulandı. Denenmedi: gerçek telefon, ortak oyun (taşlar yalnız yerelde görünür), ultra grafik/bloom ile görünüm.
+- Açık: asa vuruşu mevcut büyü klipleriyle oynar (görsel uyumsuzluk olabilir); denge değerleri (EMP 1.5, SOAK %25, LIFE 14 sn, melee çarpanları) ilk taslak.
+
+## 2026-10-20 (41b) — Büyücü: asa elde tutulmuyordu · dal `duzeltme/buyucu-asa-tutus`
 - Sorun: gövdelerin elinde parmak kemiği yok, el açık; asa bağlantısı bilek yakınına sabit (`[0, 0.03, 0]`) ve avuç aşağı bakıyordu → asa elin dışında duruyordu.
 - `mageHandFrame` (yeni): el köşelerinden (boneInverse ile el kemiği uzayı) parmak ekseni, avuç yönü (bağlama -y, görselle doğrulandı) ve avuç ortası tutuş noktası (`MAGE_GRIP`).
 - `mageMounts`: el bağlantısı tutuş noktasına; bilek düzeltmesi `wrist` (parmaklar asaya dik, avuç asaya; iki yandan en az bükeni, en çok 2.4 rad). `buildMageModel` → `H.wristFix`; `animateGltf` mixer'dan sonra uygular (yalnız asa eldeyken; RemotePlayer da aynı yoldan).
