@@ -936,8 +936,8 @@ const DUNGEONS = [
   { id: 'd1', name: 'Yosunlu İn', theme: 'forest', req: 1, lv: [1, 6], floors: 2, mobs: ['wolf', 'bat'], elite: 'alphawolf', boss: 'wolfking', junk: 'j1', desc: 'Köyün altındaki nemli mağara. Kurtlar ve yarasalar.' },
   { id: 'd2', name: 'Ağ Kuyusu', theme: 'spider', req: 7, lv: [7, 12], floors: 2, mobs: ['spider', 'venomspider'], elite: 'spiderguard', boss: 'spiderqueen', junk: 'j2', desc: 'Zehirli örümceklerin ördüğü dar dehlizler.' },
   { id: 'd3', name: 'Sisli Bataklık', theme: 'swamp', req: 15, lv: [15, 25], floors: 3, mobs: ['bogfrog', 'spitter'], elite: 'leechgiant', boss: 'bogwitch', junk: 'j3', desc: 'Sisin içinde kurbağa savaşçılar ve zehir tükürücüler. Cadının kazanı kaynıyor.' },
-  { id: 'd4', name: 'Kor Ocağı', theme: 'fire', req: 20, lv: [20, 27], floors: 3, mobs: ['imp', 'lavaturtle'], elite: 'flameguard', boss: 'firelord', junk: 'j4', desc: 'Lav gölleri arasında ateş ifritleri.' },
-  { id: 'd5', name: 'Ayaz Mağarası', theme: 'ice', req: 28, lv: [28, 36], floors: 3, mobs: ['icewolf', 'snowgolem'], elite: 'icewitch', boss: 'frostgiant', junk: 'j5', desc: 'Donmuş koridorlar. Buz seni yavaşlatır.' },
+  { id: 'd4', name: 'Kor Ocağı', theme: 'fire', req: 25, lv: [25, 32], floors: 3, mobs: ['imp', 'lavaturtle'], elite: 'flameguard', boss: 'firelord', junk: 'j4', desc: 'Lav gölleri arasında ateş ifritleri.' },
+  { id: 'd5', name: 'Ayaz Mağarası', theme: 'ice', req: 33, lv: [33, 40], floors: 3, mobs: ['icewolf', 'snowgolem'], elite: 'icewitch', boss: 'frostgiant', junk: 'j5', desc: 'Donmuş koridorlar. Buz seni yavaşlatır.' },
   // diffLv: zorluğa göre canavar seviyesine eklenen (Normal / Zor / Kabus) — Sv 50-70 son oyunu buralarda geçer
   { id: 'd6', name: 'Kara Taş Tapınağı', theme: 'temple', req: 38, lv: [38, 45], diffLv: [0, 6, 12], floors: 2, mobs: ['shade', 'stoneling'], elite: 'templeguard', boss: 'metin', junk: 'j6', final: true, desc: 'Kadim Mühür burada. Taşı kır, dalgalara dayan, mührü tamamla.' },
   // 7. zindan: Kadim Mühür mühürlendikten sonra açılır (needSeal). pow: kat gücü (Mob yapıcısı, L.mobPow)
@@ -1348,6 +1348,9 @@ const THEMES = {
   // Sisli Bataklık: zindan (swamp) ve açık dünya (bog: alçak yeşil sis, ateşböcekleri)
   swamp: { floor: 0x55564a, wall: 0x3a3e30, wallTop: 0x46503a, fog: 0x1a2418, fogNear: 12, fogFar: 44, hemiSky: 0xd0dcc0, hemiGround: 0x46493a, hemiI: 1.0, sun: 0xe0e8c8, sunI: 0.5, exposure: 1.12, light: 0xe0f0b0, lightI: 1.5, torch: 0x9aff4a, deco: 'swamp', vignette: 0.28, ambient: 'firefly', ambientN: 34 },
   bog: { fog: 0x7e8c72, fogDensity: 0.0105, hemiSky: 0xb8c8a8, hemiGround: 0x3e4430, hemiI: 0.72, sun: 0xf0e0b0, sunI: 0.62, exposure: 1.04, vignette: 0.3, ambient: 'firefly', ambientN: 60, grade: { bloom: 0.42, thr: 0.8, sat: 1.04, con: 1.08, tint: [1.0, 1.02, 0.96], vig: 0.26 } },
+  // Kor ve Ayaz (açık dünya): güney ember, kuzey frost — oyuncu kuzeye ilerledikçe aralarında harmanlanır
+  ember: { fog: 0x4e3a36, fogDensity: 0.0078, hemiSky: 0xe0c8b8, hemiGround: 0x3a2a26, hemiI: 0.7, sun: 0xffd4ac, sunI: 0.8, exposure: 1.0, vignette: 0.3, ambient: 'ember', ambientN: 60, grade: { bloom: 0.48, thr: 0.8, sat: 1.04, con: 1.1, tint: [1.03, 0.99, 0.96], vig: 0.3 } },
+  frost: { fog: 0x8ea4bc, fogDensity: 0.0072, hemiSky: 0xc8d8f0, hemiGround: 0x4a5262, hemiI: 0.62, sun: 0xf0f4ff, sunI: 0.72, exposure: 0.94, vignette: 0.26, ambient: 'snow', ambientN: 70, grade: { bloom: 0.3, thr: 0.9, sat: 1.0, con: 1.1, tint: [0.97, 1.0, 1.05], vig: 0.26 } },
   fire: { floor: 0x604840, wall: 0x4a302a, wallTop: 0x5e3a2e, fog: 0x3a1a0e, fogNear: 12, fogFar: 46, hemiSky: 0xffd0b0, hemiGround: 0x6a3e28, hemiI: 1.0, sun: 0xffc090, sunI: 0.55, exposure: 1.15, light: 0xff8a40, lightI: 1.7, torch: 0xff6a20, deco: 'fire', vignette: 0.28, ambient: 'ember', ambientN: 36 },
   ice: { floor: 0x8aa8bc, wall: 0x56788f, wallTop: 0xcfe8f5, fog: 0x0e1c2b, fogNear: 10, fogFar: 38, hemiSky: 0xcfe8ff, hemiGround: 0x4e6071, hemiI: 0.72, sun: 0xdff0ff, sunI: 0.4, light: 0xbfe6ff, torch: 0x7fd8ff, deco: 'ice', vignette: 0.3, ambient: 'snow', ambientN: 42 },
   bone: { floor: 0x5e5850, wall: 0x46403a, wallTop: 0x8a8070, fog: 0x14140f, fogNear: 10, fogFar: 40, hemiSky: 0xd4d8cc, hemiGround: 0x46423a, hemiI: 0.92, sun: 0xe8f0e0, sunI: 0.45, exposure: 1.08, light: 0x9affb0, lightI: 1.6, torch: 0x6aff8a, deco: 'bone', vignette: 0.34, ambient: 'spore', ambientN: 26 },
@@ -9127,8 +9130,8 @@ const QUESTS = [
   { id: 'q09', lv: 15, from: 'portal', to: 'portal', title: 'Sisli Bataklık', type: 'clear', d: 'd3', goal: 'Sisli Bataklık\'ın bossunu yen',
     say: 'Mührün fısıltısı bataklığa da ulaştı. Sisin ardında Bataklık Cadısı kazanını kaynatıyor, kurbağa savaşçılarını köye salmak üzere. Fener Ovası\'nın kuzeyindeki geçitten git, kazanını devir.',
     done: 'Kazan devrildi, sis dağılıyor. Şimdilik.', reward: { gold: 900, exp: 0.18, st: [['hp2', 4]] } },
-  { id: 'q10', lv: 20, from: 'portal', to: 'portal', title: 'Kor Ocağı', type: 'clear', d: 'd4', goal: "Kor Ocağı'nın bossunu yen",
-    say: "Çatlak yerin derinine ulaştı ve lavı uyandırdı. Kor Ocağı'nda Alev Beyi Kızılhan ateş ifritlerini topluyor. Gidip söndür.",
+  { id: 'q10', lv: 25, from: 'portal', to: 'portal', title: 'Kor Ocağı', type: 'clear', d: 'd4', goal: "Kor Ocağı'nın bossunu yen",
+    say: "Çatlak yerin derinine ulaştı ve lavı uyandırdı. Kor Ocağı'nda Alev Beyi Kızılhan ateş ifritlerini topluyor. Sisli Bataklık'ın kuzeydoğusundaki geçitten git, Kızıl Krater'deki ateşi söndür.",
     done: 'Ateş söndü. Mühür biraz daha dayanacak.', reward: { gold: 2000, exp: 0.18, st: [['hp2', 5], ['soul', 2]] } },
   { id: 'q11', lv: 20, from: 'alchemist', to: 'alchemist', title: 'Eşyaya Fısıltı', type: 'efsun', goal: "Simyacı'da bir eşyayı efsunla",
     say: 'Her eşyanın içinde saklı bir güç var. Efsunla bir eşyanın bonus satırlarını yeniden yazdır; Ruh Taşı ve zindan malzemesi gerekir.',
@@ -9136,7 +9139,7 @@ const QUESTS = [
   { id: 'q12', lv: 20, from: 'master', to: 'master', title: 'Son Ders', type: 'skillgain', sk: 3, goal: 'Dördüncü yeteneğini Usta\'dan öğren',
     say: (sk) => `${sk(3)} dördüncü ve son yeteneğin. Savaşın gidişini değiştirir; öğren ve savaşta kullan.`,
     done: 'Artık tam bir savaşçısın.', reward: { gold: 1500, exp: 0.12, st: [['hp2', 4], ['mp2', 4]] } },
-  { id: 'q13', lv: 28, from: 'portal', to: 'portal', title: 'Ayaz Mağarası', type: 'clear', d: 'd5', goal: "Ayaz Mağarası'nın bossunu yen",
+  { id: 'q13', lv: 33, from: 'portal', to: 'portal', title: 'Ayaz Mağarası', type: 'clear', d: 'd5', goal: "Ayaz Mağarası'nın bossunu yen",
     say: 'Soğuk, mühürden sızan karanlıkla birleşti. Ayaz Mağarası\'nda Buz Devi Ayaz köye doğru ilerliyor. Dur de ona.',
     done: 'Buz çözülüyor. Son durak, Kara Taş Tapınağı.', reward: { gold: 3500, exp: 0.18, st: [['hp3', 3], ['bless', 1]] } },
   // ---- 2. perde: Mührün Gölgesi (Sv 38-45) ----
@@ -14879,11 +14882,38 @@ const WILD_ZONES = [
       { id: 'nw', poi: 'Yosun Harabesi', pts: [[146, 152], [122, 142], [102, 126], [84, 108], [72, 94]], bw: [2] },
       { id: 'ne', poi: 'Ateşböceği Adası', pts: [[166, 118], [192, 110], [216, 100], [238, 88], [250, 80]], bw: [1, 3] },
       { id: 'se', poi: 'Sazlık Kampı', pts: [[150, 268], [176, 274], [202, 268], [226, 258], [240, 250]], bw: [2] },
+      { id: 'gate', poi: 'Kor ve Ayaz', pts: [[216, 100], [220, 76], [222, 52]] },
     ],
     islands: [[160, 290, 14], [60, 202, 20], [258, 174, 9], [64, 84, 17], [258, 72, 16], [248, 246, 12], [160, 42, 24],
       [100, 278, 12], [214, 228, 13], [110, 190, 12], [206, 150, 14], [110, 60, 12], [218, 42, 12], [58, 148, 11], [270, 122, 12], [92, 160, 9], [228, 196, 8]],
-    pois: [[60, 202, 20, 'village'], [258, 174, 9, 'mill'], [64, 84, 14, 'ruins'], [258, 72, 13, 'glow'], [248, 246, 9, 'camp'], [160, 40, 16, 'hut']],
+    pois: [[60, 202, 20, 'village'], [258, 174, 9, 'mill'], [64, 84, 14, 'ruins'], [258, 72, 13, 'glow'], [248, 246, 9, 'camp'], [160, 40, 16, 'hut'], [222, 42, 8, 'gate']],
     mill: [270, 164], hut: [160, 29], cauldron: [160, 45],
+    gate: [222, 40], next: 'w4', nextReq: 25, // kuzeydoğu geçidi: Kor ve Ayaz
+  },
+  // Kor ve Ayaz (4. ve 5. zindanın birleşik açık dünyası, Sv 25-40): Sisli Bataklık'ın kuzeydoğusundaki geçitten gelinir.
+  // split: güney (Kor Ocağı, d4) / kuzey (Ayaz Mağarası, d5) sınırı (z). north: kuzey yarının zindanı, eliti, patronu.
+  {
+    id: 'w4', name: 'Kor ve Ayaz', sub: 'Güneyde Kor Ocağı, kuzeyde Ayaz Mağarası, arada Buhar Vadisi', build: 'korayaz', link: 'gate', theme: 'ember', lv: [25, 40], seed: 8803, size: 360, split: 180,
+    dId: 'd4', dIdx: 3, mobs: ['imp', 'lavaturtle'], elite: 'flameguard', boss: 'firelord', bossLv: 33, junk: 'j4', mobLv: [25, 39],
+    north: { dIdx: 4, theme: 'frost', elite: 'icewitch', boss: 'frostgiant', bossLv: 41 },
+    start: [180, 322], back: [180, 334],
+    paths: [
+      { id: 'main', pts: [[180, 334], [176, 312], [164, 292], [170, 270], [188, 252], [192, 232], [180, 214], [172, 196], [180, 176], [196, 160], [198, 140], [184, 120], [172, 100], [176, 80], [180, 62]] },
+      { id: 'crater', poi: 'Kızıl Krater', pts: [[164, 292], [140, 286], [118, 276], [100, 262]] },
+      { id: 'forge', poi: 'Obsidyen Ocakları', pts: [[188, 252], [214, 258], [240, 266], [262, 274]] },
+      { id: 'springs', poi: 'Sıcak Su Gölleri', pts: [[180, 214], [154, 206], [128, 198], [104, 192]] },
+      { id: 'geysers', poi: 'Buhar Bacaları', pts: [[180, 176], [208, 182], [234, 188], [256, 194]] },
+      { id: 'lake', poi: 'Donmuş Göl', pts: [[184, 120], [156, 114], [128, 106], [106, 96]] },
+      { id: 'camp', poi: 'Buzkıran Kampı', pts: [[176, 80], [204, 74], [232, 66], [254, 58]] },
+    ],
+    plazas: [[180, 326, 13], [82, 248, 24], [276, 282, 15], [86, 188, 17], [272, 198, 15], [84, 88, 24], [270, 52, 14], [180, 46, 20], [180, 200, 14]],
+    crater: [82, 248, 24], lake: [84, 88, 20], cave: [180, 26],
+    pois: [[276, 282, 15, 'forge'], [86, 188, 17, 'springs'], [272, 198, 15, 'geysers'], [270, 52, 14, 'camp']],
+    lava: [[[20, 306], [70, 314], [120, 316], [176, 302], [230, 312], [290, 306], [344, 298]], [[112, 226], [150, 236], [200, 226], [250, 236], [300, 228], [344, 236]]],
+    lavaPools: [[70, 238, 4.5], [96, 258, 3.5], [74, 262, 3]],
+    springs: [[78, 182, 5], [96, 194, 4], [84, 198, 3], [142, 186, 4], [226, 206, 3.5]],
+    vents: [[66, 252], [92, 240], [88, 266], [268, 276], [284, 288], [150, 280], [206, 262], [158, 256], [214, 296], [140, 300]],
+    geysers: [[266, 192], [280, 204], [274, 186], [262, 204], [200, 190], [160, 204]],
   },
 ];
 const wildIdxOf = (id) => WILD_ZONES.findIndex((z) => z.id === id);
@@ -15063,6 +15093,7 @@ const WDEF = {
   hay: { geo: () => new THREE.CylinderGeometry(1, 1, 1, 12).rotateZ(Math.PI / 2), cast: 1 },
   stal: { geo: () => new THREE.ConeGeometry(1, 1, 6), cast: 1, flat: 1 }, // dikit (yeraltı)
   stalC: { geo: () => new THREE.ConeGeometry(1, 1, 6), flat: 1 }, // tavan sarkıtı (gölge düşürmez)
+  hexcol: { geo: () => new THREE.CylinderGeometry(1, 1, 1, 6), cast: 1, flat: 1 }, // bazalt sütun (Kor ve Ayaz)
 };
 const WPAL = {
   oak: [0x4f8a32, 0x5e9a3a, 0x6aa443, 0x467c2c, 0x3f7230], birch: [0x9cc04e, 0xb4cc5a, 0x8ab048, 0xc2d266],
@@ -16955,6 +16986,64 @@ function buildAgDeepInner(Z) {
   L.bossSpawn = addSpawn(Z.boss, Z.bossLv || 14, WX, 46, { boss: true, respawnTime: 300 });
   return deepFinish(L);
 }
+// ---------- Açık dünya ortak kiti (deepTerrain bölgeleri: Sisli Bataklık, Kor ve Ayaz) ----------
+// Izgara yardımcıları, yol tabelası ve yürüme uzaklığına göre kamp yerleşimi. Kamp seviyesi: k = başlangıçtan yürüme (BFS)
+// uzaklığı, en yakın kamp 0, en uzak 1 olacak şekilde normalize edilir.
+function wildGridKit(L) {
+  const W = L.W, H = L.H;
+  const walkAt = (x, z) => { const i = Math.floor(x / T), j = Math.floor(z / T); return i >= 0 && j >= 0 && i < W && j < H && L.grid[j * W + i] === 1; };
+  const blockDisc = (x, z, r) => { for (let j = Math.floor((z - r) / T); j <= Math.floor((z + r) / T); j++) for (let i = Math.floor((x - r) / T); i <= Math.floor((x + r) / T); i++) if (i >= 0 && j >= 0 && i < W && j < H && Math.hypot((i + 0.5) * T - x, (j + 0.5) * T - z) < r + 0.4) L.grid[j * W + i] = 0; };
+  return { walkAt, blockDisc };
+}
+// Yol tabelası (Fener Ovası'ndakiyle aynı biçim): kavşaktan hedef yöne bakan ok + etiket; yürünemeyen yere kurulmaz
+function wildSignpost(L, gk, jx, jz, tx, tz, text, color, o) {
+  o = o || {};
+  const dl = Math.hypot(tx - jx, tz - jz) || 1, dx = (tx - jx) / dl, dz = (tz - jz) / dl;
+  const sx = jx + dx * 4.5 - dz * (o.side || 4.4), sz = jz + dz * 4.5 + dx * (o.side || 4.4), h = groundY(L, sx, sz);
+  if (!gk.walkAt(sx, sz)) return;
+  const g = pivot(L.group, sx, h, sz); g.rotation.y = Math.atan2(-dz, dx);
+  const wd = mat(o.wood || 0x7a5a32);
+  box(g, 0.2, 2.5, 0.2, mat(o.post || 0x4a3220), 0, 1.25, 0);
+  box(g, 1.7, 0.55, 0.1, wd, 0, 2.2, -0.06);
+  const tip = part(g, coneGeo(0.3, 0.5, 4), wd, 0.95, 2.2, -0.06); tip.rotation.z = -Math.PI / 2; tip.rotation.y = Math.PI / 4;
+  if (o.trim) for (let k = 0; k < 4; k++) box(g, 0.05, rand(0.3, 0.6), 0.04, mat(o.trim), -0.7 + k * 0.45, 1.85, -0.12);
+  if (o.cap) box(g, 1.8, 0.12, 0.2, mat(o.cap), 0, 2.52, -0.06);
+  addLabel(L, text, '→↘↓↙←↖↑↗'[((Math.round(Math.atan2(dz, dx) / (Math.PI / 4)) % 8) + 8) % 8], sx, h + 3.1, sz, color || '#e8eccc');
+  gk.blockDisc(sx, sz, 0.3);
+}
+// Kamp yerleşimi. o.pathD(x,z): yola uzaklık · o.skip(x,z): ek eleme · o.step/spacing/okR/dMin/dMax/startR · o.poiR(p)
+function wildCampKit(L, gk, o) {
+  const W = L.W, H = L.H, S = L.W * T;
+  const addSpawn = (key, lv, x, z, opt) => { const sp = Object.assign({ key, lv, x, z, timer: 0, mob: null, respawn: true }, opt || {}); L.spawns.push(sp); return sp; };
+  const dist0 = new Int32Array(W * H).fill(-1), qd = [], s0 = Math.floor(L.spawn.z / T) * W + Math.floor(L.spawn.x / T);
+  dist0[s0] = 0; qd.push(s0);
+  for (let h0 = 0; h0 < qd.length; h0++) { const c = qd[h0], ci = c % W, cj = (c / W) | 0; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ni = ci + di, nj = cj + dj, k = nj * W + ni; if (ni < 0 || nj < 0 || ni >= W || nj >= H || dist0[k] >= 0 || !L.grid[k]) continue; dist0[k] = dist0[c] + 1; qd.push(k); } }
+  let dmax = 1; for (const v of dist0) if (v > dmax) dmax = v;
+  const reach = (x, z) => { const i = Math.floor(x / T), j = Math.floor(z / T); return i >= 0 && j >= 0 && i < W && j < H ? dist0[j * W + i] : -1; };
+  const okAt = (x, z, r) => { for (let a = 0; a < 6; a++) if (!gk.walkAt(x + Math.cos(a) * r, z + Math.sin(a) * r)) return false; return gk.walkAt(x, z); };
+  const campPos = (c, r) => { for (let t = 0; t < 24; t++) { const a = rand(0, TAU), rd = rand(0, r), x = c.x + Math.cos(a) * rd, z = c.z + Math.sin(a) * rd; if (canStand(L, x, z, 0.6) && reach(x, z) >= 0) return [x, z]; } return [c.x, c.z]; };
+  const nearest = (bx, bz, r) => { // (bx,bz)'ye en yakın erişilebilir, r yarıçapında açık nokta
+    if (canStand(L, bx, bz, 0.9) && reach(bx, bz) >= 0) return [bx, bz];
+    let best = 1e9, out = [bx, bz];
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const x = (i + 0.5) * T, z = (j + 0.5) * T, dd = Math.hypot(x - bx, z - bz); if (dd < best && dist0[j * W + i] >= 0 && okAt(x, z, r || 1.4)) { best = dd; out = [x, z]; } }
+    return out;
+  };
+  const camps = [], step = o.step || 6, sp = o.spacing || 12;
+  for (let z = 20; z < S - 20; z += step) for (let x = 20; x < S - 20; x += step) {
+    const px = x + rand(-2.5, 2.5), pz = z + rand(-2.5, 2.5), d = o.pathD(px, pz);
+    if (d < (o.dMin || 4) || d > (o.dMax || 32) || Math.hypot(px - L.spawn.x, pz - L.spawn.z) < (o.startR || 26) || !okAt(px, pz, o.okR || 2.2) || (o.skip && o.skip(px, pz))) continue;
+    if (L.poi.some((p) => Math.hypot(px - p.x, pz - p.z) < (o.poiR ? o.poiR(p) : p.boss ? 24 : 12)) || camps.some((c) => Math.hypot(c.x - px, c.z - pz) < sp)) continue;
+    const k = reach(px, pz); if (k < 0) continue;
+    camps.push({ x: px, z: pz, k: k / dmax });
+  }
+  camps.sort((a, b) => a.k - b.k);
+  const k0 = camps.length ? camps[0].k : 0, k1 = camps.length ? camps[camps.length - 1].k : 1;
+  for (const c of camps) c.k = clamp((c.k - k0) / Math.max(0.01, k1 - k0), 0, 1);
+  const kAt = (x, z) => clamp((reach(x, z) / dmax - k0) / Math.max(0.01, k1 - k0), 0, 1);
+  // birbirinden uzak (minD) en uzak kamplar: elit yerleri
+  const farthest = (n, minD, filter) => { const out = []; for (const c of camps.slice().reverse()) { if (out.length >= n) break; if ((filter && !filter(c)) || out.some((a) => Math.hypot(a.x - c.x, a.z - c.z) < minD)) continue; out.push(c); } return out; };
+  return { addSpawn, reach, okAt, campPos, nearest, camps, kAt, farthest, dist0 };
+}
 // ===== Bölge 3: Sisli Bataklık (Sv 15-25) =====
 // Fener Ovası'nın kuzeyindeki geçitten gelinir (güneyden girilir). Alçak, sisli bir bataklık: adalar ve çamur set yolları, su üstünde
 // tahta iskeleler, kökleri suya inen bataklık servileri, nilüfer ve kamışlar. Batıda Kurbağa Köyü (direkli kulübeler), doğuda Batık
@@ -17024,9 +17113,7 @@ function buildSwampInner(Z) {
       c.multiplyScalar(0.92 + 0.12 * v);
     },
   });
-  const gy = (x, z) => groundY(L, x, z), W = L.W, H = L.H;
-  const blockDisc = (x, z, r) => { for (let j = Math.floor((z - r) / T); j <= Math.floor((z + r) / T); j++) for (let i = Math.floor((x - r) / T); i <= Math.floor((x + r) / T); i++) if (i >= 0 && j >= 0 && i < W && j < H && Math.hypot((i + 0.5) * T - x, (j + 0.5) * T - z) < r + 0.4) L.grid[j * W + i] = 0; };
-  const walkAt = (x, z) => { const i = Math.floor(x / T), j = Math.floor(z / T); return i >= 0 && j >= 0 && i < W && j < H && L.grid[j * W + i] === 1; };
+  const gy = (x, z) => groundY(L, x, z), gk = wildGridKit(L), { walkAt, blockDisc } = gk;
 
   // --- su yüzeyi (tek düzlem: bulanık yeşil, yansımalı) + alçak sis ---
   const waterM = wildMat({ cloud: true, water: 0.6, phong: { color: 0x34442a, specular: 0xc8d8b0, shininess: 90, transparent: true, opacity: 0.88, emissive: 0x080c05 } });
@@ -17137,18 +17224,7 @@ function buildSwampInner(Z) {
     part(g, sphGeo(0.2, 8, 6), mat(c, { e: c, ei: 1.3 }), 0.6, 2.4, 0).scale.y = 1.3;
     addGlowSprite(L, x + 0.6, h + 2.4, z, c, 0.9); blockDisc(x, z, 0.3);
   };
-  const signAt = (jx, jz, tx, tz, text, color) => { // yol tabelası (Fener Ovası'ndakiyle aynı biçim)
-    const dl = Math.hypot(tx - jx, tz - jz) || 1, dx = (tx - jx) / dl, dz = (tz - jz) / dl;
-    const sx = jx + dx * 4.5 - dz * 4.4, sz = jz + dz * 4.5 + dx * 4.4, h = gy(sx, sz);
-    if (!walkAt(sx, sz)) return;
-    const g = pivot(L.group, sx, h, sz); g.rotation.y = Math.atan2(-dz, dx);
-    box(g, 0.2, 2.5, 0.2, mat(0x4a3220), 0, 1.25, 0);
-    box(g, 1.7, 0.55, 0.1, mat(0x7a5a32), 0, 2.2, -0.06);
-    const tip = part(g, coneGeo(0.3, 0.5, 4), mat(0x7a5a32), 0.95, 2.2, -0.06); tip.rotation.z = -Math.PI / 2; tip.rotation.y = Math.PI / 4;
-    for (let k = 0; k < 4; k++) box(g, 0.05, rand(0.3, 0.6), 0.04, mat(0x7a8a5a), -0.7 + k * 0.45, 1.85, -0.12);
-    addLabel(L, text, '→↘↓↙←↖↑↗'[((Math.round(Math.atan2(dz, dx) / (Math.PI / 4)) % 8) + 8) % 8], sx, h + 3.1, sz, color || '#e8eccc');
-    blockDisc(sx, sz, 0.3);
-  };
+  const signAt = (jx, jz, tx, tz, text, color) => wildSignpost(L, gk, jx, jz, tx, tz, text, color, { trim: 0x7a8a5a });
   const P_ = {}; for (const q of Z.pois) P_[q[3]] = q; // [x, z, r, kimlik]
 
   // geri dönüş kapısı: Fener Ovası
@@ -17157,6 +17233,13 @@ function buildSwampInner(Z) {
   addLabel(L, 'Fener Ovası', 'Geri dön', bkx, bh + 5.4, bkz, '#e8d8a8');
   L.interact.push({ kind: 'wtp', zone: wildIdxOf('w1'), from: 'gate', x: bkx, z: bkz - 1.8, r: 3.4, label: 'Fener Ovası\'na dön', active: true });
   signAt(Z.start[0], Z.start[1] - 4, Z.start[0], Z.start[1] - 14, 'Sisli Bataklık', '#d8e8b8');
+  if (Z.gate) { // sonraki bölgeye geçit (Sv şartlı)
+    const [gx, gz] = Z.gate, gh = gy(gx, gz), nz = wildIdxOf(Z.next), NZ = WILD_ZONES[nz];
+    { const n0 = L.group.children.length; buildExitGate(L, gx, gz, -1, gh, true); for (let i = n0; i < L.group.children.length; i++) L.group.children[i].position.y += gh; }
+    const gp = makePortal(L, gx, gz, 0xff8a5a); gp.g.position.y = gh; gp.g.scale.setScalar(1.35); gp.active = true;
+    addLabel(L, NZ.name, 'Sonraki bölge · Sv ' + Z.nextReq + '+', gx, gh + 5.6, gz, '#ffd8c0');
+    L.interact.push({ kind: 'wnext', zone: nz, req: Z.nextReq, x: gx, z: gz + 2.6, r: 3.6, label: 'Geçide gir: ' + NZ.name + ' · Sv ' + Z.nextReq + '+', active: true, portal: gp });
+  }
 
   // Kurbağa Köyü: kulübeler bir meydanın çevresinde, ortada kurbağa totemi ve ateş, kurutma sırıkları
   { const [vx, vz] = P_.village;
@@ -17304,49 +17387,328 @@ function buildSwampInner(Z) {
   wildSky(L, S, Math.random, { top: 0x5e6e62, sunC: [0.85, 0.82, 0.6], puffs: 10, puffC: 0xbcc8b0, puffOp: 0.5, mt: 0x34402e, sn: 0x4a5640, mtn: 26, mtR: 240 });
 
   // harita + ilgi noktaları
-  L.poi = [{ x: bkx, z: bkz, name: 'Fener Ovası', gate: 'back' }, { x: P_.village[0], z: P_.village[1], name: 'Kurbağa Köyü' }, { x: P_.mill[0], z: P_.mill[1], name: 'Batık Değirmen', deco: 1 },
+  L.poi = [{ x: bkx, z: bkz, name: 'Fener Ovası', gate: 'back' }].concat(Z.gate ? [{ x: Z.gate[0], z: Z.gate[1], name: WILD_ZONES[wildIdxOf(Z.next)].name, gate: 'next' }] : [], [{ x: P_.village[0], z: P_.village[1], name: 'Kurbağa Köyü' }, { x: P_.mill[0], z: P_.mill[1], name: 'Batık Değirmen', deco: 1 },
     { x: P_.ruins[0], z: P_.ruins[1], name: 'Yosun Harabesi', deco: 1 }, { x: P_.glow[0], z: P_.glow[1], name: 'Ateşböceği Adası', deco: 1 }, { x: P_.camp[0], z: P_.camp[1], name: 'Sazlık Kampı', deco: 1 },
-    { x: Z.cauldron[0], z: Z.cauldron[1] + 6, name: 'Cadı Kulübesi', boss: 1 }];
+    { x: Z.cauldron[0], z: Z.cauldron[1] + 6, name: 'Cadı Kulübesi', boss: 1 }]);
   deepMap(L, (x, z, k) => (L.grid[k] ? (bwD(x, z) < 0.4 && landD(x, z) > 0 ? 0x9a7a4a : pathD(x, z) < 2.8 ? 0x7a6444 : 0x52643a) : landD(x, z) > 0 ? 0x2c3c34 : edge(x, z) < 18 ? 0x1e2a1a : 0x34442a));
   L.spawn = { x: Z.start[0], z: Z.start[1] }; L.spawnGate = L.spawn;
-  L.arrive = { back: { x: Z.start[0], z: Z.start[1] }, gate: { x: Z.start[0], z: Z.start[1] } };
+  L.arrive = { back: { x: Z.start[0], z: Z.start[1] }, gate: Z.gate ? { x: Z.gate[0], z: Z.gate[1] + 9 } : { x: Z.start[0], z: Z.start[1] } };
 
   // --- canavar kampları: başlangıçtan yürüme uzaklığıyla seviye artar (Sv 15 → 24); en uzak kamplarda Sülük Devi ---
-  const addSpawn = (key, lv, x, z, opt) => { const sp = Object.assign({ key, lv, x, z, timer: 0, mob: null, respawn: true }, opt || {}); L.spawns.push(sp); return sp; };
-  const dist0 = new Int32Array(W * H).fill(-1), qd = [], s0 = Math.floor(L.spawn.z / T) * W + Math.floor(L.spawn.x / T);
-  dist0[s0] = 0; qd.push(s0);
-  for (let h0 = 0; h0 < qd.length; h0++) { const c = qd[h0], ci = c % W, cj = (c / W) | 0; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ni = ci + di, nj = cj + dj, k = nj * W + ni; if (ni < 0 || nj < 0 || ni >= W || nj >= H || dist0[k] >= 0 || !L.grid[k]) continue; dist0[k] = dist0[c] + 1; qd.push(k); } }
-  let dmax = 1; for (const v of dist0) if (v > dmax) dmax = v;
-  const reach = (x, z) => { const i = Math.floor(x / T), j = Math.floor(z / T); return i >= 0 && j >= 0 && i < W && j < H ? dist0[j * W + i] : -1; };
-  const okAt = (x, z, r) => { for (let a = 0; a < 6; a++) if (!walkAt(x + Math.cos(a) * r, z + Math.sin(a) * r)) return false; return walkAt(x, z); };
-  const campPos = (c, r) => { for (let t = 0; t < 24; t++) { const a = rand(0, TAU), rd = rand(0, r), x = c.x + Math.cos(a) * rd, z = c.z + Math.sin(a) * rd; if (canStand(L, x, z, 0.6) && reach(x, z) >= 0) return [x, z]; } return [c.x, c.z]; };
-  const [lv0, lv1] = Z.mobLv, camps = [];
-  for (let z = 20; z < S - 20; z += 6) for (let x = 20; x < S - 20; x += 6) {
-    const px = x + rand(-2.5, 2.5), pz = z + rand(-2.5, 2.5), d = pathD(px, pz);
-    if (d < 4 || d > 32 || Math.hypot(px - L.spawn.x, pz - L.spawn.z) < 26 || bwD(px, pz) < 3.5 || !okAt(px, pz, 2.2)) continue;
-    if (L.poi.some((p) => Math.hypot(px - p.x, pz - p.z) < (p.boss ? 24 : 12)) || camps.some((c) => Math.hypot(c.x - px, c.z - pz) < 12)) continue;
-    const k = reach(px, pz); if (k < 0) continue;
-    camps.push({ x: px, z: pz, k: k / dmax });
-  }
-  camps.sort((a, b) => a.k - b.k);
-  const k0 = camps.length ? camps[0].k : 0, k1 = camps.length ? camps[camps.length - 1].k : 1; // en yakın kamp Sv 15, en uzak Sv 24
-  for (const c of camps) c.k = clamp((c.k - k0) / Math.max(0.01, k1 - k0), 0, 1);
+  const CK = wildCampKit(L, gk, { pathD, skip: (x, z) => bwD(x, z) < 3.5 }), { addSpawn, campPos, camps } = CK, [lv0, lv1] = Z.mobLv;
   camps.forEach((c) => {
     const lv = Math.round(lv0 + (lv1 - lv0) * c.k), n = 3 + (chance(0.5) ? 1 : 0) + (lv >= 19 ? 1 : 0);
     for (let m = 0; m < n; m++) { const [x, z] = campPos(c, 3.2); addSpawn(m % 3 === 2 || chance(0.12 + c.k * 0.2) ? 'spitter' : 'bogfrog', clamp(lv + randi(-1, 1), lv0, lv1), x, z); }
     c.lv = lv;
   });
-  { const [vx, vz] = P_.village, k = clamp((reach(vx, vz) / dmax - k0) / Math.max(0.01, k1 - k0), 0, 1), lv = Math.round(lv0 + (lv1 - lv0) * k); // köy sakinleri
+  { const [vx, vz] = P_.village, lv = Math.round(lv0 + (lv1 - lv0) * CK.kAt(vx, vz)); // köy sakinleri
     for (let m = 0; m < 6; m++) { const [x, z] = campPos({ x: vx, z: vz }, 9); addSpawn(m === 5 ? 'spitter' : 'bogfrog', clamp(lv + randi(0, 1), lv0, lv1), x, z); } }
-  const far = camps.slice().reverse(), elites = [];
-  for (const c of far) { if (elites.length >= 4) break; if (elites.some((a) => Math.hypot(a.x - c.x, a.z - c.z) < 55)) continue; elites.push(c); const [x, z] = campPos(c, 2); addSpawn(Z.elite, lv1 + 1, x, z, { respawnTime: 110 }); }
-  { let [bx, bz] = [Z.cauldron[0], Z.cauldron[1] + 6]; // patron: kazanın önü
-    if (!canStand(L, bx, bz, 0.9) || reach(bx, bz) < 0) { let best = 1e9; for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const x = (i + 0.5) * T, z = (j + 0.5) * T, dd = Math.hypot(x - bx, z - bz); if (dd < best && dist0[j * W + i] >= 0 && okAt(x, z, 1.4)) { best = dd; bx = x; bz = z; } } }
-    L.bossSpawn = addSpawn(Z.boss, Z.bossLv, bx, bz, { boss: true, respawnTime: 300 }); }
+  for (const c of CK.farthest(4, 55)) { const [x, z] = campPos(c, 2); addSpawn(Z.elite, lv1 + 1, x, z, { respawnTime: 110 }); }
+  { const [bx, bz] = CK.nearest(Z.cauldron[0], Z.cauldron[1] + 6); L.bossSpawn = addSpawn(Z.boss, Z.bossLv, bx, bz, { boss: true, respawnTime: 300 }); } // patron: kazanın önü
   L.camps = camps;
   return deepFinish(L);
 }
-const WILD_BUILD = { gate: buildAgGate, deep: buildAgDeep, swamp: buildSwamp };
+// ===== Bölge 4: Kor ve Ayaz (Sv 25-40) — Kor Ocağı + Ayaz Mağarası tek haritada =====
+// Tasarım: güneyde Kor Ocağı (Sv 25-32: lav nehirleri, bazalt sütunlar, Kızıl Krater'de Alev Beyi), ortada Buhar Vadisi
+// (sıcak su gölleri, gayzerler: ateşle buzun buluştuğu geçiş), kuzeyde Ayaz (Sv 33-40: kar, donmuş göl, Ayaz Mağarası ağzında
+// Buz Devi). Seviye yürüme uzaklığıyla artar; oyuncu bölgeyi geçtikçe zindan kimliği (ödül kademesi, temizleme, görev) d4 → d5,
+// atmosfer (sis, ışık, son-işleme, parçacık) ateşten buza yumuşakça döner. Tehlikeler: Kor Bacaları ve gayzerler yer uyarısıyla
+// patlar (savaşta konum kararı). Yollar lavı taş köprülerle geçer. Zemin deepTerrain: oyulmuş vadiler (yollar + meydanlar + yan
+// cepler) ∪ kesintisiz yol koridoru; dışı kaya duvar (güney bazalt, kuzey karlı).
+function buildKorAyaz(Z) {
+  const R0 = Math.random; Math.random = mulberry32(Z.seed >>> 0);
+  try { return buildKorAyazInner(Z); } finally { Math.random = R0; }
+}
+function buildKorAyazInner(Z) {
+  const L = deepLevel(Z); L.camFar = 620;
+  const S = Z.size, M = WILD_M, NN = S + 2 * M + 1;
+  const n1 = wildNoise(Z.seed), n2 = wildNoise(Z.seed + 41), n3 = wildNoise(Z.seed + 87), n4 = wildNoise(Z.seed + 133);
+  const reg = (z) => sstep(Z.split + 30, Z.split - 30, z); // 0 ateş (güney) … 1 buz (kuzey)
+  // --- yollar, meydanlar, yan cepler ---
+  const segs = [];
+  for (const p of Z.paths) for (let i = 0; i < p.pts.length - 1; i++) segs.push([p.pts[i][0], p.pts[i][1], p.pts[i + 1][0], p.pts[i + 1][1]]);
+  const allSp = Z.paths.map((p) => wildSpline(p.pts, 1.2)), pathQ = wildIndex(allSp, 8), pathD = (x, z) => pathQ(x, z).d;
+  const segD = (list, x, z, r) => { let d = 1e9; for (const s of list) d = Math.min(d, sdSeg(x, z, s[0], s[1], s[2], s[3], r)); return d; };
+  const pockets = [];
+  for (const [ax, az, bx, bz] of segs) { const l = Math.hypot(bx - ax, bz - az); if (l < 14) continue; const nx = -(bz - az) / l, nz = (bx - ax) / l; for (const sd of [-1, 1]) if (chance(0.7)) pockets.push(['c', (ax + bx) / 2 + nx * sd * rand(11, 15), (az + bz) / 2 + nz * sd * rand(11, 15), rand(7.5, 11.5)]); }
+  const carve = segs.map((s) => ['s', [[s[0], s[1]], [s[2], s[3]]], 5.4]).concat(Z.plazas.map(([x, z, r]) => ['c', x, z, r]), pockets);
+  const edge = (x, z) => Math.min(x, z, S - x, S - z);
+  const memo = (fn) => { const A = new Float32Array(NN * NN).fill(NaN); return (x, z) => { if (Number.isInteger(x) && Number.isInteger(z) && x >= -M && z >= -M && x <= S + M && z <= S + M) { const k = (z + M) * NN + (x + M); let v = A[k]; if (v !== v) v = A[k] = fn(x, z); return v; } return fn(x, z); }; };
+  const valD = memo((x, z) => deepUnion(carve, x, z) + 1.5 * n2(x / 9 + 3, z / 9 + 1) + 0.5 * n3(x / 3.5, z / 3.5));
+  const walkD = memo((x, z) => segD(segs, x, z, 3.6)); // kesintisiz yol koridoru
+  const lavaD = memo((x, z) => { let d = 1e9; for (const l of Z.lava) for (let i = 0; i < l.length - 1; i++) d = Math.min(d, sdSeg(x, z, l[i][0], l[i][1], l[i + 1][0], l[i + 1][1], 2.9)); for (const [px, pz, r] of Z.lavaPools) d = Math.min(d, Math.hypot(x - px, z - pz) - r); return d + 0.7 * n3(x / 5 + 2, z / 5 + 8); });
+  const springD = (x, z) => { let d = 1e9; for (const [px, pz, r] of Z.springs) d = Math.min(d, Math.hypot(x - px, z - pz) - r * (1 + 0.15 * n2(x / 4, z / 4))); return d; };
+  const lakeIn = (x, z) => Math.hypot(x - Z.lake[0], z - Z.lake[1]) < Z.lake[2];
+  const sdf = (x, z) => Math.min(valD(x, z), walkD(x, z));
+  const floor = memo((x, z) => 0.3 * n1(x / 30 + 1, z / 30 + 4) + 0.18 * n3(x / 8, z / 8) + 3.2 * sstep(Z.split + 60, Z.split - 70, z) - 1.2 * sstep(Z.crater[2] + 4, 0, Math.hypot(x - Z.crater[0], z - Z.crater[1]))); // kuzey yükselir, krater çanak
+  const bridge = (x, z) => walkD(x, z) <= 0;
+  const hole = (x, z) => { if (bridge(x, z)) return 0; const lv = lavaD(x, z); if (lv < 0) return -2.4 * sstep(0, -1.4, lv); const sp = springD(x, z); return sp < 0 ? -1.3 * sstep(0, -1.0, sp) : 0; };
+  const trench = (x, z) => { const lv = lavaD(x, z); return lv < 0 ? 2.4 * sstep(0, -1.4, lv) : 0; };
+  const rock = (x, z, d, low) => {
+    const r = reg(z), hi = lerp(9, 15, r) + 5 * n1(x / 22 + 5, z / 22 + 2), lo = 2.4 + 1.2 * n2(x / 10, z / 10);
+    return (lerp(hi, lo, low) * sstep(0, 7, d) + d * lerp(0.45, 0.24, low)) * (1 + 0.5 * sstep(30, 6, edge(x, z))) + (1.4 * n3(x / 5 + 9, z / 5 + 4) + 0.7 * n3(x / 2.2, z / 2.2)) * sstep(0.5, 4, d);
+  };
+  const cAsh = new THREE.Color(0x4a403c), cAsh2 = new THREE.Color(0x5e524a), cCinder = new THREE.Color(0x6e4a3a), cGlow = new THREE.Color(0xc0481a), cBas = new THREE.Color(0x2e2a2c), cBas2 = new THREE.Color(0x3e3836),
+    cMoss = new THREE.Color(0x5a6a44), cTrav = new THREE.Color(0xb8b09a), cSnow = new THREE.Color(0xdde6ef), cSnow2 = new THREE.Color(0xbccad9), cPack = new THREE.Color(0xa8b6c6), cRockN = new THREE.Color(0x6a7482), cRockN2 = new THREE.Color(0x56606c), cIce = new THREE.Color(0x86b2d2), tmp = new THREE.Color();
+  const tex = grainTex().clone(); tex.needsUpdate = true; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  const terrM = wildMat({ vc: true, map: tex, cloud: true, fade: true }); // kamera ile oyuncu arasındaki kaya saydamlaşır
+  L.disposables.push(terrM, tex);
+  deepTerrain(L, Z, {
+    sdf, floor, rock, hole, mat: terrM,
+    drop: (x, z) => (bridge(x, z) ? trench(x, z) : 0),
+    walk: (x, z) => edge(x, z) > 16 && (bridge(x, z) || (lavaD(x, z) > 0.6 && springD(x, z) > 0.5)),
+    color: (x, z, h, f, d, c) => {
+      const r = reg(z), v = 0.5 + 0.5 * n3(x / 7 + 1, z / 7 + 3), steam = 1 - Math.abs(2 * r - 1);
+      if (d <= 0.3) {
+        c.copy(cAsh).lerp(cAsh2, v * 0.8); // kül zemin
+        tmp.copy(cSnow2).lerp(cSnow, v); c.lerp(tmp, r); // kar zemin
+        if (steam > 0.1) c.lerp(cMoss, Math.min(1, steam * 1.1) * (0.6 + 0.4 * v)); // Buhar Vadisi: ılık, yosunlu taban
+        const pd = pathD(x, z); if (pd < 3.4) c.lerp(r > 0.5 ? cPack : cCinder, sstep(3.4, 1.3, pd) * 0.85);
+        const lv = lavaD(x, z); if (lv < 5 && r < 0.6) c.lerp(lv < 0 ? cBas : cGlow, sstep(5, 0.5, lv) * (lv < 0 ? 0.9 : 0.55) * (1 - r));
+        const sp = springD(x, z); if (sp < 3.5) c.lerp(cTrav, sstep(3.5, 0.2, sp) * 0.8);
+        if (lakeIn(x, z)) c.lerp(cIce, 0.85);
+      } else {
+        c.copy(cBas).lerp(cBas2, v); tmp.copy(cRockN).lerp(cRockN2, v); c.lerp(tmp, r);
+        const rel = h - f; c.multiplyScalar(lerp(1, 0.66, sstep(4, 30, rel)));
+        if (r > 0.3) c.lerp(cSnow, sstep(0.3, 0.8, r) * sstep(3, 9, rel + 3 * n2(x / 6, z / 6)) * 0.9); // karlı tepeler
+        if (d < 2.5) c.lerp(r > 0.5 ? cSnow2 : cAsh, sstep(2.5, 0.4, d) * 0.6);
+      }
+      c.multiplyScalar(0.92 + 0.12 * v);
+    },
+  });
+  const gy = (x, z) => groundY(L, x, z), gk = wildGridKit(L), { walkAt, blockDisc } = gk, kit = deepKit(L);
+
+  // --- lav nehirleri ve havuzları (akan, ışıyan yüzey) ---
+  const lavaT = lavaTex().clone(); lavaT.needsUpdate = true; lavaT.wrapS = lavaT.wrapT = THREE.RepeatWrapping;
+  const lavaM = new THREE.MeshBasicMaterial({ map: lavaT, color: 0xffffff });
+  L.disposables.push(lavaT, lavaM);
+  L.anims.push((t) => { lavaT.offset.set(t * 0.03, t * 0.012); });
+  for (const l of Z.lava) {
+    const sp = wildSpline(l, 1.0), n = sp.length, wp = new Float32Array(n * 6), uv = new Float32Array(n * 4), wi = [];
+    let acc = 0;
+    for (let i = 0; i < n; i++) {
+      const a = sp[Math.max(0, i - 1)], b = sp[Math.min(n - 1, i + 1)], tx = b[0] - a[0], tz = b[1] - a[1], tl = Math.hypot(tx, tz) || 1, nx = -tz / tl, nz = tx / tl, y = floor(sp[i][0], sp[i][1]) - 1.45;
+      if (i) acc += Math.hypot(sp[i][0] - sp[i - 1][0], sp[i][1] - sp[i - 1][1]);
+      wp.set([sp[i][0] + nx * 3.6, y, sp[i][1] + nz * 3.6, sp[i][0] - nx * 3.6, y, sp[i][1] - nz * 3.6], i * 6);
+      uv.set([acc / 8, 0, acc / 8, 0.9], i * 4);
+      if (i < n - 1) { const v = i * 2; wi.push(v, v + 2, v + 1, v + 1, v + 2, v + 3); }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(wp, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(wi); g.computeVertexNormals();
+    const me = new THREE.Mesh(g, lavaM); me.userData.dyn = true; me.userData.noCast = true; L.group.add(me); L.disposables.push(g);
+    for (let i = 4; i < n; i += 22) addLightSpot(L, sp[i][0], floor(sp[i][0], sp[i][1]) + 0.6, sp[i][1], 0xff6a20, 1.1, 12, { flicker: true });
+  }
+  for (const [px, pz, r] of Z.lavaPools) { const g = new THREE.CircleGeometry(r + 1.2, 24), me = new THREE.Mesh(g, lavaM); me.rotation.x = -Math.PI / 2; me.position.set(px, floor(px, pz) - 1.4, pz); me.userData.dyn = true; me.userData.noCast = true; L.group.add(me); L.disposables.push(g); addLightSpot(L, px, floor(px, pz) + 0.8, pz, 0xff6a20, 1.2, 12); }
+  // sıcak su gölleri (turkuaz, buharlı) + donmuş göl (parlak buz)
+  const springM = wildMat({ cloud: true, water: 0.5, phong: { color: 0x3ab0b8, specular: 0xe0ffff, shininess: 120, transparent: true, opacity: 0.86, emissive: 0x0a3a40 } });
+  L.disposables.push(springM);
+  const steamSp = [];
+  for (const [px, pz, r] of Z.springs) {
+    const g = new THREE.CircleGeometry(r * 1.2, 24), me = new THREE.Mesh(g, springM); me.rotation.x = -Math.PI / 2; me.position.set(px, floor(px, pz) - 0.45, pz); me.userData.dyn = true; me.userData.noCast = true; me.renderOrder = 1; L.group.add(me); L.disposables.push(g);
+    for (let k = 0; k < 3; k++) { const m = new THREE.SpriteMaterial({ map: puffTex(), transparent: true, depthWrite: false, opacity: 0.3, color: 0xf0f8ff }); const s = new THREE.Sprite(m); s.userData.dyn = true; L.group.add(s); L.disposables.push(m); steamSp.push({ s, x: px + rand(-r, r) * 0.5, z: pz + rand(-r, r) * 0.5, y: floor(px, pz), ph: rand(0, 1), sc: r }); }
+  }
+  L.anims.push((t) => { for (const o of steamSp) { const f = (t * 0.12 + o.ph) % 1; o.s.position.set(o.x + Math.sin(t * 0.4 + o.ph * 9) * 0.6, o.y + f * 5, o.z); o.s.scale.setScalar(o.sc * (0.8 + f * 1.4)); o.s.material.opacity = 0.2 * Math.sin(f * Math.PI); } });
+  { const [lx, lz, lr] = Z.lake, iceM = wildMat({ cloud: true, phong: { color: 0x9cc8e8, specular: 0xffffff, shininess: 160, transparent: true, opacity: 0.82, emissive: 0x0a1a28 } });
+    const g = new THREE.CircleGeometry(lr, 48), me = new THREE.Mesh(g, iceM); me.rotation.x = -Math.PI / 2; me.position.set(lx, floor(lx, lz) + 0.05, lz); me.userData.dyn = true; me.userData.noCast = true; me.receiveShadow = true; me.renderOrder = 1; L.group.add(me); L.disposables.push(g, iceM);
+    for (let k = 0; k < 14; k++) { const a = rand(0, TAU), rd = rand(2, lr - 3), x = lx + Math.cos(a) * rd, z = lz + Math.sin(a) * rd, b = box(L.group, rand(2, 6), 0.02, 0.07, mat(0x8aaac0), x, floor(x, z) + 0.08, z); b.rotation.y = rand(0, TAU); } } // buz çatlakları
+
+  // --- örnekli bitki/kaya örtüsü ---
+  const LI = {}, add = (name, x, y, z, sx, sy, sz, c, rx, ry, rz) => { (LI[name] || (LI[name] = [])).push(x, y, z, sx, sy, sz, rx || 0, ry || 0, rz || 0, c); };
+  const charred = (x, z, s) => { const h = gy(x, z) - 0.1, c = varyColor(0x2a2220, 0.1); add('trunk', x, h + 1.4 * s, z, 0.8 * s, 2.8 * s, 0.8 * s, c, 0, 0, rand(-0.15, 0.15)); for (let k = 0; k < 4; k++) { const a = rand(0, TAU); add('branch', x, h + (1.5 + k * 0.4) * s, z, s, (0.8 + rand(0, 0.8)) * s, s, c, Math.cos(a) * rand(0.7, 1.2), 0, Math.sin(a) * rand(0.7, 1.2)); } };
+  const PINE = [0x2a4a3a, 0x30523e, 0x264434];
+  const snowPine = (x, z, s) => { const h = gy(x, z) - 0.2, c = pick(PINE), tiers = 3 + (chance(0.5) ? 1 : 0); add('trunk', x, h + 0.6 * s, z, s, 1.2 * s, s, 0x4a3426); for (let k = 0; k < tiers; k++) { const f = 1 - k / (tiers + 0.6); add('cone', x, h + (1.9 + k * 0.95) * s, z, 1.4 * f * s, 1.9 * s * (0.8 + 0.2 * f), 1.4 * f * s, varyColor(c, 0.08), 0, rand(0, TAU)); add('cone', x, h + (2.25 + k * 0.95) * s, z, 1.05 * f * s, 1.2 * s * (0.8 + 0.2 * f), 1.05 * f * s, pick([0xf0f6fc, 0xe2ecf6]), 0, rand(0, TAU)); } };
+  const basalt = (x, z, s) => { const h = gy(x, z) - 0.3, n = 3 + randi(0, 4); for (let k = 0; k < n; k++) { const a = rand(0, TAU), rd = rand(0, 1.3) * s, hh = rand(1.2, 4.5) * s; add('hexcol', x + Math.cos(a) * rd, h + hh / 2, z + Math.sin(a) * rd, 0.55 * s, hh, 0.55 * s, pick([0x2e2a2e, 0x3a3436, 0x262226]), 0, rand(0, 1)); } };
+  const iceCluster = (x, z, s) => { const h = gy(x, z) - 0.2; for (let k = 0; k < 5; k++) { const a = rand(0, TAU), rd = rand(0, 1.0) * s, hh = rand(1.2, 3.4) * s; add('stal', x + Math.cos(a) * rd, h + hh / 2, z + Math.sin(a) * rd, rand(0.25, 0.45) * s, hh, rand(0.25, 0.45) * s, pick([0xbfe8ff, 0xa8dcf8, 0xd8f2ff]), rand(-0.3, 0.3), 0, rand(-0.3, 0.3)); } };
+  for (let z = -M + 3; z < S + M - 3; z += 4.4) for (let x = -M + 3; x < S + M - 3; x += 4.4) { // duvar üstü: güneyde kurumuş ağaç / bazalt, kuzeyde karlı çam / buz
+    const px = x + rand(-1.8, 1.8), pz = z + rand(-1.8, 1.8), d = valD(px, pz), r = reg(pz);
+    if (d < 1.6 || walkD(px, pz) < 2) continue;
+    const sl = Math.hypot(gy(px + 1, pz) - gy(px - 1, pz), gy(px, pz + 1) - gy(px, pz - 1)) / 2; if (sl > 2.2) continue;
+    if (r > 0.5) { if (chance(0.5)) snowPine(px, pz, rand(1.0, 1.7)); else if (chance(0.12)) iceCluster(px, pz, rand(0.8, 1.4)); }
+    else if (r > 0.3) { if (chance(0.3)) snowPine(px, pz, rand(0.9, 1.4)); }
+    else if (chance(0.16)) charred(px, pz, rand(0.9, 1.4)); else if (chance(0.1)) basalt(px, pz, rand(0.8, 1.3));
+  }
+  for (let z = 14; z < S - 14; z += 1.9) for (let x = 14; x < S - 14; x += 1.9) { // vadi tabanı
+    const px = x + rand(0, 1.7), pz = z + rand(0, 1.7);
+    if (!walkAt(px, pz) || bridge(px, pz)) continue;
+    const r = reg(pz), steam = 1 - Math.abs(2 * r - 1), pd = pathD(px, pz), hh = gy(px, pz);
+    if (pd < 2.6) continue;
+    if (r < 0.35) {
+      if (chance(0.05)) add('tuft', px, hh + 0.14, pz, rand(0.6, 1), rand(0.5, 0.9), rand(0.6, 1), pick([0x6a6058, 0x5a5048, 0x7a6a50]), 0, rand(0, TAU));
+      if (chance(0.012)) { const s = rand(0.3, 0.9); add('rock2', px, hh + 0.12 * s, pz, s * 1.2, s * 0.8, s, pick([0x3a3230, 0x2e2826, 0x4a3a32]), 0, rand(0, TAU)); }
+      if (chance(0.004) && lavaD(px, pz) < 8) { add('stal', px, hh + 0.6, pz, 0.35, rand(0.9, 1.8), 0.35, 0x221c26, rand(-0.3, 0.3), 0, rand(-0.3, 0.3)); }
+      if (chance(0.0025) && valD(px, pz) > -4) { basalt(px, pz, rand(0.6, 1.0)); blockDisc(px, pz, 1.2); }
+      if (chance(0.0018)) { charred(px, pz, rand(0.8, 1.2)); blockDisc(px, pz, 0.7); }
+    } else if (r < 0.65) {
+      if (chance(0.3 * steam)) add('tuft', px, hh + 0.15, pz, rand(0.7, 1.1), rand(0.6, 1.2), rand(0.7, 1.1), pick([0x6a7a44, 0x5a6a3a, 0x7a8048]), 0, rand(0, TAU), rand(-0.3, 0.3));
+      if (chance(0.01)) { const n = 5, c = pick([0x4a7a34, 0x3e6a2e]); for (let f = 0; f < n; f++) { const a = (f / n) * TAU; add('fern', px, hh, pz, 1.1, 1, 1, varyColor(c, 0.1), Math.sin(a), 0, -Math.cos(a)); } }
+      if (chance(0.006) && springD(px, pz) < 6) add('moss', px, hh + 0.05, pz, rand(0.8, 1.6), 0.12, rand(0.8, 1.6), pick([0xd8c89a, 0xc8b480, 0xe0d4b0]), 0, rand(0, TAU)); // mineral kabuk
+      if (chance(0.003)) { snowPine(px, pz, rand(0.8, 1.1)); blockDisc(px, pz, 0.7); }
+    } else {
+      if (chance(0.02)) add('moss', px, hh + 0.04, pz, rand(0.6, 1.4), rand(0.12, 0.3), rand(0.6, 1.4), pick([0xf0f6fc, 0xe6eef8]), 0, rand(0, TAU)); // kar yığını
+      if (chance(0.03)) add('tuft', px, hh + 0.14, pz, 0.7, rand(0.5, 0.8), 0.7, pick([0x8a9078, 0x9a9a88]), 0, rand(0, TAU));
+      if (chance(0.004) && !lakeIn(px, pz)) { snowPine(px, pz, rand(0.9, 1.4)); blockDisc(px, pz, 0.7); }
+      if (chance(0.003) && valD(px, pz) > -4) { iceCluster(px, pz, rand(0.7, 1.1)); blockDisc(px, pz, 0.9); }
+      if (chance(0.008)) { const s = rand(0.3, 0.9), ry = rand(0, TAU); add('rock', px, hh + 0.12 * s, pz, s * 1.2, s * 0.8, s, pick([0x6a7482, 0x7a8490]), 0, ry); add('moss', px, hh + 0.6 * s, pz, s * 0.6, s * 0.18, s * 0.5, 0xf0f6fc, 0, ry); }
+    }
+  }
+
+  // --- taş köprüler: yol lavı geçtiği yerde bazalt levhalar + alçak korkuluk ---
+  const slab = mat(0x4a4246), slabD = mat(0x2e282c), slabL = mat(0x5a5054);
+  for (const sp of allSp) {
+    let run = null;
+    const flush = (j1) => { if (!run) return; const a = sp[Math.max(0, run - 3)], b = sp[Math.min(sp.length - 1, j1 + 3)], len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uz = (b[1] - a[1]) / len, ry = Math.atan2(ux, uz);
+      for (let k = 0; k <= len; k += 1.1) { const x = a[0] + ux * k, z = a[1] + uz * k, y = floor(x, z) - 0.12, pl = box(L.group, 6.6, 0.4, 1.0, k % 2.2 < 1.1 ? slab : slabL, x, y, z); pl.rotation.y = ry; }
+      for (const sd of [-1, 1]) for (let k = 0; k <= len; k += 2.2) { const x = a[0] + ux * k - uz * sd * 3.3, z = a[1] + uz * k + ux * sd * 3.3, rb = box(L.group, 0.55, 0.7, 2.0, slabD, x, floor(x, z) + 0.25, z); rb.rotation.y = ry; }
+      for (const sd of [-1, 1]) { const x = (a[0] + b[0]) / 2 - uz * sd * 3.4, z = (a[1] + b[1]) / 2 + ux * sd * 3.4; part(L.group, cylGeo(0.5, 0.7, 2.6, 6), slabD, x, floor(x, z) - 1.2, z); } // kemer ayakları
+      run = null; };
+    for (let j = 0; j < sp.length; j++) { const on = lavaD(sp[j][0], sp[j][1]) < 1.2; if (on && run == null) run = j; else if (!on && run != null) flush(j - 1); }
+    flush(sp.length - 1);
+  }
+  wildInstFlush(L, LI);
+
+  // --- yapılar ---
+  const P_ = {}; for (const q of Z.pois) P_[q[3]] = q;
+  const [bkx, bkz] = Z.back, bh = gy(bkx, bkz);
+  { const n0 = L.group.children.length; buildExitGate(L, bkx, bkz, 1, bh, true); for (let i = n0; i < L.group.children.length; i++) L.group.children[i].position.y += bh; }
+  addLabel(L, 'Sisli Bataklık', 'Geri dön', bkx, bh + 5.4, bkz, '#d8e8b8');
+  L.interact.push({ kind: 'wtp', zone: wildIdxOf('w3'), from: 'gate', x: bkx, z: bkz - 1.8, r: 3.4, label: 'Sisli Bataklık\'a dön', active: true });
+  const signAt = (jx, jz, tx, tz, text, color, z0) => wildSignpost(L, gk, jx, jz, tx, tz, text, color, reg(z0 == null ? jz : z0) > 0.5 ? { wood: 0x6a5a48, cap: 0xeef4fa } : { wood: 0x4a3a30, post: 0x2a2220 });
+  signAt(Z.start[0], Z.start[1] - 4, Z.start[0], Z.start[1] - 14, 'Kor Ocağı', '#ffb890');
+  for (const p of Z.paths.slice(1)) { const a = p.pts[0], b = p.pts[1]; signAt(a[0], a[1], b[0], b[1], p.poi, reg(a[1]) > 0.5 ? '#d8ecff' : '#ffd0b0'); }
+  { const m = Z.paths[0].pts, i = m.findIndex((q) => q[1] < Z.split); signAt(m[i - 1][0], m[i - 1][1], m[i][0], m[i][1], 'Ayaz Mağarası', '#d8ecff', Z.split + 40); } // Buhar Vadisi'nin kuzey ucunda
+
+  // Kızıl Krater: bazalt sütun halkası, ortada obsidyen sunak ve büyük alev
+  { const [cx, cz, cr] = Z.crater, ch = gy(cx, cz), en = Math.atan2(Z.paths[1].pts.slice(-1)[0][1] - cz, Z.paths[1].pts.slice(-1)[0][0] - cx);
+    for (let k = 0; k < 26; k++) { const a = (k / 26) * TAU; if (Math.abs(Math.atan2(Math.sin(a - en), Math.cos(a - en))) < 0.42) continue; const x = cx + Math.cos(a) * (cr + 0.5), z = cz + Math.sin(a) * (cr + 0.5); if (!walkAt(x, z) && valD(x, z) > 2) continue; const hh = rand(2.5, 6.5); part(L.group, cylGeo(0.85, 0.95, hh, 6), pick([slabD, slab]), x, gy(x, z) + hh / 2 - 0.3, z, 0, rand(0, 1), 0); blockDisc(x, z, 1.0); }
+    const g = pivot(L.group, cx, ch, cz), ob = mat(0x1e1a22), obE = mat(0xff5a14, { e: 0xff3a00, ei: 1.4 });
+    part(g, cylGeo(3.6, 4.2, 0.6, 8), ob, 0, 0.3, 0); part(g, cylGeo(2.6, 3.0, 0.6, 8), slabD, 0, 0.9, 0);
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * TAU; box(g, 0.12, 0.08, 1.4, obE, Math.cos(a) * 3.0, 0.62, Math.sin(a) * 3.0).rotation.y = -a; }
+    for (let k = 0; k < 4; k++) { const a = (k / 4) * TAU + 0.4; part(g, coneGeo(0.5, 2.6, 5), ob, Math.cos(a) * 2.2, 2.2, Math.sin(a) * 2.2, rand(-0.2, 0.2), 0, rand(-0.2, 0.2)); }
+    makeFlame(L, cx, ch + 1.2, cz, 0xff7a20, 2.4); addLightSpot(L, cx, ch + 3.5, cz, 0xff7a30, 2.0, 22, { pri: 1.6 }); addGlowHalo(L, cx, ch + 2.6, cz, 0xff6a20, 4.5);
+    blockDisc(cx, cz, 3.8); addLabel(L, 'Kızıl Krater', 'Alev Beyi Kızılhan', cx, ch + 8, cz, '#ff9a7a'); }
+
+  // Obsidyen Ocakları: sönmemiş cüce ocakları, örsler, baca, zincirli kazan
+  { const [fx, fz] = P_.forge;
+    for (const [ox, oz, ry] of [[-6, -5, 0.3], [6, -6, -0.3], [0, 7, Math.PI]]) {
+      const x = fx + ox, z = fz + oz, g = pivot(L.group, x, gy(x, z), z); g.rotation.y = ry;
+      box(g, 3.6, 3.0, 3.0, slab, 0, 1.5, 0); box(g, 3.9, 0.4, 3.3, slabD, 0, 3.1, 0); box(g, 3.9, 0.5, 3.3, slabD, 0, 0.25, 0);
+      box(g, 1.6, 1.4, 0.2, mat(0xff6a1a, { e: 0xff4a00, ei: 1.5 }), 0, 1.1, 1.45); // ocak ağzı
+      part(g, cylGeo(0.55, 0.7, 4.2, 8), slabD, 0.8, 5.0, -0.6);
+      makeFlame(L, x + Math.sin(ry) * 1.6, gy(x, z) + 0.7, z + Math.cos(ry) * 1.6, 0xff8a30, 1.0);
+      blockDisc(x, z, 2.4);
+    }
+    for (const [ox, oz] of [[-2, 1], [3, 2]]) { const x = fx + ox, z = fz + oz, g = pivot(L.group, x, gy(x, z), z); g.rotation.y = rand(0, TAU); const iron = mat(0x2a2a30); box(g, 0.6, 0.7, 0.5, iron, 0, 0.35, 0); box(g, 1.2, 0.3, 0.5, iron, 0, 0.85, 0); part(g, coneGeo(0.25, 0.5, 4), iron, 0.75, 0.85, 0, 0, 0, -Math.PI / 2); blockDisc(x, z, 0.7); }
+    addLightSpot(L, fx, gy(fx, fz) + 3, fz, 0xff8a40, 1.5, 18, { pri: 1.3 });
+    addLabel(L, 'Obsidyen Ocakları', '', fx, gy(fx, fz) + 6.5, fz, '#ffd0b0'); }
+
+  // Sıcak Su Gölleri: göl kenarı taşları + adı; Buhar Bacaları: mineral konileri
+  { const [sx, sz] = P_.springs; addLabel(L, 'Sıcak Su Gölleri', '', sx, gy(sx, sz) + 5, sz, '#c8f8f0');
+    for (const [px, pz, r] of Z.springs) for (let k = 0; k < 10; k++) { const a = (k / 10) * TAU + rand(-0.2, 0.2), x = px + Math.cos(a) * (r * 1.15 + 0.4), z = pz + Math.sin(a) * (r * 1.15 + 0.4); part(L.group, icoGeo(rand(0.35, 0.7), 0), mat(pick([0xb8ae98, 0xa89e88, 0xc4bca8]), { flat: 1 }), x, gy(x, z) + 0.1, z).scale.y = 0.6; } }
+  { const [gx, gz] = P_.geysers; addLabel(L, 'Buhar Bacaları', '', gx, gy(gx, gz) + 5.5, gz, '#e0f0ff'); }
+  // Buzkıran Kampı: karlı çadırlar, kızak, sandıklar, ateş, kazık çit
+  { const [cx, cz] = P_.camp, canvas = mat(0x9a8a72), snow = mat(0xf0f6fc);
+    for (const [ox, oz, ry] of [[-5, -2, 0.5], [4, -4, -0.6]]) { const g = pivot(L.group, cx + ox, gy(cx + ox, cz + oz), cz + oz); g.rotation.y = ry;
+      for (const sd of [-1, 1]) { const p = box(g, 0.08, 2.6, 3.4, canvas, sd * 0.85, 1.05, 0); p.rotation.z = sd * 0.62; const sn = box(g, 0.1, 1.2, 3.5, snow, sd * 0.55, 1.6, 0); sn.rotation.z = sd * 0.62; }
+      box(g, 1.1, 1.0, 0.05, mat(0x1a140e), 0, 0.5, 1.68); blockDisc(cx + ox, cz + oz, 2.0); }
+    const fx = cx + 1, fz = cz + 3, fh = gy(fx, fz);
+    for (let k = 0; k < 7; k++) { const a = (k / 7) * TAU; part(L.group, sphGeo(0.2, 5, 4), mat(0x6a6a70), fx + Math.cos(a) * 0.8, fh + 0.1, fz + Math.sin(a) * 0.8); }
+    makeFlame(L, fx, fh + 0.1, fz, 0xff9a40, 1.1); addLightSpot(L, fx, fh + 1.4, fz, 0xffa050, 1.4, 12, { pri: 1.2 }); blockDisc(fx, fz, 0.8);
+    { const g = pivot(L.group, cx + 6, gy(cx + 6, cz + 4), cz + 4); g.rotation.y = 0.9; box(g, 1.2, 0.3, 2.6, mat(0x6a4a2e), 0, 0.45, 0); for (const sd of [-1, 1]) box(g, 0.1, 0.12, 3.0, mat(0x3a3a40), sd * 0.55, 0.12, 0.1); box(g, 1.0, 0.6, 1.0, mat(0x7a5a3a), 0, 0.9, -0.4); blockDisc(cx + 6, cz + 4, 1.3); }
+    for (let k = 0; k < 18; k++) { const a = -0.4 + k * 0.17, x = cx + Math.cos(a) * 11, z = cz - 2 + Math.sin(a) * 9; if (!walkAt(x, z)) continue; const hh = rand(1.6, 2.2); part(L.group, cylGeo(0.16, 0.2, hh, 6), mat(0x5a4632), x, gy(x, z) + hh / 2, z); part(L.group, coneGeo(0.2, 0.3, 6), mat(0x5a4632), x, gy(x, z) + hh + 0.15, z); blockDisc(x, z, 0.3); }
+    addLabel(L, 'Buzkıran Kampı', '', cx, gy(cx, cz) + 5, cz, '#d8ecff'); }
+  addLabel(L, 'Donmuş Göl', '', Z.lake[0], gy(Z.lake[0], Z.lake[1]) + 4, Z.lake[1], '#d8ecff');
+  for (let k = 0; k < 7; k++) { const a = rand(0, TAU), rd = Z.lake[2] + rand(1, 4), x = Z.lake[0] + Math.cos(a) * rd, z = Z.lake[1] + Math.sin(a) * rd; if (!walkAt(x, z)) continue; const h = gy(x, z), c = 0x7a8a9a; add2(x, z, h, c); }
+  function add2(x, z, h, c) { const g = pivot(L.group, x, h, z); part(g, cylGeo(0.18, 0.28, 3.2, 6), mat(c), 0, 1.6, 0); for (let k = 0; k < 3; k++) { const b = part(g, cylGeo(0.05, 0.1, 1.4, 5), mat(c), 0, 2.2 + k * 0.4, 0); b.rotation.set(rand(0.6, 1.1), rand(0, TAU), 0, 'YXZ'); } part(g, sphGeo(0.4, 6, 4), mat(0xf0f6fc), 0, 3.2, 0).scale.y = 0.5; blockDisc(x, z, 0.5); }
+
+  // Ayaz Mağarası ağzı: buz-kaya kemer, sarkıtlar, içte karanlık, mavi ışık
+  { const [ax, az] = Z.cave, ah = gy(ax, az + 6), rk = mat(0x5a6470, { flat: 1 }), ic = mat(0xbfe8ff, { e: 0x3a90c0, ei: 0.45 }), icD = mat(0x8ac8e8, { e: 0x2a70a0, ei: 0.3 });
+    for (const sd of [-1, 1]) { part(L.group, icoGeo(4.4, 1), rk, ax + sd * 7.5, ah + 4, az, 0, rand(0, 1), 0).scale.set(1.1, 2.0, 1.2); blockDisc(ax + sd * 7.5, az + 1, 4.2); }
+    part(L.group, icoGeo(5, 1), rk, ax, ah + 11.5, az - 0.5).scale.set(2.6, 0.9, 1.2);
+    const dark = new THREE.Mesh(new THREE.CircleGeometry(5.6, 20), new THREE.MeshBasicMaterial({ color: 0x050a12 })); dark.position.set(ax, ah + 4.6, az - 1.8); dark.scale.set(1, 1.15, 1); dark.userData.dyn = true; L.group.add(dark); L.disposables.push(dark.geometry, dark.material);
+    for (let k = 0; k < 11; k++) { const x = ax - 6 + k * 1.2, l = rand(1.2, 3.4); part(L.group, coneGeo(rand(0.22, 0.4), l, 5), k % 2 ? ic : icD, x, ah + 9.6 - l / 2, az + 1.2 + rand(-0.4, 0.4), Math.PI, 0, 0); }
+    for (let k = 0; k < 14; k++) { const a = rand(-1.2, 1.2) + Math.PI / 2, rd = rand(8, 16), x = ax + Math.cos(a) * rd * (k % 2 ? 1 : -1), z = az + 4 + Math.sin(a) * rd * 0.5, hh = rand(1.5, 4.5); if (Math.abs(x - ax) < 5 && z > az + 3) continue; part(L.group, coneGeo(rand(0.4, 0.8), hh, 5), k % 3 ? ic : icD, x, gy(x, z) + hh / 2 - 0.2, z, rand(-0.25, 0.25), 0, rand(-0.25, 0.25)); if (walkAt(x, z)) blockDisc(x, z, 0.6); }
+    addLightSpot(L, ax, ah + 4, az + 4, 0x7ac8ff, 1.8, 20, { flicker: false, pri: 1.5 }); addGlowHalo(L, ax, ah + 4.5, az - 0.6, 0x6ab8ff, 6);
+    glowDecal(L.group, ax, ah + 0.05, az + 8, 8, 0x8ad8ff, 0.18).userData.dyn = true;
+    addLabel(L, 'Ayaz Mağarası', 'Buz Devi Ayaz', ax, ah + 14, az, '#bfe4ff'); }
+  // yol başı mangalları: güneyde kor, kuzeyde soğuk mavi alev
+  for (const p of Z.paths) { const q = p.pts[p.pts.length - 1], a = p.pts[p.pts.length - 2], dx = q[0] - a[0], dz = q[1] - a[1], l = Math.hypot(dx, dz) || 1;
+    for (const sd of [-1, 1]) { const x = q[0] - dz / l * sd * 4.6 - dx / l * 3, z = q[1] + dx / l * sd * 4.6 - dz / l * 3; if (!walkAt(x, z)) continue; kit.brazier(x, gy(x, z), z, reg(z) > 0.5 ? 0x7ad0ff : 0xff8a3a); blockDisc(x, z, 0.8); } }
+  kit.flush();
+
+  // --- tehlikeler: Kor Bacaları (güney) ve gayzerler (orta) — yer uyarısı, sonra patlama; yakındaysan hasar ---
+  const vents = [];
+  const ventAt = (x0, z0, kind) => { let p = null; for (let t = 0; t < 30 && !p; t++) { const x = x0 + rand(-3, 3) * (t ? 1 : 0), z = z0 + rand(-3, 3) * (t ? 1 : 0); if (walkAt(x, z) && !bridge(x, z) && pathD(x, z) > 3.5) p = [x, z]; } if (!p) return;
+    const [x, z] = p, h = gy(x, z), fire = kind === 'fire', g = pivot(L.group, x, h, z);
+    part(g, cylGeo(0.9, 1.5, 0.7, 8), mat(fire ? 0x2a2224 : 0xc8b48a, { flat: 1 }), 0, 0.35, 0);
+    const mouth = part(g, cylGeo(0.55, 0.6, 0.08, 10), mat(fire ? 0xff5a14 : 0xe8f8ff, { e: fire ? 0xff3a00 : 0x8ad8ff, ei: fire ? 1.2 : 0.5 }), 0, 0.72, 0);
+    vents.push({ x, z, h, fire, r: fire ? 2.8 : 2.5, t: rand(2, 7), busy: false, mouth }); };
+  for (const [x, z] of Z.vents) ventAt(x, z, 'fire');
+  for (const [x, z] of Z.geysers) ventAt(x, z, 'steam');
+  L.anims.push((t, dt) => {
+    const pl = G.player; if (!pl || G.paused || G.level !== L) return;
+    for (const v of vents) {
+      v.mouth.material.emissiveIntensity = v.fire ? 0.9 + 0.5 * Math.sin(t * 3 + v.x) : 0.5;
+      if (v.busy || Math.abs(pl.x - v.x) > 36 || Math.abs(pl.z - v.z) > 36) continue;
+      if ((v.t -= dt) > 0) continue;
+      v.busy = true;
+      telegraph(v.x, v.z, v.r, 1.35, v.fire ? 0xff5a1a : 0xbfe8ff, () => {
+        v.busy = false; v.t = rand(5.5, 9.5);
+        if (G.level !== L) return;
+        FX.pillar(v.x, v.z, v.fire ? 0xff7a2a : 0xe8f8ff, v.fire ? 6 : 8, 0.9, v.fire ? 1.1 : 1.4);
+        FX.burst(v.x, 0.6, v.z, v.fire ? 0xff8a30 : 0xf0faff, 22, 6);
+        FX.ring(v.x, v.z, v.r, v.fire ? 0xff6a20 : 0xcff0ff, 0.5);
+        const p2 = G.player; if (p2 && !p2.dead && Math.hypot(p2.x - v.x, p2.z - v.z) < v.r) Combat.damagePlayer(D.maxHp * (v.fire ? 0.14 : 0.09), null, { raw: true });
+      });
+    }
+  });
+
+  // --- bölge geçişi: zindan kimliği + atmosfer (sis, ışık, ton, son-işleme, parçacık) güneyden kuzeye ---
+  const D4 = DUNGEONS[Z.dIdx], D5 = DUNGEONS[Z.north.dIdx];
+  const dgOf = (d) => ({ id: d.id, name: d.name, theme: d.theme, lv: Z.lv, floors: 1, mobs: d.mobs, elite: d.elite, boss: d.boss, junk: d.junk });
+  const DG = [dgOf(D4), dgOf(D5)], TH = [THEMES[Z.theme], THEMES[Z.north.theme]];
+  const cF = new THREE.Color(), cA = new THREE.Color(), cB = new THREE.Color();
+  let side = 0, bl = -1;
+  const lerpHex = (a, b, k, out) => out.setHex(a).lerp(cB.setHex(b), k);
+  L.anims.push(() => {
+    const pl = G.player; if (!pl || G.level !== L) return;
+    const ns = side ? (pl.z > Z.split + 8 ? 0 : 1) : (pl.z < Z.split - 8 ? 1 : 0); // ±8 gecikmeli eşik: sınırda gidip gelince titremesin
+    if (ns !== side) { side = ns; L.dg = DG[side]; L.dIdx = side ? Z.north.dIdx : Z.dIdx; L.theme = TH[side]; Post.setTheme(TH[side]); Atmo.setTheme(TH[side]); feed(side ? '❄ Ayaz topraklarına girdin' : '🔥 Kor Ocağı topraklarına girdin', side ? '#bfe4ff' : '#ffb890'); }
+    const k = reg(pl.z); if (Math.abs(k - bl) < 0.002) return; bl = k;
+    const a = TH[0], b = TH[1];
+    lerpHex(a.fog, b.fog, k, cF); W3.scene.fog.color.copy(cF); if (W3.scene.background && W3.scene.background.isColor) W3.scene.background.copy(cF);
+    if (W3.scene.fog.isFogExp2) W3.scene.fog.density = lerp(a.fogDensity, b.fogDensity, k);
+    W3.hemi.color.copy(lerpHex(a.hemiSky, b.hemiSky, k, cA)); W3.hemi.groundColor.copy(lerpHex(a.hemiGround, b.hemiGround, k, cA)); W3.hemi.intensity = lerp(a.hemiI, b.hemiI, k);
+    W3.sun.color.copy(lerpHex(a.sun, b.sun, k, cA)); W3.sun.intensity = lerp(a.sunI, b.sunI, k);
+    W3.renderer.toneMappingExposure = lerp(a.exposure || 1.05, b.exposure || 1.05, k);
+  });
+
+  // gökyüzü: dumanlı alacakaranlık, uzakta karlı doruklar
+  wildSky(L, S, Math.random, { top: 0x3e4462, sunC: [1.0, 0.62, 0.42], puffs: 12, puffC: 0xb8aab0, puffOp: 0.55, mt: 0x3a3640, sn: 0xe8eef6, mtn: 28, mtR: 270 });
+
+  // harita + ilgi noktaları
+  L.poi = [{ x: bkx, z: bkz, name: 'Sisli Bataklık', gate: 'back' }, { x: Z.crater[0], z: Z.crater[1], name: 'Kızıl Krater', boss: 1 }, { x: P_.forge[0], z: P_.forge[1], name: 'Obsidyen Ocakları', deco: 1 },
+    { x: P_.springs[0], z: P_.springs[1], name: 'Sıcak Su Gölleri', deco: 1 }, { x: P_.geysers[0], z: P_.geysers[1], name: 'Buhar Bacaları', deco: 1 }, { x: Z.lake[0], z: Z.lake[1], name: 'Donmuş Göl', deco: 1 },
+    { x: P_.camp[0], z: P_.camp[1], name: 'Buzkıran Kampı', deco: 1 }, { x: Z.cave[0], z: Z.cave[1] + 16, name: 'Ayaz Mağarası', boss: 1 }];
+  deepMap(L, (x, z, k) => { const r = reg(z); if (L.grid[k]) { if (bridge(x, z) && lavaD(x, z) < 0) return 0x6a5a5a; if (pathD(x, z) < 2.8) return r > 0.5 ? 0xb8c4d0 : 0x8a6450; if (lakeIn(x, z)) return 0xa8d0e8; return r > 0.6 ? 0xd8e2ec : r > 0.35 ? 0x6a7a54 : 0x5a4a44; } if (lavaD(x, z) < 0) return 0xe0581a; if (springD(x, z) < 0) return 0x3ab0b8; return r > 0.5 ? 0x4a525c : 0x26222a; });
+  L.spawn = { x: Z.start[0], z: Z.start[1] }; L.spawnGate = L.spawn;
+  L.arrive = { back: { x: Z.start[0], z: Z.start[1] }, gate: { x: Z.start[0], z: Z.start[1] } };
+
+  // --- kamplar: güneyde ifrit / lav kaplumbağası, kuzeyde ayaz kurdu / kar golemi, ortada karışık; seviye Sv 25 → 39 ---
+  const CK = wildCampKit(L, gk, { pathD, skip: (x, z) => lavaD(x, z) < 3 || springD(x, z) < 2, spacing: 13, poiR: (p) => (p.boss ? 30 : 12) }), { addSpawn, campPos, camps } = CK, [lv0, lv1] = Z.mobLv;
+  for (const v of vents) camps.forEach((c) => { if (Math.hypot(c.x - v.x, c.z - v.z) < 4) c.x += 4; });
+  camps.forEach((c) => {
+    const r = reg(c.z), lv = Math.round(lv0 + (lv1 - lv0) * c.k), n = 3 + (chance(0.5) ? 1 : 0) + (lv >= 32 ? 1 : 0);
+    const fire = r < 0.35 ? 1 : r > 0.65 ? 0 : chance(1 - r) ? 1 : 0;
+    for (let m = 0; m < n; m++) { const [x, z] = campPos(c, 3.4); addSpawn(fire ? (m % 3 === 2 ? 'lavaturtle' : 'imp') : (m % 3 === 2 ? 'snowgolem' : 'icewolf'), clamp(lv + randi(-1, 1), lv0, lv1), x, z); }
+    c.lv = lv;
+  });
+  for (const c of CK.farthest(2, 50, (c) => reg(c.z) < 0.3)) { const [x, z] = campPos(c, 2); addSpawn(Z.elite, Z.bossLv - 1, x, z, { respawnTime: 110 }); }
+  for (const c of CK.farthest(2, 50, (c) => reg(c.z) > 0.7)) { const [x, z] = campPos(c, 2); addSpawn(Z.north.elite, Z.north.bossLv - 1, x, z, { respawnTime: 110 }); }
+  { const [bx, bz] = CK.nearest(Z.crater[0], Z.crater[1] + 6); L.bossSpawn = addSpawn(Z.boss, Z.bossLv, bx, bz, { boss: true, respawnTime: 300 }); }
+  { const [bx, bz] = CK.nearest(Z.cave[0], Z.cave[1] + 16); L.bossSpawn2 = addSpawn(Z.north.boss, Z.north.bossLv, bx, bz, { boss: true, respawnTime: 300 }); }
+  L.camps = camps; L.vents = vents;
+  return deepFinish(L);
+}
+const WILD_BUILD = { gate: buildAgGate, deep: buildAgDeep, swamp: buildSwamp, korayaz: buildKorAyaz };
 
 // ---------- ZİNDAN ÜRETİMİ ----------
 function genLayout(dg, floorIdx, dIdx) {
