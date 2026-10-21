@@ -16,7 +16,7 @@ Eski kayıtlar kısa tutulur; ayrıntı gerekirse git geçmişine bakılır.
 - `3990959` Kılıca özel +0…+9 yükseltme görünümü.
 - Her büyük işten önce `main` yedek dala alındı (`yedek/*-oncesi`).
 
-## 2026-10-21 (47) — Sisli Bataklık: 3. zindan mezarlık yerine bataklık, açık dünya bölgesi `w3` (Sv 15–25) · dal `ozellik/bataklik-acik-dunya`
+## 2026-10-21 (47) — Sisli Bataklık: 3. zindan mezarlık yerine bataklık, açık dünya bölgesi `w3` (Sv 15–25) · dal `ozellik/bataklik-acik-dunya` → `main` (2026-10-21, kullanıcı onayı; yedek `yedek/bataklik-oncesi`)
 - Kullanıcı kararı: «Sessiz Mezarlık» konsepti kaldırıldı → «Sisli Bataklık»; seviye 13–19 → 15–25, alan 320×320. `DUNGEONS` d3 (tema `swamp`, req 15), `j3` «Bataklık Kökü», görev `q09` (Sv 15, metin) güncellendi. Eski iskelet canavarları `MOBS`'ta duruyor (d7 / metin havuzu kullanıyor).
 - Yeni canavarlar (`MOBS`): `bogfrog` Bataklık Kurbağası (model `frog`: insansı + kurbağa başı, mızrak), `spitter` Zehir Tükürücü (model `toad`, uzak/zehir, boğaz kesesi `M.sac`), `leechgiant` Sülük Devi (elit, model `leech`: halkalar `M.segs`, `Mob.animate`'te dalga), `bogwitch` Bataklık Cadısı (patron, `witch` modelinin `isBog` varyantı; nova/volley/summon/pool).
 - Açık dünya: `WILD_ZONES` `w3` (`build:'swamp'`, tema `bog`) → `buildSwamp` (`deepTerrain` üzerine: kara sdf = set yolları + adalar + gürültü; dışı su altı; `paths[].bw` iskele parçaları — yürüme yüksekliği `hole`, görüntü `drop`). Yerler: Kurbağa Köyü, Batık Değirmen, Yosun Harabesi, Ateşböceği Adası, Sazlık Kampı, Cadı Kulübesi + kazan (patron). Ateşböcekleri (Points), su üstü sis, servi ağaçları, kamış, nilüfer. Kamplar yürüme uzaklığıyla Sv 15→24, 3 Sülük Devi Sv 25, patron Sv 26.
