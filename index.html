@@ -12553,10 +12553,11 @@ const Post = {
     this.quad = new T3.Mesh(new T3.PlaneGeometry(2, 2), null);
     this.quad.frustumCulled = false;
     this.scn = new T3.Scene(); this.scn.add(this.quad);
-    this.mBright = mk(`uniform sampler2D tD; uniform float thr; varying vec2 vUv;
-      void main(){ vec3 c = min(texture2D(tD, vUv).rgb, vec3(12.));
+    this.mBright = mk(`uniform sampler2D tD; uniform float thr; uniform vec2 tx; varying vec2 vUv;
+      void main(){ vec3 c = min((texture2D(tD, vUv + vec2(-tx.x, -tx.y)).rgb + texture2D(tD, vUv + vec2(tx.x, -tx.y)).rgb
+          + texture2D(tD, vUv + vec2(-tx.x, tx.y)).rgb + texture2D(tD, vUv + tx).rgb) * 0.25, vec3(12.));
         float l = max(c.r, max(c.g, c.b)); float k = clamp((l - thr) / 0.6, 0., 1.); k = k * k * (3. - 2. * k);
-        gl_FragColor = vec4(c * k, 1.); }`, { tD: { value: null }, thr: { value: 0.8 } });
+        gl_FragColor = vec4(c * k, 1.); }`, { tD: { value: null }, thr: { value: 0.8 }, tx: { value: new T3.Vector2() } });
     this.mCopy = mk(`uniform sampler2D tD; varying vec2 vUv; void main(){ gl_FragColor = texture2D(tD, vUv); }`, { tD: { value: null } });
     this.mBlur = mk(`uniform sampler2D tD; uniform vec2 dir; varying vec2 vUv;
       void main(){ vec3 s = texture2D(tD, vUv).rgb * 0.227027;
@@ -12591,7 +12592,7 @@ const Post = {
     this.sz = k;
     this.rt.setSize(w, h);
     this.lv.forEach((L, i) => {
-      const lw = Math.max(2, w >> (i + 1)), lh = Math.max(2, h >> (i + 1));
+      const lw = Math.max(2, w >> (i + 2)), lh = Math.max(2, h >> (i + 2)); // ısınma: bloom ¼ çözünürlükten başlar (eskiden ½)
       L.a.setSize(lw, lh); L.b.setSize(lw, lh);
     });
   },
@@ -12607,7 +12608,7 @@ const Post = {
     r.clear();
     r.render(scene, camera);
     const g = this.grade, lv = this.lv;
-    this.mBright.uniforms.tD.value = this.rt.texture; this.mBright.uniforms.thr.value = g.thr;
+    this.mBright.uniforms.tD.value = this.rt.texture; this.mBright.uniforms.thr.value = g.thr; this.mBright.uniforms.tx.value.set(1 / v.x, 1 / v.y); // 4 bilinear örnek = 4×4 tam çözünürlük pikseli (küçük ışıklar titremesin)
     for (let i = 0; i < lv.length; i++) {
       const L = lv[i];
       if (i === 0) this.pass(this.mBright, L.a);
@@ -23938,8 +23939,22 @@ function updateCamera(dt) {
 }
 
 let _last = 0;
+// Kare hızı sınırı (ısınma): 90/120 Hz ekranlarda en çok ~60 kare çizilir. Kısa rAF aralığı ölçülür, sınır yalnız ekran 60 Hz'den hızlıysa devreye girer.
+const FPS_CAP = 60;
+let _fcAcc = 0, _fcPrev = 0, _fcGap = 16.7;
 function frame(now) {
   requestAnimationFrame(frame);
+  if (FPS_CAP && _fcPrev) {
+    const gap = now - _fcPrev;
+    if (gap > 0 && gap < 100) _fcGap += (gap - _fcGap) * 0.05; // ekran yenileme aralığı (yumuşatılmış)
+    if (_fcGap < 1000 / FPS_CAP - 1.5) {
+      const bud = 1000 / FPS_CAP;
+      _fcAcc += gap;
+      if (_fcAcc < bud - _fcGap * 0.45) { _fcPrev = now; return; } // bu kareyi atla (0.45: 90 Hz'de tam sınırda kalmasın)
+      _fcAcc = Math.min(_fcAcc - bud, bud); if (_fcAcc < 0) _fcAcc = 0;
+    } else _fcAcc = 0;
+  }
+  _fcPrev = now;
   let dt = Math.min(0.05, (now - _last) / 1000 || 0.016);
   _last = now;
   if (G.hitStop > 0) { G.hitStop -= dt; dt *= 0.08; } // darbe duraksaması (hitStop)

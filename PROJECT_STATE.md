@@ -85,6 +85,7 @@ her zaman `grep -n` ile doğrula.
 ## Kalite politikası (kullanıcı kararı 2026-10-15)
 - Öncelik yüksek görsel kalite; zayıf telefon ve dosya boyutu artık kısıt değil. Varsayılan görünüm `gfx:'ultra'` ("Yüksek kalite"); eski kayıtlardaki `lowpoly` bir kez `ultra`ya göç eder (`settings.gfxv`).
 - `Post` (index.html, "Son-işleme" bölümü): sahne HalfFloat + 4x MSAA hedefe çizilir → 5 kademeli bloom → tek geçişte ACES + sRGB + kontrast/doygunluk/ton + vinyet + dither. Tema bazlı ayar: `THEMES[x].grade = {bloom,thr,sat,con,tint,vig}` (isteğe bağlı). `gfx:'ultra'` dışındaki modlar doğrudan `renderer.render` kullanır.
+- Isınma (main): `frame` başında `FPS_CAP` (60; yüksek Hz ekranda kare atlar), bloom ¼ çözünürlükten başlar.
 - Ultra: gölge haritası 2048, piksel oranı en az 1.5 (en çok 2). `renderer.info.render` artık yalnız son geçişi gösterir (son-işlemde calls=1); çizim sayısı ölçümü için `Post.on=false` yap.
 - Sıradaki kalite adımları: PBR/ortam yansıması (sahne materyalleri), SSAO/derinlik, dokulu yüksek ayrıntılı modeller, zindan ortamı.
 
