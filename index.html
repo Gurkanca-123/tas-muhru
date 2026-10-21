@@ -16984,17 +16984,18 @@ function buildSwampInner(Z) {
   for (const p of Z.paths) for (const q of p.pts) isl.push([q[0], q[1], 6.5]); // yol düğümleri: küçük adalar
   const edge = (x, z) => Math.min(x, z, S - x, S - z);
   const landRaw = (x, z) => {
-    let d = segD(segs, x, z, 4.6, 0) + 1.2 * n2(x / 7 + 3, z / 7 + 1);
+    let d = 1e9;
     for (const [ix, iz, r] of isl) d = Math.min(d, Math.hypot(x - ix, z - iz) - r * (1 + 0.16 * n3(x / 9 + ix * 0.1, z / 9 + iz * 0.1)));
     d = Math.min(d, (0.24 - n1(x / 46 + 3, z / 46 + 7)) * 30 + 2 * n3(x / 6, z / 6)); // geniş, düzensiz kara parçaları
-    d = Math.max(d, 7 - segD(bwSegs, x, z, 0, 0.2)); // iskelelerin altı su kalır
-    return d;
+    d = Math.max(d, 8 - segD(bwSegs, x, z, 0, 0.2)); // iskelelerin altı su kalır
+    return Math.min(d, segD(segs, x, z, 4.6, 0) + 0.9 * n2(x / 7 + 3, z / 7 + 1)); // set yolları her zaman kara (en az ~3,7 yarıçap)
   };
   // tam sayı köşelerde önbellek (deepTerrain her köşe için birkaç kez sorar)
   const LD = new Float32Array(NN * NN).fill(NaN), BD = new Float32Array(NN * NN).fill(NaN);
   const memo = (A, fn) => (x, z) => { if (Number.isInteger(x) && Number.isInteger(z) && x >= -M && z >= -M && x <= S + M && z <= S + M) { const k = (z + M) * NN + (x + M); let v = A[k]; if (v !== v) v = A[k] = fn(x, z); return v; } return fn(x, z); };
-  const landD = memo(LD, landRaw), bwD = memo(BD, (x, z) => segD(bwSegs, x, z, 2.3, 0));
-  const sdf = (x, z) => Math.min(landD(x, z), bwD(x, z));
+  const landD = memo(LD, landRaw), bwD = memo(BD, (x, z) => segD(bwSegs, x, z, 3.4, 0)); // geniş güverte: çapraz iskelede ızgara basamaklanmasın
+  const allSegs = segs.concat(bwSegs), walkD = (x, z) => segD(allSegs, x, z, 3.4, 0); // tüm yollar boyunca kesintisiz yürüme koridoru
+  const sdf = (x, z) => Math.min(landD(x, z), bwD(x, z), walkD(x, z));
   const landH = (x, z) => 0.42 + 0.34 * n2(x / 13 + 5, z / 13 + 2) + 0.16 * n3(x / 4.5 + 1, z / 4.5 + 7);
   const ridge = (x, z) => 11 * sstep(20, 2, edge(x, z) + 3 * n4(x / 15, z / 15));
   const floor = (x, z) => Math.max(landH(x, z), WY + 0.3) + ridge(x, z);
@@ -17105,10 +17106,10 @@ function buildSwampInner(Z) {
     for (let k = 0; k <= n; k++) {
       const t = k / n, x = ax + (bx - ax) * t, z = az + (bz - az) * t;
       if (landD(x, z) < -0.6 && gy(x, z) > PY + 0.05) continue; // karaya gömülen uçlar
-      add('plank', x + rand(-0.05, 0.05), PY - 0.07 + rand(-0.03, 0.03), z, 4.5 + rand(-0.2, 0.2), 0.12, 0.62, pick([0x8a6a42, 0x7a5a38, 0x9a7a4a, 0x6e5232]), 0, ry + rand(-0.04, 0.04), rand(-0.02, 0.02));
-      if (k % 4 === 0) for (const sd of [-1, 1]) { const px = x - uz * sd * 2.1, pz = z + ux * sd * 2.1, by = Math.min(gy(px, pz), WY - 1); add('plank', px, (by + PY + 0.5) / 2, pz, 0.22, PY + 0.5 - by, 0.22, 0x4a3622); }
+      add('plank', x + rand(-0.05, 0.05), PY - 0.07 + rand(-0.03, 0.03), z, 6.4 + rand(-0.2, 0.2), 0.12, 0.62, pick([0x8a6a42, 0x7a5a38, 0x9a7a4a, 0x6e5232]), 0, ry + rand(-0.04, 0.04), rand(-0.02, 0.02));
+      if (k % 4 === 0) for (const sd of [-1, 1]) { const px = x - uz * sd * 3.05, pz = z + ux * sd * 3.05, by = Math.min(gy(px, pz), WY - 1); add('plank', px, (by + PY + 0.5) / 2, pz, 0.22, PY + 0.5 - by, 0.22, 0x4a3622); }
     }
-    for (const sd of [-1, 1]) add('plank', (ax + bx) / 2 - uz * sd * 2.1, PY - 0.2, (az + bz) / 2 + ux * sd * 2.1, 0.2, 0.18, len, 0x4e3a24, 0, ry, 0);
+    for (const sd of [-1, 1]) add('plank', (ax + bx) / 2 - uz * sd * 3.05, PY - 0.2, (az + bz) / 2 + ux * sd * 3.05, 0.2, 0.18, len, 0x4e3a24, 0, ry, 0);
   }
   wildInstFlush(L, LI);
 
