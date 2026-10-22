@@ -18799,15 +18799,24 @@ const FX = {
       }
     } });
   },
-  // Alev Patlaması / Gök Taşı çarpması: ortada patlama topu + dışa dizilen alev dilleri (Blender alev/patlama kareleri)
-  fireBlast(x, z, R, tint, n) {
+  // Alev Patlaması / Gök Taşı çarpması: ortada patlama topu + dışa dizilen alev dilleri (Blender alev/patlama kareleri).
+  // big (Büyük Usta): daha büyük top, iç + dış iki alev halkası, uzun alev sütunları ve gecikmeli ikinci alev dalgası
+  fireBlast(x, z, R, n, big) {
     if (!MAGE_FX.tex.boom) return;
-    this.flip(x, 0.2, z, 'boom', R * 1.25, 0.62, { anchor: 0.25, tint });
+    const sz = Math.min(1.4, R / 3) * (big ? 1.5 : 1);
+    this.flip(x, 0.2, z, 'boom', R * (big ? 1.7 : 1.25), big ? 0.75 : 0.62, { anchor: 0.25 });
     n = n || 12;
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * TAU + rand(-0.15, 0.15), rr = R * rand(0.55, 0.95);
-      this.flip(x + Math.cos(a) * rr, 0, z + Math.sin(a) * rr, i % 2 ? 'flame0' : 'flame1', rand(1.1, 1.7) * Math.min(1.4, R / 3), rand(0.6, 0.85), { anchor: 0.02, sx: 0.8, delay: (rr / R) * 0.12, tint });
-    }
+    const ring = (cnt, r0, r1, s0, s1, d0, life) => {
+      for (let i = 0; i < cnt; i++) {
+        const a = (i / cnt) * TAU + rand(-0.15, 0.15), rr = R * rand(r0, r1);
+        this.flip(x + Math.cos(a) * rr, 0, z + Math.sin(a) * rr, i % 2 ? 'flame0' : 'flame1', rand(s0, s1) * sz, rand(life, life + 0.25), { anchor: 0.02, sx: 0.8, delay: d0 + (rr / R) * 0.12 });
+      }
+    };
+    ring(n, 0.55, 0.95, 1.1, 1.7, 0, 0.6);
+    if (!big) return;
+    ring(Math.round(n * 0.6), 0.12, 0.45, 1.6, 2.3, 0.04, 0.75); // iç halka: uzun alev sütunları
+    ring(Math.round(n * 1.3), 0.85, 1.25, 1.0, 1.5, 0.22, 0.7); // ikinci dalga dışarıda
+    this.flip(x, 0.2, z, 'boom', R * 2.1, 0.7, { anchor: 0.25, delay: 0.22 });
   },
   // Buz Dalgası: büyücünün çevresinde halka halka yayılan buz; zemin buzla kaplanır, kenarda kristaller fırlar
   iceField(x, z, R, wave, cols, life) {
@@ -21086,10 +21095,10 @@ const SKILL_FX = {
   b2: {},
   b3: { magma: true, M: SV_FIRE_M, G: SV_FIRE_G },
   b4: { ult: true, castBolts: { G: { n: 5, cols: [0xff2a14, 0xff8a20], span: 0.3, w: 0.3 } }, G: SV_FIRE_G },
-  // Büyücü: Alev Patlaması (Usta kızıl-altın alev + lav sütunları · Büyük Usta mavi-beyaz ruh alevi + ikinci patlama),
+  // Büyücü: Alev Patlaması (Usta kızıl-altın alev + lav sütunları · Büyük Usta kızıl cehennem alevi + alev fırtınası + ikinci patlama),
   // Gök Taşı (Usta erimiş kaya + lav · Büyük Usta mor kozmik taş + inişte yıldırım), Buz Dalgası (Usta kristal buz sivrileri ·
   // Büyük Usta kutup ışığı: büyük sivriler + don halkası), Mühür Kalkanı (ult: rün dairesi + gökten yıldırım; Büyük Usta'da rün kubbesi)
-  m1: { magma: true, blast2: 'G', M: SV_FIRE_M, G: SV_SOUL_G },
+  m1: { magma: true, blast2: 'G', M: SV_FIRE_M, G: SV_FIRE_G }, // Büyük Usta: kızıl cehennem alevi (2026-10-23, eski mavi ruh alevi kaldırıldı)
   m2: { magma: true, boltHit: 'G', M: SV_FIRE_M, G: SV_COSMIC_G },
   m3: { iceSpikes: true, M: SV_FROST_M, G: SV_AURORA_G },
   m4: { ult: true, dome: 'G', castBolts: { M: { n: 3, cols: [0xffd060, 0xfff1c0], span: 0.24, w: 0.24 }, G: { n: 5, cols: [0xb98cff, 0xfff0ff], span: 0.3, w: 0.32 } } },
@@ -21810,7 +21819,7 @@ const Combat = {
           const drop = (mx, mz, r, fall, k) => FX.meteor(mx, mz, r, fall, () => {
             if (G.level !== L) return;
             if (k === 1) SkillVis.hit(id, mx, mz, r, true); // ustalık: lav sütunları / Büyük Usta'da yıldırım
-            FX.fireBlast(mx, mz, r * 1.05, SkillVis.of(id).tier === 'G' ? vc(0xffd060) : 0xffffff, k === 1 ? 10 : 5);
+            FX.fireBlast(mx, mz, r * 1.05, k === 1 ? 10 : 5, k === 1 && SkillVis.of(id).tier === 'G');
             for (const m of L.mobs) if (!m.dead && dist(mx, mz, m.x, m.z) <= r + m.r) { this.hitMob(m, sk.mult * pw * k); if (sk.stun && !m.dead && !m.static) Coop.stun(m, sk.stun); }
           }, vc);
           drop(x, z, sk.radius, sk.fall, 1);
@@ -21966,11 +21975,12 @@ const Combat = {
           FX.quake(cx, cz, R, vc(0xff7a20)); FX.ring(cx, cz, R * 1.1, vc(0xffd060), 0.35); FX.ring(cx, cz, R * 0.6, vc(0xff5a20), 0.28, 0.15);
           FX.burst(cx, 0.4, cz, vc(0xffd060), 28, 7, 0.14, 0.5, 2); FX.burst(cx, 0.2, cz, vc(0xff5a20), 20, 5, 0.18, 0.6, 1);
           FX.flash(0xffa040, 4, 0.3); SkillVis.hit(id, cx, cz, R, true);
-          FX.fireBlast(cx, cz, R, SkillVis.of(id).tier === 'G' ? vc(0xffd060) : 0xffffff, Math.round(10 + R * 1.5)); // patlama topu + alev dilleri
+          const BIG = SkillVis.of(id).tier === 'G';
+          FX.fireBlast(cx, cz, R, Math.round(10 + R * 1.5), BIG); // patlama topu + alev dilleri (Büyük Usta: alev fırtınası)
           SFX.play('boom'); camPunch(1.4); hitStop(0.06);
           for (const m of L.mobs) if (!m.dead && dist(cx, cz, m.x, m.z) <= R + m.r) this.hitMob(m, sk.mult * pw);
           L.clouds = L.clouds || [];
-          L.clouds.push({ x: cx, z: cz, t: sk.burnT || 3, tick: 1, r: R, mult: (sk.burn || 0.3) * pw, col: 0xff7a20, fire: true }); // yanma (fire: yerde alev dilleri)
+          L.clouds.push({ x: cx, z: cz, t: sk.burnT || 3, tick: 1, r: R, mult: (sk.burn || 0.3) * pw, col: 0xff7a20, fire: BIG ? 2 : 1 }); // yanma (fire: yerde alev dilleri; 2 = Büyük Usta, daha sık ve büyük)
         });
         break;
       }
@@ -22187,7 +22197,7 @@ const Combat = {
       const c = L.clouds[i];
       c.t -= dt; c.tick -= dt;
       if (Math.random() < dt * 30) FX.spawn(c.x + rand(-c.r, c.r) * 0.8, rand(0.2, 1), c.z + rand(-c.r, c.r) * 0.8, 0, rand(0.2, 0.6), 0, c.col || 0x6ad83a, 1, 0.25, 0); // col: Alev Patlaması yanması
-      if (c.fire && Math.random() < dt * 9) { const a = rand(0, TAU), rr = c.r * Math.sqrt(Math.random()) * 0.85; FX.flip(c.x + Math.cos(a) * rr, 0, c.z + Math.sin(a) * rr, Math.random() < 0.5 ? 'flame0' : 'flame1', rand(0.7, 1.1), rand(0.55, 0.8), { anchor: 0.02, sx: 0.8 }); }
+      if (c.fire && Math.random() < dt * 9 * c.fire) { const a = rand(0, TAU), rr = c.r * Math.sqrt(Math.random()) * 0.85; FX.flip(c.x + Math.cos(a) * rr, 0, c.z + Math.sin(a) * rr, Math.random() < 0.5 ? 'flame0' : 'flame1', rand(0.7, 1.1) * (c.fire > 1 ? 1.5 : 1), rand(0.55, 0.8), { anchor: 0.02, sx: 0.8 }); }
       if (c.tick <= 0) {
         c.tick = 1;
         for (const m of L.mobs) if (!m.dead && dist(c.x, c.z, m.x, m.z) <= c.r + m.r) this.hitMob(m, c.mult, { noCrit: true, dot: true, color: c.col ? undefined : 'heal' });
